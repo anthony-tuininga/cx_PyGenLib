@@ -3,12 +3,14 @@
    intended to replace shutil which is less usable for copying and removing
    trees."""
 
+import cx_Logging
 import os
 import stat
 import sys
 
 def CopyFile(source, target, bufferSize = 16 * 1024):
     """Copy the source to the target."""
+    cx_Logging.Info("copying %s to %s...", source, target)
     sourceFile = file(source, "rb")
     if os.path.exists(target):
         Remove(target)
@@ -53,6 +55,7 @@ def Remove(path):
     if os.path.isdir(path):
         RemoveTree(path)
     else:
+        cx_Logging.Info("removing file %s...", path)
         if sys.platform == "win32":
             os.chmod(path, 0777)
         os.remove(path)
@@ -65,6 +68,7 @@ def RemoveTree(path):
         currentDir = None
     if currentDir is None or currentDir.startswith(path):
         os.chdir("/")
+    cx_Logging.Info("removing directory %s...", path)
     for name in os.listdir(path):
         fullName = os.path.join(path, name)
         Remove(fullName)
