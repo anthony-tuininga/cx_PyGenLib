@@ -91,15 +91,9 @@ class Argument:
         return "%s argument" % self.metavar
 
 
-def _TracebackOptionHandler(option, optionString, value, parser):
-    """Handle enabling traceback when the traceback option is specified."""
-    if hasattr(sys, "tracebacklimit"):
-        del sys.tracebacklimit
-
-
 # common options
-TRACEBACK_OPTION = Option("-t", "--traceback", action = "callback",
-    help = "display traceback on error", callback = _TracebackOptionHandler)
+TRACEBACK_OPTION = Option("-t", "--traceback", action = "store_true",
+    help = "display traceback on error", default = False)
 SHOW_BANNER_OPTION = Option("--show-banner", action = "store_true",
     help = "display banner on execution")
 PROMPT_OPTION = Option("-p", "--prompt", action = "store_true",
@@ -139,7 +133,7 @@ class OptionParser(optparse.OptionParser):
         optparse.OptionParser.__init__(self, option_class = Option,
             usage = usage, version = version)
         warnings.filterwarnings("ignore", category = FutureWarning)
-        sys.tracebacklimit = 0
+        warnings.filterwarnings("ignore", category = DeprecationWarning)
 
     def __PrintHelpSection(self, heading, helpTuples):
         """Print a section of the help message."""
@@ -257,6 +251,10 @@ class OptionParser(optparse.OptionParser):
         # display version, if not in quiet mode
         if values.showBanner:
             print >> sys.stderr, self.__banner
+
+        # turn off traceback if not desired
+        if not values.traceback:
+            sys.tracebacklimit = 0
 
         return values
 
