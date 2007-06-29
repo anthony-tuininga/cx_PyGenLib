@@ -22,11 +22,11 @@ class Thread(object):
 
     def OnThreadEnd(self):
         """Called when the thread is ended. Override in child classes."""
-        cx_Logging.Info("thread %r ending" % self.name)
+        cx_Logging.Info("thread %r ending", self.name)
 
     def OnThreadStart(self):
         """Called when the thread is started. Override in child classes."""
-        cx_Logging.Info("thread %r starting" % self.name)
+        cx_Logging.Info("thread %r starting", self.name)
 
     def Start(self, loggingState = None):
         """Start the thread."""
@@ -44,21 +44,9 @@ class Thread(object):
             try:
                 self.function(*self.args, **self.keywordArgs)
             except:
-                cx_Logging.Error("Exception in thread %s" % self.name)
                 self.errorObj = cx_Exceptions.GetExceptionInfo(*sys.exc_info())
-                cx_Logging.Error("    Message: %s" % self.errorObj.message)
-                cx_Logging.Error("    TemplateId: %s" % \
-                        self.errorObj.templateId)
-                cx_Logging.Error("    Arguments:")
-                for name, value in self.errorObj.arguments.iteritems():
-                    cx_Logging.Error("        %s -> %r" % (name, value))
-                cx_Logging.Error("    Traceback:")
-                for line in self.errorObj.traceback:
-                    cx_Logging.Error("        %s" % line)
-                cx_Logging.Error("    Details:")
-                for line in self.errorObj.details:
-                    cx_Logging.Error("        %s" % line)
-                cx_Logging.Error("Thread terminating")
+                cx_Logging.LogException(self.errorObj)
+                cx_Logging.Error("Thread %r terminating", self.name)
         finally:
             self.stopped = True
             self.OnThreadEnd()

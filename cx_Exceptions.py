@@ -1,8 +1,3 @@
-#------------------------------------------------------------------------------
-# This file is generated and should not be modified.
-# Modify the configuration in cx_Exceptions.py.in instead.
-#------------------------------------------------------------------------------
-
 import sys
 import traceback
 
@@ -209,12 +204,6 @@ class NoDataFound(BaseException):
     templateId = 1001
     message = 'No data found.'
 RegisterExceptionClass(NoDataFound)
-
-
-class NoHandlerForStartTag(BaseException):
-    templateId = 1192
-    message = 'No start handler defined for tag %(name)s.'
-RegisterExceptionClass(NoHandlerForStartTag)
 
 
 class NotImplemented(BaseException):

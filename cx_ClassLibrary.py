@@ -167,11 +167,12 @@ class ClassFactory(object):
 
     def _GenerateClass(self, className, baseClass, classDict, initArgNames):
         """Generate a class with a generated constructor."""
-        initLines = ["    self.%s = %s\n" % (n, n) for n in initArgNames]
-        codeString = "def __init__(self, %s):\n%s" % \
-                (", ".join(initArgNames), "".join(initLines))
-        code = compile(codeString, "GeneratedClass.py", "exec")
-        exec code in dict(), classDict
+        if initArgNames:
+            initLines = ["    self.%s = %s\n" % (n, n) for n in initArgNames]
+            codeString = "def __init__(self, %s):\n%s" % \
+                    (", ".join(initArgNames), "".join(initLines))
+            code = compile(codeString, "GeneratedClass.py", "exec")
+            exec code in dict(), classDict
         return type(className, (baseClass,), classDict)
 
     def GetClass(self, key):
