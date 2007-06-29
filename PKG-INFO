@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: cx_PyGenLib
+Version: 2.4
+Summary: Set of general Python modules
+Home-page: http://starship.python.net/crew/atuining
+Author: Anthony Tuininga
+Author-email: anthony.tuininga@gmail.com
+License: See LICENSE.txt
+Description: Set of general Python modules used by a number of Computronix projects (cx_OracleTools, cx_OracleDBATools, etc.)
+Platform: UNKNOWN
