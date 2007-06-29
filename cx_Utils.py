@@ -1,5 +1,6 @@
 """Defines a number of utility functions."""
 
+import cx_Logging
 import glob
 import os
 import sys
@@ -10,6 +11,7 @@ if sys.platform == "win32":
 def ExecuteOSCommands(*commands):
     """Execute OS commands, raising an error if any return errors."""
     for command in commands:
+        cx_Logging.Debug("executing command %s", command)
         if os.system(command) != 0:
             raise "Execution of command %s failed." % command
 
