@@ -1,0 +1,103 @@
+Changes from 2.3 to 2.4
+ 1) In cx_ClassLibrary, improved class factory class.
+ 2) In cx_Exceptions, used the original arguments when formatting the message
+    rather than the repr so that the strings are interpolated correctly.
+ 3) In cx_Exceptions, replaced message "Unhandled exception." with the normal
+    Python error message string that would be displayed.
+ 4) In cx_Exceptions, transformed syntax errors into something that is more
+    useful.
+ 5) In cx_LoggingOptions, added support for --max-files and --max-file-size
+    when running a server.
+ 6) In cx_LoggingOptions, installed exception handler which will log exception
+    information to the log file with considerably more information than just
+    the traceback; automatically forced sys.stderr and the log file to be
+    identical in order to capture any extraneous errors that the OS might
+    produce in the log file.
+ 7) In cx_OptionParser, filtered out future warnings completely since they are
+    of benefit only to developers.
+ 8) In cx_ReadLine, fix handling of redirection of stderr on Windows since
+    that platform handles that quite horribly.
+ 9) In cx_Win32Service, wait until the service is actually started or stopped
+    before continuing.
+10) In cx_XML, removed method for writing binary data since it is not being
+    used and cannot be seamlessly interpreted; added a method instead that
+    allows for writing uninterpreted data which can be used to write arbitrary
+    data (including base64 encoded data) if an application requires it.
+11) In cx_XML, encoded carriage return (chr(13)) in XML files since XML
+    parsers are required to translate all combinations of carriage return and
+    line feed into a single line feed.
+12) In cx_XML, added support for specifying the encoding for an XML file.
+13) Removed support for Python 2.2.
+
+Changes from 2.2.1 to 2.3
+ 1) Added new module cx_DatabaseTable which provides a simple class that
+    transforms tuples (such as those returned by cx_Oracle) into an instance
+    with attributes that can be refereced.
+ 2) Added new module cx_LoggingOptions to support handling of standardized
+    logging options.
+ 3) Added new module cx_Handles to handle providing integer handles to an
+    external application which cannot handle Python objects directly.
+ 4) Added new module cx_Tracing to handle tracing of Python code.
+ 5) Added new method for transforming text given a set of delimiters and a
+    method to manage the transformation in cx_Utils.
+ 6) Added new method for returning a default value when a key is not found in
+    cx_IniFile rather than raising an exception.
+ 7) Added new class ClassFactory to cx_ClassLibrary which allows for the
+    dynamic creation and caching of classes.
+ 8) Added support for defining arguments independently of a parser in
+    cx_OptionParser so that they can easily be defined in modules as constants.
+ 9) Added support for defining arguments that must be integers in
+    cx_OptionParser.
+10) Added support for CDATA and better pretty printing in cx_XML.
+11) Added support for getting a choice from a list of choices in cx_ReadLine.
+12) Added support for logging exceptions, starts and stops of threads in
+    cx_Threads.
+13) Added method InlineIf() to cx_Utils for conditional expressions similar to
+    those added in Python 2.5.
+14) Removed cx_Freezer since that is properly part of the cx_Freeze project.
+15) Improved CaselessDict in cx_ClassLibrary.
+16) Improved handling of exceptions in cx_Exceptions.
+17) Improved output for the CVS log report in cx_CVS.
+18) Replaced cx_Queue with an implementation in cx_Threads that allows multiple
+    producer and consumer threads.
+19) Replaced cx_ServiceFramework with cx_ServerFramework which now uses the
+    increased functionality in cx_Threads and cx_Logging.
+20) Check the return status of commands executed in cx_Utils.
+21) Use a leading underscore in front of argument names in cx_XML so that they
+    do not conflict with the XML file being parsed.
+22) Fixed bug in cx_IniFile when the first line of an ini file is a comment.
+23) Fixed bug in cx_XML when non ASCII characters are found in the input.
+24) Options or arguments are no longer checked for values in cx_OptionParser
+    if they are not marked as required.
+
+Changes from 2.2 to 2.2.1
+ 1) cx_IniFile now has a Read() method which will raise an exception if the
+    file does not exist.
+ 2) If the directory to be removed does not exist, retreat to a safe directory
+    as otherwise Windows will raise an error that the directory cannot be
+    deleted.
+ 3) Make setup.py compatible with Python 2.3.
+ 4) Fix handling of dead revisions in cx_CVS.
+ 5) Allow for spaces in passwords when connecting to a CVS server.
+ 6) Provide for a more flexible method of handling a variable number of
+    arguments in cx_OptionParser.
+ 7) Added the logging module from Python 2.3 so that Python 2.2 code can use
+    it.
+
+Changes from 2.1 to 2.2
+ 1) Print information about the files written or copied during the freezing
+    process as a convenience for users of cx_Freeze.
+ 2) Do not copy extensions when freezing if the path is being overridden since
+    it is expected that a full Python installation is available to the target
+    users of the frozen binary.
+ 3) Provide meaningful error message when the wxPython library cannot be
+    found during the freezing process.
+ 4) Include updated versions of Python 2.3 modules textwrap, modulefinder
+    and optparse.
+ 5) Include Python 2.3 modules _strptime and tarfile which are also used
+    internally.
+ 6) cx_CVS now logs dead revisions properly.
+ 7) cx_CVS now uses a file containing a description of the CVS tags to
+    print a meaningful report since CVS itself does not contain information
+    about the tags and how they relate to each other in a project.
+
