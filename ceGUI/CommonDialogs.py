@@ -3,6 +3,7 @@ Define commonly used dialogs.
 """
 
 import ceGUI
+import cx_Exceptions
 import cx_Logging
 import os
 import wx
@@ -23,7 +24,7 @@ class AboutDialog(ceGUI.Dialog):
 
     def OnCreate(self):
         app = wx.GetApp()
-        self.panel = Panel(self, -1, style = wx.SUNKEN_BORDER)
+        self.panel = ceGUI.Panel(self, -1, style = wx.SUNKEN_BORDER)
         aboutText = app.description
         if app.version is not None:
             aboutText = "%s\n\nVersion %s" % (aboutText, app.version)
@@ -152,4 +153,8 @@ class PreferencesDialog(ceGUI.Dialog):
         topSizer.Add(self.notebook, proportion = 1, flag = wx.EXPAND)
         topSizer.Add(buttonSizer, flag = wx.EXPAND)
         return topSizer
+
+
+class LoggingFileNameNotSpecified(cx_Exceptions.BaseException):
+        message = "Logging file name must be specified."
 
