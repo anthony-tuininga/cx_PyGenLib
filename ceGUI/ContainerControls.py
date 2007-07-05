@@ -6,7 +6,8 @@ functionality.
 import ceGUI
 import wx
 
-__all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "TopLevelFrame" ]
+__all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "StandardDialog",
+           "TopLevelFrame" ]
 
 
 class BaseContainer(ceGUI.BaseControl):
@@ -23,10 +24,13 @@ class BaseContainer(ceGUI.BaseControl):
         self.OnCreate()
         topSizer = self.OnLayout()
         if topSizer is not None:
-            self.SetSizer(topSizer)
-            if self.minSize is None:
-                topSizer.Fit(self)
+            self._OnLayout(topSizer)
         self._RestoreSettings()
+
+    def _OnLayout(self, topSizer):
+        self.SetSizer(topSizer)
+        if self.minSize is None:
+            topSizer.Fit(self)
 
     def BindEvent(self, control, event, method, createBusyCursor = False,
             skipEvent = True):
@@ -35,6 +39,9 @@ class BaseContainer(ceGUI.BaseControl):
 
     def OnClose(self):
         pass
+
+    def OpenWindow(self, name, *args, **kwargs):
+        return ceGUI.OpenWindow(name, self, *args, **kwargs)
 
 
 class Dialog(BaseContainer, wx.Dialog):
@@ -106,9 +113,15 @@ class Frame(BaseContainer, wx.Frame):
         return menu
 
     def AddMenuItem(self, menu, label, helpString = "", method = None,
-            createBusyCursor = False):
-        return self._AddMenuItem(menu, label, helpString,
-                method = method, createBusyCursor = createBusyCursor)
+            createBusyCursor = False, radio = False, checkable = False):
+        if radio:
+            kind = wx.ITEM_RADIO
+        elif checkable:
+            kind = wx.ITEM_CHECK
+        else:
+            kind = wx.ITEM_NORMAL
+        return self._AddMenuItem(menu, label, helpString, kind, method,
+                createBusyCursor)
 
     def AddStockMenuItem(self, menu, stockId, method = None,
             createBusyCursor = False):
@@ -136,6 +149,19 @@ class Panel(BaseContainer, wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self._Initialize()
+
+
+class StandardDialog(Dialog):
+
+    def _OnLayout(self, topSizer):
+        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
+        buttonSizer.AddStretchSpacer()
+        buttonSizer.Add(self.okButton,
+                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
+        buttonSizer.Add(self.cancelButton,
+                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
+        topSizer.Add(buttonSizer, flag = wx.EXPAND)
+        super(StandardDialog, self)._OnLayout(topSizer)
 
 
 class TopLevelFrame(Frame):

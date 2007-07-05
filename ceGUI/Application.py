@@ -38,7 +38,7 @@ class Application(wx.App):
 
     def GetTopWindow(self):
         if self.description is None:
-            self.description = self.__name__
+            self.description = self.__class__.__name__
         return ceGUI.OpenWindow("w_TopLevelFrame.Frame", None, -1,
                 self.description)
 
@@ -58,11 +58,15 @@ class Application(wx.App):
         cls = __import__(self.__class__.__module__).Config
         self.config = cls(self)
         self.copyAttributes.append("config")
+        self.OnStartup()
         self.topWindow = self.GetTopWindow()
         if self.topWindow is not None:
             self.SetTopWindow(self.topWindow)
             self.topWindow.Show()
         return True
+
+    def OnStartup(self):
+        pass
 
     def StartLogging(self):
         defaultFileName = self.GetDefaultLoggingFileName()
