@@ -8,7 +8,8 @@ import cx_Logging
 import os
 import wx
 
-__all__ = [ "AboutDialog", "PreferencesDialog" ]
+__all__ = [ "AboutDialog", "PreferencesDialog", "SelectionListDialog",
+            "SelectionTreeDialog" ]
 
 
 class AboutDialog(ceGUI.Dialog):
@@ -119,7 +120,7 @@ class LoggingPreferencesPane(ceGUI.Panel):
         self.settings.Write("LogLevel", levelName)
 
 
-class PreferencesDialog(ceGUI.Dialog):
+class PreferencesDialog(ceGUI.StandardDialog):
     baseSettingsName = "w_Preferences"
     minSize = (450, 145)
 
@@ -143,15 +144,93 @@ class PreferencesDialog(ceGUI.Dialog):
         self.settings.Flush()
 
     def OnLayout(self):
-        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        buttonSizer.AddStretchSpacer()
-        buttonSizer.Add(self.okButton,
-                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
-        buttonSizer.Add(self.cancelButton,
-                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
         topSizer = wx.BoxSizer(wx.VERTICAL)
         topSizer.Add(self.notebook, proportion = 1, flag = wx.EXPAND)
-        topSizer.Add(buttonSizer, flag = wx.EXPAND)
+        return topSizer
+
+
+class SelectionListDialog(ceGUI.StandardDialog):
+
+    def _GetList(self):
+        cls = __import__(self.__class__.__module__).List
+        return cls(self, -1, style = wx.LC_REPORT | wx.LC_VIRTUAL | \
+                wx.LC_SINGLE_SEL | wx.SUNKEN_BORDER)
+
+    def GetSelectedItems(self):
+        return self.selectionList.GetSelectedItems()
+
+    def OnCreate(self):
+        self.okButton.Enable(False)
+        self.selectionList = self._GetList()
+        self.BindEvent(self.selectionList, wx.EVT_LIST_ITEM_SELECTED,
+                self.OnItemSelected)
+        self.BindEvent(self.selectionList, wx.EVT_LIST_ITEM_DESELECTED,
+                self.OnItemDeselected)
+        self.BindEvent(self.selectionList, wx.EVT_LEFT_DCLICK,
+                self.OnDoubleClick)
+
+    def OnDoubleClick(self, event):
+        x, y = event.GetPosition()
+        row, flags = self.HitTest((x,y))
+        if flags & wx.LIST_HITTEST_ONITEM:
+            self.OnOk()
+            self.EndModal(wx.ID_OK)
+
+    def OnItemDeselected(self, event):
+        if self.selectionList.GetSelectedItemCount() == 0:
+            self.okButton.Enable(False)
+
+    def OnItemSelected(self, event):
+        self.okButton.Enable()
+
+    def SetSelectionItems(self, items, selectedItems = [], sort = True):
+        self.selectionList.SetItems(items, refresh = not sort)
+        if selectedItems:
+            self.selectionList.SetSelectedItems(selectedItems)
+        if sort:
+            self.selectionList.SortItems()
+
+
+class SelectionTreeDialog(ceGUI.StandardDialog):
+
+    def _GetTree(self):
+        cls = __import__(self.__class__.__module__).Tree
+        return cls(self, -1, style = wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | \
+                wx.TR_LINES_AT_ROOT)
+
+    def _OnItemActivated(self, event):
+        itemId = event.GetItem()
+        item = self.selectionTree.GetPyData(itemId)
+        if self.CanSelectItem(item.data):
+            self.EndModal(wx.ID_OK)
+
+    def _OnSelectionChanged(self, event):
+        itemId = event.GetItem()
+        item = self.selectionTree.GetPyData(itemId)
+        if self.CanSelectItem(item.data):
+            self.okButton.Enable(True)
+
+    def CanSelectItem(self, item):
+        return True
+
+    def GetSelectedItem(self):
+        return self.selectionTree.GetSelectedItem()
+
+    def GetSelectedItemParents(self):
+        item = self.selectionTree.GetSelectedItem()
+        return self.selectionTree.GetItemParents(item)
+
+    def OnCreate(self):
+        self.okButton.Enable(False)
+        self.selectionTree = self._GetTree()
+        self.BindEvent(self.selectionTree, wx.EVT_TREE_SEL_CHANGED,
+                self._OnSelectionChanged)
+        self.BindEvent(self.selectionTree, wx.EVT_TREE_ITEM_ACTIVATED,
+                self._OnItemActivated)
+
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(self.selectionTree, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
 
