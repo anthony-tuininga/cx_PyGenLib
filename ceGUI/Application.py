@@ -48,6 +48,7 @@ class Application(wx.App):
                 parent)
 
     def OnInit(self):
+        self.topWindow = None
         if self.vendorName is not None:
             self.SetVendorName(self.vendorName)
         self.settings = wx.ConfigBase.Get()

@@ -12,6 +12,12 @@ __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "StandardDialog",
 
 class BaseContainer(ceGUI.BaseControl):
     saveSize = savePosition = bindClose = True
+    minSize = None
+
+    def _Initialize(self):
+        if self.minSize is not None:
+            self.SetMinSize(self.minSize)
+        super(BaseContainer, self)._Initialize()
 
     def _OnClose(self, event):
         self._SaveSettings()
@@ -32,10 +38,56 @@ class BaseContainer(ceGUI.BaseControl):
         if self.minSize is None:
             topSizer.Fit(self)
 
+    def _RestoreSettings(self):
+        if self.saveSize:
+            size = self.ReadSetting("Size", self.minSize, isComplex = True)
+            if size is not None:
+                self.SetSize(size)
+        if self.savePosition:
+            position = self.ReadSetting("Position", isComplex = True)
+            if position is not None:
+                self.SetPosition(position)
+        self.RestoreSettings()
+
+    def _SaveSettings(self):
+        if self.saveSize:
+            self.WriteSetting("Size", self.GetSizeTuple(), isComplex = True)
+        if self.savePosition:
+            self.WriteSetting("Position", self.GetPositionTuple(),
+                    isComplex = True)
+        self.SaveSettings()
+        self.settings.Flush()
+
+    def AddButton(self, label, method = None):
+        button = wx.Button(self, -1, label)
+        if method is not None:
+            self.BindEvent(button, wx.EVT_BUTTON, method)
+        return button
+
+    def AddChoiceField(self, *choices):
+        return wx.Choice(self, choices = choices)
+
+    def AddLabel(self, label = ""):
+        return wx.StaticText(self, -1, label)
+
+    def AddTextField(self):
+        return wx.TextCtrl(self, -1)
+
     def BindEvent(self, control, event, method, createBusyCursor = False,
             skipEvent = True):
         ceGUI.EventHandler(self, control, event, method,
                 createBusyCursor = createBusyCursor, skipEvent = skipEvent)
+
+    def CreateFieldLayout(self, *controls):
+        numRows = len(controls) / 2
+        sizer = wx.FlexGridSizer(rows = numRows, cols = 2, vgap = 5, hgap = 5)
+        sizer.AddGrowableCol(1)
+        for index, control in enumerate(controls):
+            flag = wx.ALIGN_CENTER_VERTICAL
+            if index % 2 == 1:
+                flag |= wx.EXPAND
+            sizer.Add(control, flag = flag)
+        return sizer
 
     def OnClose(self):
         pass
@@ -152,6 +204,11 @@ class Panel(BaseContainer, wx.Panel):
 
 
 class StandardDialog(Dialog):
+    title = ""
+
+    def __init__(self, parent):
+        super(StandardDialog, self).__init__(parent, -1, self.title,
+                style = wx.CAPTION | wx.RESIZE_BORDER)
 
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)

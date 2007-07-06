@@ -2,6 +2,7 @@
 Defines simple controls with extensions to wx functionality.
 """
 
+import cx_Exceptions
 import datetime
 import wx
 
@@ -9,9 +10,8 @@ __all__ = ["BaseControl", "List", "Notebook", "Tree", "TreeItem"]
 
 
 class BaseControl(object):
-    saveSize = savePosition = False
+    copyAppAttributes = True
     baseSettingsName = None
-    minSize = None
 
     def _GetSettingsName(self, name):
         baseSettingsName = self.baseSettingsName
@@ -20,37 +20,16 @@ class BaseControl(object):
         return "%s/%s" % (baseSettingsName, name)
 
     def _Initialize(self):
-        app = wx.GetApp()
-        for name in app.copyAttributes:
-            value = getattr(app, name)
-            setattr(self, name, value)
-        if self.minSize is not None:
-            self.SetMinSize(self.minSize)
+        if self.copyAppAttributes:
+            app = wx.GetApp()
+            for name in app.copyAttributes:
+                value = getattr(app, name)
+                setattr(self, name, value)
         self._OnCreate()
 
     def _OnCreate(self):
         self.OnCreate()
-        self._RestoreSettings()
-
-    def _RestoreSettings(self):
-        if self.saveSize:
-            size = self.ReadSetting("Size", isComplex = True)
-            if size is not None:
-                self.SetSize(size)
-        if self.savePosition:
-            position = self.ReadSetting("Position", isComplex = True)
-            if position is not None:
-                self.SetPosition(position)
         self.RestoreSettings()
-
-    def _SaveSettings(self):
-        if self.saveSize:
-            self.WriteSetting("Size", self.GetSizeTuple(), isComplex = True)
-        if self.savePosition:
-            self.WriteSetting("Position", self.GetPositionTuple(),
-                    isComplex = True)
-        self.SaveSettings()
-        self.settings.Flush()
 
     def FlushSettings(self):
         self.settings.Flush()
@@ -91,12 +70,15 @@ class BaseControl(object):
 
 class List(BaseControl, wx.ListCtrl):
     transformerAcceptsItem = False
+    singleSelection = False
     itemIsSequence = False
     attrNames = []
 
-    def __init__(self, *args, **kwargs):
-        wx.ListCtrl.__init__(self, *args, **kwargs)
-        parent = self.GetParent()
+    def __init__(self, parent, style = 0):
+        if self.singleSelection:
+            style |= wx.LC_SINGLE_SEL
+        wx.ListCtrl.__init__(self, parent,
+                style = style | wx.LC_REPORT | wx.LC_VIRTUAL)
         parent.BindEvent(self, wx.EVT_LIST_COL_CLICK, self._OnColumnClick,
                 createBusyCursor = True)
         parent.BindEvent(self, wx.EVT_SIZE, self._OnResize)
@@ -182,7 +164,7 @@ class List(BaseControl, wx.ListCtrl):
             self._AddColumn(heading, width, transformer, wx.LIST_FORMAT_RIGHT)
 
     def ClearAll(self):
-        super(ListControl, self).ClearAll()
+        super(List, self).ClearAll()
         self.items = []
         self.transformers = {}
         self.sortByColumnIndexes = []
@@ -227,8 +209,9 @@ class List(BaseControl, wx.ListCtrl):
 
     def SaveColumnWidths(self):
         numColumns = self.GetColumnCount()
-        widths = tuple([self.GetColumnWidth(i) for i in range(numColumns - 1)])
-        self.WriteSetting("ColumnWidths", widths, isComplex = True)
+        if numColumns > 1:
+            widths = [self.GetColumnWidth(i) for i in range(numColumns - 1)]
+            self.WriteSetting("ColumnWidths", tuple(widths), isComplex = True)
 
     def SetItems(self, items, refresh = True, clearSelection = True):
         if clearSelection:
@@ -362,4 +345,8 @@ class TreeItem(object):
 
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.data)
+
+
+class WrongNumberOfItemsSelected(cx_Exceptions.BaseException):
+    message = "One and only one item should be selected."
 
