@@ -153,8 +153,7 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def _GetList(self):
         cls = __import__(self.__class__.__module__).List
-        return cls(self, -1, style = wx.LC_REPORT | wx.LC_VIRTUAL | \
-                wx.LC_SINGLE_SEL | wx.SUNKEN_BORDER)
+        return cls(self, wx.SUNKEN_BORDER)
 
     def GetSelectedItems(self):
         return self.selectionList.GetSelectedItems()
@@ -169,9 +168,14 @@ class SelectionListDialog(ceGUI.StandardDialog):
         self.BindEvent(self.selectionList, wx.EVT_LEFT_DCLICK,
                 self.OnDoubleClick)
 
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(self.selectionList, proportion = 1, flag = wx.EXPAND)
+        return topSizer
+
     def OnDoubleClick(self, event):
         x, y = event.GetPosition()
-        row, flags = self.HitTest((x,y))
+        row, flags = self.selectionList.HitTest((x,y))
         if flags & wx.LIST_HITTEST_ONITEM:
             self.OnOk()
             self.EndModal(wx.ID_OK)
@@ -182,6 +186,12 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def OnItemSelected(self, event):
         self.okButton.Enable()
+
+    def RestoreSettings(self):
+        self.selectionList.RestoreColumnWidths()
+
+    def SaveSettings(self):
+        self.selectionList.SaveColumnWidths()
 
     def SetSelectionItems(self, items, selectedItems = [], sort = True):
         self.selectionList.SetItems(items, refresh = not sort)
