@@ -155,6 +155,9 @@ class SelectionListDialog(ceGUI.StandardDialog):
         cls = __import__(self.__class__.__module__).List
         return cls(self, wx.SUNKEN_BORDER)
 
+    def GetSelectedItem(self):
+        return self.selectionList.GetSelectedItem()
+
     def GetSelectedItems(self):
         return self.selectionList.GetSelectedItems()
 
