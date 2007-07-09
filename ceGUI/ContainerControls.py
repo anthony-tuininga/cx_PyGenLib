@@ -70,8 +70,16 @@ class BaseContainer(ceGUI.BaseControl):
     def AddLabel(self, label = ""):
         return wx.StaticText(self, -1, label)
 
-    def AddTextField(self):
-        return wx.TextCtrl(self, -1)
+    def AddTextField(self, readOnly = False):
+        if readOnly:
+            style = wx.TE_READONLY
+        else:
+            style = 0
+        field = wx.TextCtrl(self, -1, style = style)
+        if readOnly:
+            color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+            field.SetBackgroundColour(color)
+        return field
 
     def BindEvent(self, control, event, method, createBusyCursor = False,
             skipEvent = True):
