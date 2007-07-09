@@ -177,7 +177,7 @@ class SelectionListDialog(ceGUI.StandardDialog):
         x, y = event.GetPosition()
         row, flags = self.selectionList.HitTest((x,y))
         if flags & wx.LIST_HITTEST_ONITEM:
-            self.OnOk()
+            self._OnOk(event)
             self.EndModal(wx.ID_OK)
 
     def OnItemDeselected(self, event):
