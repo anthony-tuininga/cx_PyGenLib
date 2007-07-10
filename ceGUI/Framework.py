@@ -33,11 +33,12 @@ class BusyCursorContext(object):
 class EventHandler(object):
 
     def __init__(self, parent, control, event, method,
-            createBusyCursor = False, skipEvent = True):
+            createBusyCursor = False, skipEvent = True, passEvent = True):
         self.parent = parent
         self.method = method
         self.createBusyCursor = createBusyCursor
         self.skipEvent = skipEvent
+        self.passEvent = passEvent
         if isinstance(control, wx.Window):
             connectControl = control
         else:
@@ -48,7 +49,10 @@ class EventHandler(object):
         try:
             if self.createBusyCursor:
                 busyCursor = wx.BusyCursor()
-            self.method(event)
+            if self.passEvent:
+                self.method(event)
+            else:
+                self.method()
             if self.skipEvent:
                 event.Skip()
         except:
