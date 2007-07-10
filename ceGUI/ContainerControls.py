@@ -81,11 +81,6 @@ class BaseContainer(ceGUI.BaseControl):
             field.SetBackgroundColour(color)
         return field
 
-    def BindEvent(self, control, event, method, createBusyCursor = False,
-            skipEvent = True):
-        ceGUI.EventHandler(self, control, event, method,
-                createBusyCursor = createBusyCursor, skipEvent = skipEvent)
-
     def CreateFieldLayout(self, *controls):
         numRows = len(controls) / 2
         sizer = wx.FlexGridSizer(rows = numRows, cols = 2, vgap = 5, hgap = 5)
@@ -142,18 +137,6 @@ class Frame(BaseContainer, wx.Frame):
     def __init__(self, *args, **kwargs):
         wx.Frame.__init__(self, *args, **kwargs)
         self._Initialize()
-
-    def _AddMenuItem(self, menu, label = "", helpString = "",
-            kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
-            id = None):
-        if id is None:
-            id = wx.NewId()
-        item = wx.MenuItem(menu, id, label, helpString, kind)
-        menu.AppendItem(item)
-        if method is not None:
-            self.BindEvent(item, wx.EVT_MENU, method,
-                    createBusyCursor = createBusyCursor)
-        return item
 
     def _OnCreate(self):
         if self.hasToolbar:
