@@ -2,6 +2,7 @@
 Defines simple controls with extensions to wx functionality.
 """
 
+import ceGUI
 import cx_Exceptions
 import datetime
 import wx
@@ -12,6 +13,18 @@ __all__ = ["BaseControl", "List", "Notebook", "Tree", "TreeItem"]
 class BaseControl(object):
     copyAppAttributes = True
     baseSettingsName = None
+
+    def _AddMenuItem(self, menu, label = "", helpString = "",
+            kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
+            id = None):
+        if id is None:
+            id = wx.NewId()
+        item = wx.MenuItem(menu, id, label, helpString, kind)
+        menu.AppendItem(item)
+        if method is not None:
+            self.BindEvent(item, wx.EVT_MENU, method,
+                    createBusyCursor = createBusyCursor)
+        return item
 
     def _GetSettingsName(self, name):
         baseSettingsName = self.baseSettingsName
@@ -30,6 +43,11 @@ class BaseControl(object):
     def _OnCreate(self):
         self.OnCreate()
         self.RestoreSettings()
+
+    def BindEvent(self, control, event, method, createBusyCursor = False,
+            skipEvent = True):
+        ceGUI.EventHandler(self, control, event, method,
+                createBusyCursor = createBusyCursor, skipEvent = skipEvent)
 
     def FlushSettings(self):
         self.settings.Flush()
