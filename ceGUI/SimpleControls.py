@@ -16,13 +16,13 @@ class BaseControl(object):
 
     def _AddMenuItem(self, menu, label = "", helpString = "",
             kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
-            id = None):
+            id = None, passEvent = True):
         if id is None:
             id = wx.NewId()
         item = wx.MenuItem(menu, id, label, helpString, kind)
         menu.AppendItem(item)
         if method is not None:
-            self.BindEvent(item, wx.EVT_MENU, method,
+            self.BindEvent(item, wx.EVT_MENU, method, passEvent = passEvent,
                     createBusyCursor = createBusyCursor)
         return item
 
@@ -45,9 +45,10 @@ class BaseControl(object):
         self.RestoreSettings()
 
     def BindEvent(self, control, event, method, createBusyCursor = False,
-            skipEvent = True):
+            skipEvent = True, passEvent = True):
         ceGUI.EventHandler(self, control, event, method,
-                createBusyCursor = createBusyCursor, skipEvent = skipEvent)
+                createBusyCursor = createBusyCursor, skipEvent = skipEvent,
+                passEvent = passEvent)
 
     def FlushSettings(self):
         self.settings.Flush()
