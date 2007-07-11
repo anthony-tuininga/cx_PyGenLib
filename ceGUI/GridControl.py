@@ -60,6 +60,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, currentNumRows, numRows)
         self.ProcessTableMessage(msg)
 
+    def GetCurrentRow(self):
+        row = self.GetGridCursorRow()
+        if row < len(self.table.rowHandles):
+            handle = self.table.rowHandles[row]
+            return self.table.dataSet.rows[handle]
+
     def InsertRows(self, row, numRows = 1):
         wx.grid.Grid.InsertRows(self, row, numRows)
         self.SetGridCursor(row, 0)

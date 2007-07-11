@@ -172,15 +172,24 @@ class Frame(BaseContainer, wx.Frame):
                 createBusyCursor = createBusyCursor)
 
     def AddToolbarItem(self, label, bitmapId, shortHelp = "", longHelp = "",
-            method = None, createBusyCursor = False):
+            method = None, createBusyCursor = False, passEvent = True):
         bitmap = wx.ArtProvider.GetBitmap(bitmapId, wx.ART_TOOLBAR,
                 self.toolbar.GetToolBitmapSize())
         item = self.toolbar.AddLabelTool(-1, label, bitmap,
                 shortHelp = shortHelp, longHelp = longHelp)
         if method is not None:
             self.BindEvent(item, wx.EVT_TOOL, method,
-                    createBusyCursor = createBusyCursor)
+                    createBusyCursor = createBusyCursor, passEvent = passEvent)
         return item
+
+    def OnClose(self, event):
+        for window in self.GetChildren():
+            if not isinstance(window, ceGUI.Frame):
+                continue
+            if not window.Close():
+                event.Veto()
+                return
+        event.Skip()
 
     def OnCreateToolbar(self):
         pass
