@@ -19,8 +19,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self._Initialize(parent)
 
     def _Initialize(self, parent):
+        """Note that the margins have to be set to negative pixels in order to
+           eliminate the implicit margin that appears to be there otherwise."""
         self.SetRowLabelSize(0)
-        self.SetMargins(0, 0)
+        self.SetMargins(-10, 0)
         self.DisableDragRowSize()
         parent.BindEvent(self, wx.grid.EVT_GRID_CELL_RIGHT_CLICK,
                 self.OnCellRightClick)
@@ -32,14 +34,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
-           space; for some reason the size has to be at least 10 pixels smaller
-           than would otherwise be expected or the horizontal scrollbar
-           appears."""
+           space."""
         if not self:
             return
         numColumns = self.GetNumberCols()
         if numColumns:
-            width = self.GetClientSize().width - 10
+            width = self.GetClientSize().width
             for columnNum in range(numColumns - 1):
                 width -= self.GetColSize(columnNum)
             if width > 0:
