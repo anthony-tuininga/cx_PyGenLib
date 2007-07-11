@@ -23,7 +23,6 @@ class Application(wx.App):
     copyrightOwner = None
     copyrightStartYear = None
     copyrightEndYear = None
-    description = None
     vendorName = None
     version = None
 
@@ -37,10 +36,7 @@ class Application(wx.App):
         return os.path.join(path, baseName)
 
     def GetTopWindow(self):
-        if self.description is None:
-            self.description = self.__class__.__name__
-        return ceGUI.OpenWindow("w_TopLevelFrame.Frame", None, -1,
-                self.description)
+        return ceGUI.OpenWindow("w_TopLevelFrame.Frame")
 
     def OnException(self, exc, parent = None):
         cx_Logging.LogException(exc)
