@@ -140,6 +140,9 @@ class DataSet(object):
 
     def Clear(self):
         self.rows = {}
+        self.ClearChanges()
+
+    def ClearChanges(self):
         self.insertedRows = {}
         self.updatedRows = {}
         self.deletedRows = {}
@@ -172,6 +175,9 @@ class DataSet(object):
                 (self.tableName, ",".join(names), ",".join(values))
         cursor.execute(sql, args)
 
+    def PendingChanges(self):
+        return bool(self.insertedRows or self.updatedRows or self.deletedRows)
+
     def Retrieve(self, *args):
         self.Clear()
         sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
@@ -196,8 +202,7 @@ class DataSet(object):
             setattr(row, attrName, value)
 
     def Update(self):
-        if not self.insertedRows and not self.updatedRows \
-                and not self.deletedRows:
+        if not self.PendingChanges():
             cx_Logging.Debug("no update to perform")
             return
         self._PreUpdate()
@@ -213,6 +218,7 @@ class DataSet(object):
         except:
             self.connection.rollback()
             raise
+        self.ClearChanges()
         self._PostUpdate()
 
     def UpdateRowInDatabase(self, cursor, row, origRow):
