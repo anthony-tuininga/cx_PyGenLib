@@ -151,7 +151,10 @@ class DataSet(object):
         row = self.rows[handle]
         self._OnDeleteRow(row)
         self.rows.pop(handle)
-        self.deletedRows[handle] = row
+        if handle in self.insertedRows:
+            self.insertedRows.pop(handle)
+        else:
+            self.deletedRows[handle] = row
 
     def DeleteRowInDatabase(self, cursor, row):
         args = [getattr(row, n) for n in self.pkAttrNames]
