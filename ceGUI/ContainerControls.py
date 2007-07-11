@@ -21,8 +21,7 @@ class BaseContainer(ceGUI.BaseControl):
 
     def _OnClose(self, event):
         self._SaveSettings()
-        self.OnClose()
-        event.Skip()
+        self.OnClose(event)
 
     def _OnCreate(self):
         if self.bindClose:
@@ -92,8 +91,8 @@ class BaseContainer(ceGUI.BaseControl):
             sizer.Add(control, flag = flag)
         return sizer
 
-    def OnClose(self):
-        pass
+    def OnClose(self, event):
+        event.Skip()
 
     def OpenWindow(self, name, *args, **kwargs):
         return ceGUI.OpenWindow(name, self, *args, **kwargs)
@@ -133,9 +132,10 @@ class Dialog(BaseContainer, wx.Dialog):
 
 class Frame(BaseContainer, wx.Frame):
     hasToolbar = hasMenus = True
+    title = ""
 
-    def __init__(self, *args, **kwargs):
-        wx.Frame.__init__(self, *args, **kwargs)
+    def __init__(self, parent = None, style = wx.DEFAULT_FRAME_STYLE):
+        wx.Frame.__init__(self, parent, title = self.title, style = style)
         self._Initialize()
 
     def _OnCreate(self):
