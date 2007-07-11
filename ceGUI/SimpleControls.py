@@ -4,7 +4,6 @@ Defines simple controls with extensions to wx functionality.
 
 import ceGUI
 import cx_Exceptions
-import datetime
 import wx
 
 __all__ = ["BaseControl", "List", "Notebook", "Tree", "TreeItem"]
@@ -155,15 +154,6 @@ class List(BaseControl, wx.ListCtrl):
                 self.SetColumnWidth(numColumns - 1, width)
             self.Refresh()
 
-    def _SortRep(self, value):
-        if value is None:
-            return ""
-        if isinstance(value, basestring):
-            return value.upper()
-        elif isinstance(value, (datetime.datetime, datetime.date)):
-            return str(value)
-        return value
-
     def AddColumn(self, heading, width = -1, transformer = None):
         self._AddColumn(heading, width, transformer, wx.LIST_FORMAT_LEFT)
 
@@ -252,7 +242,7 @@ class List(BaseControl, wx.ListCtrl):
             if columnIndex in self.sortByColumnIndexes:
                 self.sortByColumnIndexes.remove(columnIndex)
             self.sortByColumnIndexes.insert(0, columnIndex)
-        method = self._SortRep
+        method = ceGUI.SortRep
         selectedItemIndexes = self._GetSelectedItemIndexes()
         if self.attrNames:
             attrNames = [self.attrNames[i] for i in self.sortByColumnIndexes]
