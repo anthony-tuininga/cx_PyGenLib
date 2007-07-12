@@ -62,11 +62,16 @@ class EventHandler(object):
             app.OnException(exc, self.parent)
 
 
-def OpenWindow(_name, *args, **kwargs):
-    moduleName, attrName = _name.split(".")
+def OpenWindow(name, parent = None, openNewInstance = False):
+    moduleName, attrName = name.split(".")
     module = __import__(moduleName)
     cls = getattr(module, attrName)
-    return cls(*args, **kwargs)
+    if parent is not None and not openNewInstance:
+        for child in parent.GetChildren():
+            if isinstance(child, cls):
+                child.SetFocus()
+                return child
+    return cls(parent)
 
 
 def SortRep(value):
