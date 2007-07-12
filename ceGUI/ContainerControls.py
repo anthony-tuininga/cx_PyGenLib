@@ -4,6 +4,7 @@ functionality.
 """
 
 import ceGUI
+import functools
 import wx
 
 __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "StandardDialog",
@@ -156,15 +157,19 @@ class Frame(BaseContainer, wx.Frame):
         return menu
 
     def AddMenuItem(self, menu, label, helpString = "", method = None,
-            createBusyCursor = False, radio = False, checkable = False):
+            createBusyCursor = False, passEvent = True, radio = False,
+            checkable = False, windowName = None):
         if radio:
             kind = wx.ITEM_RADIO
         elif checkable:
             kind = wx.ITEM_CHECK
         else:
             kind = wx.ITEM_NORMAL
+        if windowName is not None:
+            method = functools.partial(self.SimpleOpenWindow, windowName)
+            passEvent = False
         return self._AddMenuItem(menu, label, helpString, kind, method,
-                createBusyCursor)
+                createBusyCursor, passEvent = passEvent)
 
     def AddStockMenuItem(self, menu, stockId, method = None,
             createBusyCursor = False):
@@ -193,6 +198,10 @@ class Frame(BaseContainer, wx.Frame):
 
     def OnCreateToolbar(self):
         pass
+
+    def SimpleOpenWindow(self, windowName):
+        window = self.OpenWindow(windowName)
+        window.Show()
 
 
 class Panel(BaseContainer, wx.Panel):
