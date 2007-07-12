@@ -7,7 +7,8 @@ import functools
 import wx
 import wx.grid
 
-__all__ = ["Grid"]
+__all__ = ["Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
+           "GridColumnInt", "GridColumnStr" ]
 
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
@@ -45,8 +46,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             if width > 0:
                 self.SetColSize(numColumns - 1, width)
 
-    def AddColumn(self, label, attrName, dataType = str):
-        column = GridColumn(label, attrName, dataType)
+    def AddColumn(self, cls, *args, **kwargs):
+        column = cls(*args, **kwargs)
         self.table.columns.append(column)
         self.SetColAttr(len(self.table.columns) - 1, column.attr)
         msg = wx.grid.GridTableMessage(self.table,
@@ -161,14 +162,8 @@ class GridTable(wx.grid.PyGridTableBase):
         handle = self.rowHandles[row]
         return self.dataSet.CanDeleteRow(handle)
 
-    def CanGetValueAs(self, row, col, typeName):
-        return self.columns[col].typeName == typeName
-
     def CanInsertRow(self):
         return self.dataSet.CanInsertRow()
-
-    def CanSetValueAs(self, row, col, typeName):
-        return self.columns[col].typeName == typeName
 
     def DeleteRows(self, pos = 0, numRows = 1):
         while numRows > 0:
@@ -186,16 +181,11 @@ class GridTable(wx.grid.PyGridTableBase):
     def GetNumberRows(self):
         return len(self.rowHandles)
 
-    def GetTypeName(self, row, col):
-        return self.columns[col].typeName
-
     def GetValue(self, row, col):
-        attrName = self.columns[col].attrName
+        column = self.columns[col]
         handle = self.rowHandles[row]
-        value = getattr(self.dataSet.rows[handle], attrName)
-        if value is None:
-            return ""
-        return value
+        value = getattr(self.dataSet.rows[handle], column.attrName)
+        return column.ToString(value)
 
     def InsertRows(self, pos = 0, numRows = 1):
         for rowNum in range(numRows):
@@ -206,10 +196,11 @@ class GridTable(wx.grid.PyGridTableBase):
         self.dataSet.Retrieve(*args)
         self.SortItems()
 
-    def SetValue(self, row, col, value):
-        attrName = self.columns[col].attrName
+    def SetValue(self, row, col, rawValue):
+        column = self.columns[col]
         handle = self.rowHandles[row]
-        self.dataSet.SetValue(handle, attrName, value)
+        value = column.FromString(rawValue)
+        self.dataSet.SetValue(handle, column.attrName, value)
 
     def SortItems(self, columnIndex = None):
         if columnIndex is not None:
@@ -228,17 +219,77 @@ class GridTable(wx.grid.PyGridTableBase):
 
 
 class GridColumn(object):
-    typeNames = {
-            str : wx.grid.GRID_VALUE_STRING,
-            bool : wx.grid.GRID_VALUE_BOOL
-    }
 
-    def __init__(self, label, attrName, dataType):
+    def __init__(self, label, attrName):
         self.label = label
         self.attrName = attrName
-        self.dataType = dataType
-        self.typeName = self.typeNames[dataType]
         self.attr = wx.grid.GridCellAttr()
-        if dataType is bool:
-            self.attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+
+    def FromString(self, value):
+        if value:
+            return value
+
+    def ToString(self, value):
+        if value is None:
+            return ""
+        return str(value)
+
+
+class GridColumnBool(GridColumn):
+
+    def __init__(self, label, attrName):
+        super(GridColumnBool, self).__init__(label, attrName)
+        editor = wx.grid.GridCellBoolEditor()
+        editor.UseStringValues("1", "0")
+        self.attr.SetEditor(editor)
+        self.attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+        self.attr.SetRenderer(wx.grid.GridCellBoolRenderer())
+
+    def FromString(self, value):
+        return bool(int(value))
+
+    def ToString(self, value):
+        return str(int(value))
+
+
+class GridColumnChoice(GridColumn):
+
+    def __init__(self, label, attrName, choices):
+        super(GridColumnChoice, self).__init__(label, attrName)
+        displayValues = []
+        self.dataValuesByDisplayValue = {}
+        self.displayValuesByDataValue = {}
+        for choice in choices:
+            if isinstance(choice, tuple):
+                dataValue, displayValue = choice
+            else:
+                dataValue = displayValue = choice
+            displayValues.append(displayValue)
+            self.dataValuesByDisplayValue[displayValue] = dataValue
+            self.displayValuesByDataValue[dataValue] = displayValue
+        editor = wx.grid.GridCellChoiceEditor(displayValues)
+        self.attr.SetEditor(editor)
+
+    def FromString(self, value):
+        return self.dataValuesByDisplayValue[value]
+
+    def ToString(self, value):
+        return self.displayValuesByDataValue[value]
+
+
+class GridColumnInt(GridColumn):
+
+    def __init__(self, label, attrName, min = -1, max = -1):
+        super(GridColumnInt, self).__init__(label, attrName)
+        editor = wx.grid.GridCellNumberEditor(min, max)
+        self.attr.SetEditor(editor)
+        self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
+
+    def FromString(self, value):
+        if value:
+            return int(value)
+
+
+class GridColumnStr(GridColumn):
+    pass
 
