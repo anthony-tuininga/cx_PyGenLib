@@ -68,10 +68,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def InsertRows(self, row, numRows = 1):
         wx.grid.Grid.InsertRows(self, row, numRows)
-        self.SetGridCursor(row, 0)
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
         self.ProcessTableMessage(msg)
+        self.SetGridCursor(row, 0)
+        self.MakeCellVisible(row, 0)
 
     def OnCellRightClick(self, event):
         menu = wx.Menu()
