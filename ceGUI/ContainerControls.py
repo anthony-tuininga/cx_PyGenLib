@@ -94,8 +94,8 @@ class BaseContainer(ceGUI.BaseControl):
     def OnClose(self, event):
         event.Skip()
 
-    def OpenWindow(self, name, *args, **kwargs):
-        return ceGUI.OpenWindow(name, self, *args, **kwargs)
+    def OpenWindow(self, name):
+        return ceGUI.OpenWindow(name, self)
 
 
 class Dialog(BaseContainer, wx.Dialog):
