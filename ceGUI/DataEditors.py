@@ -29,6 +29,14 @@ class GridEditWindow(ceGUI.Frame):
         self.subWindows = []
         self.panel = None
         super(GridEditWindow, self)._OnCreate()
+        accelerators = [
+            ( wx.ACCEL_CTRL, ord('D'), self.deleteToolbarItem.GetId() ),
+            ( wx.ACCEL_CTRL, ord('I'), self.insertToolbarItem.GetId() ),
+            ( wx.ACCEL_CTRL, ord('R'), self.retrieveToolbarItem.GetId() ),
+            ( wx.ACCEL_CTRL, ord('S'), self.saveToolbarItem.GetId() )
+        ]
+        self.acceleratorTable = wx.AcceleratorTable(accelerators)
+        self.SetAcceleratorTable(self.acceleratorTable)
         self.Retrieve()
 
     def AddSubWindow(self, cls):
@@ -89,11 +97,12 @@ class GridEditWindow(ceGUI.Frame):
             event.Veto()
 
     def OnCreateToolbar(self):
-        self.AddToolbarItem("Retrieve", wx.ART_FILE_OPEN,
+        self.retrieveToolbarItem = self.AddToolbarItem("Retrieve",
+                wx.ART_FILE_OPEN,
                 shortHelp = "Retrieve data",
                 longHelp = "Retrieve data from the database",
                 method = self.Retrieve, passEvent = False)
-        self.AddToolbarItem("Save", wx.ART_FILE_SAVE,
+        self.saveToolbarItem = self.AddToolbarItem("Save", wx.ART_FILE_SAVE,
                 shortHelp = "Save data",
                 longHelp = "Save data to the database",
                 method = self.OnUpdate)
