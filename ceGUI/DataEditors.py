@@ -39,14 +39,15 @@ class GridEditWindow(ceGUI.Frame):
         self.SetAcceleratorTable(self.acceleratorTable)
         self.Retrieve()
 
-    def AddSubWindow(self, cls):
+    def AddSubWindow(self, cls, label = None):
         if self.panel is None:
             self.panel = wx.Panel(self)
-        subWindow = cls(self.panel)
+        subWindow = cls(self.panel, label)
         self.BindEvent(subWindow.button, wx.EVT_BUTTON,
                 functools.partial(self.OnOpenSubWindow, subWindow),
                 passEvent = False)
         self.subWindows.append(subWindow)
+        return subWindow
 
     def ContinueQuery(self, allowCancel = True):
         self.grid.SaveEditControlValue()
@@ -130,7 +131,8 @@ class GridEditWindow(ceGUI.Frame):
         if self.subWindows:
             buttonSizer = wx.BoxSizer(wx.VERTICAL)
             for subWindow in self.subWindows:
-                buttonSizer.Add(subWindow.button, flag = wx.BOTTOM, border = 5)
+                buttonSizer.Add(subWindow.button, flag = wx.BOTTOM | wx.EXPAND,
+                        border = 5)
             panelSizer = wx.BoxSizer(wx.VERTICAL)
             self.panel.SetSizer(panelSizer)
             panelSizer.Add(buttonSizer, flag = wx.EXPAND | wx.RIGHT | wx.LEFT,
@@ -171,19 +173,24 @@ class GridEditWindow(ceGUI.Frame):
 
 
 class SubWindow(object):
-    childWindowName = ""
+    childWindowName = None
+    childWindowInstanceName = None
+    childForceNewInstance = False
     isModal = False
     label = ""
 
-    def __init__(self, parent):
-        self.button = wx.Button(parent, -1, self.label)
+    def __init__(self, parent, label):
+        if label is None:
+            label = self.label
+        self.button = wx.Button(parent, -1, label)
         self.window = None
 
     def Open(self, parent):
         if self.window:
             self.window.SetFocus()
         else:
-            self.window = parent.OpenWindow(self.childWindowName)
+            self.window = parent.OpenWindow(self.childWindowName,
+                    self.childForceNewInstance, self.childWindowInstanceName)
             if self.isModal:
                 self.window.ShowModal()
             else:

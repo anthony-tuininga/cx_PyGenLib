@@ -95,15 +95,18 @@ class BaseContainer(ceGUI.BaseControl):
     def OnClose(self, event):
         event.Skip()
 
-    def OpenWindow(self, name):
-        return ceGUI.OpenWindow(name, self)
+    def OpenWindow(self, name, forceNewInstance = False, instanceName = None):
+        return ceGUI.OpenWindow(name, self, forceNewInstance, instanceName)
 
 
 class Dialog(BaseContainer, wx.Dialog):
     createOkButton = createCancelButton = True
+    title = ""
 
-    def __init__(self, *args, **kwargs):
-        wx.Dialog.__init__(self, *args, **kwargs)
+    def __init__(self, parent = None, style = wx.DEFAULT_DIALOG_STYLE,
+            instanceName = None):
+        wx.Dialog.__init__(self, parent, title = self.title, style = style)
+        self.instanceName = instanceName
         self._Initialize()
 
     def _OnCreate(self):
@@ -135,8 +138,10 @@ class Frame(BaseContainer, wx.Frame):
     hasToolbar = hasMenus = True
     title = ""
 
-    def __init__(self, parent = None, style = wx.DEFAULT_FRAME_STYLE):
+    def __init__(self, parent = None, style = wx.DEFAULT_FRAME_STYLE,
+            instanceName = None):
         wx.Frame.__init__(self, parent, title = self.title, style = style)
+        self.instanceName = instanceName
         self._Initialize()
 
     def _OnCreate(self):
@@ -213,11 +218,13 @@ class Panel(BaseContainer, wx.Panel):
 
 
 class StandardDialog(Dialog):
-    title = ""
+    resizable = True
 
-    def __init__(self, parent):
-        super(StandardDialog, self).__init__(parent, -1, self.title,
-                style = wx.CAPTION | wx.RESIZE_BORDER)
+    def __init__(self, parent = None, instanceName = None):
+        style = wx.CAPTION
+        if self.resizable:
+            style |= wx.RESIZE_BORDER
+        super(StandardDialog, self).__init__(parent, style, instanceName)
 
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)

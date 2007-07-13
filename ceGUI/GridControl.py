@@ -61,16 +61,29 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, currentNumRows, numRows)
         self.ProcessTableMessage(msg)
 
+    def GetAllRows(self):
+        return [self.table.dataSet.rows[h] for h in self.table.rowHandles]
+
     def GetCurrentRow(self):
         row = self.GetGridCursorRow()
         if row < len(self.table.rowHandles):
             handle = self.table.rowHandles[row]
             return self.table.dataSet.rows[handle]
 
+    def GetInsertChoicesDialog(self, parent):
+        pass
+
     def InsertRows(self, row, numRows = 1):
-        wx.grid.Grid.InsertRows(self, row, numRows)
+        dialog = self.GetInsertChoicesDialog(self.GetParent())
+        if dialog is None:
+            choices = [None] * numRows
+        elif dialog.ShowModal() != wx.ID_OK:
+            return
+        else:
+            choices = dialog.GetSelectedItems()
+        self.table.InsertRows(row, choices)
         msg = wx.grid.GridTableMessage(self.table,
-                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
+                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, len(choices))
         self.ProcessTableMessage(msg)
         self.SetGridCursor(row, 0)
         self.MakeCellVisible(row, 0)
@@ -187,9 +200,9 @@ class GridTable(wx.grid.PyGridTableBase):
         value = getattr(self.dataSet.rows[handle], column.attrName)
         return column.ToString(value)
 
-    def InsertRows(self, pos = 0, numRows = 1):
-        for rowNum in range(numRows):
-            handle, row = self.dataSet.InsertRow()
+    def InsertRows(self, pos = 0, choices = [None]):
+        for rowNum, choice in enumerate(choices):
+            handle, row = self.dataSet.InsertRow(choice)
             self.rowHandles.insert(pos + rowNum, handle)
 
     def Retrieve(self, *args):
