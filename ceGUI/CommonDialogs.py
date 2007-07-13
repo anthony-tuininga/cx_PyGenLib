@@ -18,13 +18,11 @@ class AboutDialog(ceGUI.Dialog):
     saveSize = False
 
     def __init__(self, parent):
-        app = wx.GetApp()
-        title = "About %s" % app.description
-        wx.Dialog.__init__(self, parent, -1, title, style = wx.CAPTION)
-        self._Initialize()
+        super(AboutDialog, self).__init__(parent, wx.CAPTION)
 
     def OnCreate(self):
         app = wx.GetApp()
+        self.SetTitle("About %s" % app.description)
         self.panel = ceGUI.Panel(self, -1, style = wx.SUNKEN_BORDER)
         aboutText = app.description
         if app.version is not None:

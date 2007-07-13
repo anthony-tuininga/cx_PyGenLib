@@ -23,6 +23,7 @@ class Application(wx.App):
     copyrightOwner = None
     copyrightStartYear = None
     copyrightEndYear = None
+    description = None
     vendorName = None
     version = None
 
