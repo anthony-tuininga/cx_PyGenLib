@@ -233,10 +233,12 @@ class GridTable(wx.grid.PyGridTableBase):
 
 class GridColumn(object):
 
-    def __init__(self, label, attrName):
+    def __init__(self, label, attrName, readOnly = False):
         self.label = label
         self.attrName = attrName
         self.attr = wx.grid.GridCellAttr()
+        if readOnly:
+            self.attr.SetReadOnly()
 
     def FromString(self, value):
         if value:
@@ -250,8 +252,8 @@ class GridColumn(object):
 
 class GridColumnBool(GridColumn):
 
-    def __init__(self, label, attrName):
-        super(GridColumnBool, self).__init__(label, attrName)
+    def __init__(self, label, attrName, readOnly = False):
+        super(GridColumnBool, self).__init__(label, attrName, readOnly)
         editor = wx.grid.GridCellBoolEditor()
         editor.UseStringValues("1", "0")
         self.attr.SetEditor(editor)
@@ -267,8 +269,8 @@ class GridColumnBool(GridColumn):
 
 class GridColumnChoice(GridColumn):
 
-    def __init__(self, label, attrName, choices):
-        super(GridColumnChoice, self).__init__(label, attrName)
+    def __init__(self, label, attrName, choices, readOnly = False):
+        super(GridColumnChoice, self).__init__(label, attrName, readOnly)
         displayValues = []
         self.dataValuesByDisplayValue = {}
         self.displayValuesByDataValue = {}
@@ -292,8 +294,8 @@ class GridColumnChoice(GridColumn):
 
 class GridColumnInt(GridColumn):
 
-    def __init__(self, label, attrName, min = -1, max = -1):
-        super(GridColumnInt, self).__init__(label, attrName)
+    def __init__(self, label, attrName, readOnly = False, min = -1, max = -1):
+        super(GridColumnInt, self).__init__(label, attrName, readOnly)
         editor = wx.grid.GridCellNumberEditor(min, max)
         self.attr.SetEditor(editor)
         self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
