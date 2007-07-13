@@ -154,6 +154,8 @@ class DataSet(object):
         if handle in self.insertedRows:
             self.insertedRows.pop(handle)
         else:
+            if handle in self.updatedRows:
+                self.updatedRows.pop(handle)
             self.deletedRows[handle] = row
 
     def DeleteRowInDatabase(self, cursor, row):
