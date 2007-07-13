@@ -190,6 +190,7 @@ class DataSet(object):
         cursor = self.connection.cursor()
         cursor.execute(sql, args)
         cursor.rowfactory = self.rowClass
+        self.retrievalArgs = args
         self.rows = dict(enumerate(cursor))
 
     def SetValue(self, handle, attrName, value):
@@ -199,7 +200,7 @@ class DataSet(object):
             if handle not in self.insertedRows \
                     and handle not in self.updatedRows:
                 self.updatedRows[handle] = row.Copy()
-            cx_Logging.Debug("setting attr %s on row %s to %s", attrName,
+            cx_Logging.Debug("setting attr %s on row %s to %r", attrName,
                     handle, value)
             self._OnSetValue(row, attrName, value, origValue)
             setattr(row, attrName, value)
