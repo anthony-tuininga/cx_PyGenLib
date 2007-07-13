@@ -115,7 +115,7 @@ class DataSet(object):
     def _OnDeleteRow(self, row):
         pass
 
-    def _OnInsertRow(self, row):
+    def _OnInsertRow(self, row, choice):
         pass
 
     def _OnSetValue(self, row, attrName, value, origValue):
@@ -163,10 +163,10 @@ class DataSet(object):
                 (self.tableName, " and ".join(clauses))
         cursor.execute(sql, args)
 
-    def InsertRow(self):
+    def InsertRow(self, choice = None):
         handle = self._GetNewRowHandle()
         row = self.rowClass.New()
-        self._OnInsertRow(row)
+        self._OnInsertRow(row, choice)
         self.insertedRows[handle] = self.rows[handle] = row
         return handle, row
 
