@@ -7,8 +7,8 @@ import ceGUI
 import functools
 import wx
 
-__all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "StandardDialog",
-           "TopLevelFrame" ]
+__all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "ScrolledPanel",
+           "StandardDialog", "TopLevelFrame" ]
 
 
 class BaseContainer(ceGUI.BaseControl):
@@ -212,8 +212,15 @@ class Frame(BaseContainer, wx.Frame):
 class Panel(BaseContainer, wx.Panel):
     saveSize = savePosition = bindClose = False
 
-    def __init__(self, *args, **kwargs):
-        wx.Panel.__init__(self, *args, **kwargs)
+    def __init__(self, parent, style = wx.TAB_TRAVERSAL):
+        wx.Panel.__init__(self, parent, style = style)
+        self._Initialize()
+
+
+class ScrolledPanel(Panel, wx.ScrolledWindow):
+
+    def __init__(self, parent, style = wx.HSCROLL | wx.VSCROLL):
+        wx.ScrolledWindow.__init__(self, parent, style = style)
         self._Initialize()
 
 
