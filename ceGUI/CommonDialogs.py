@@ -162,12 +162,20 @@ class SelectionListDialog(ceGUI.StandardDialog):
     def OnCreate(self):
         self.okButton.Enable(False)
         self.selectionList = self._GetList()
+        self.selectionList.SetFocus()
         self.BindEvent(self.selectionList, wx.EVT_LIST_ITEM_SELECTED,
                 self.OnItemSelected)
         self.BindEvent(self.selectionList, wx.EVT_LIST_ITEM_DESELECTED,
                 self.OnItemDeselected)
         self.BindEvent(self.selectionList, wx.EVT_LEFT_DCLICK,
                 self.OnDoubleClick)
+        self.BindEvent(self.selectionList, wx.EVT_CHAR,
+                self.OnCharPressed)
+
+    def OnCharPressed(self, event):
+        if event.GetKeyCode() == 1: # Ctrl-A
+            self.selectionList.SetSelectedItems(self.selectionList.items)
+        event.Skip()
 
     def OnLayout(self):
         topSizer = wx.BoxSizer(wx.VERTICAL)
