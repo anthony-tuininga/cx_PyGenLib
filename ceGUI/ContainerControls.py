@@ -70,11 +70,12 @@ class BaseContainer(ceGUI.BaseControl):
     def AddLabel(self, label = ""):
         return wx.StaticText(self, -1, label)
 
-    def AddTextField(self, readOnly = False):
+    def AddTextField(self, readOnly = False, processEnter = False):
+        style = 0
         if readOnly:
-            style = wx.TE_READONLY
-        else:
-            style = 0
+            style |= wx.TE_READONLY
+        if processEnter:
+            style |= wx.TE_PROCESS_ENTER
         field = wx.TextCtrl(self, -1, style = style)
         if readOnly:
             color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
