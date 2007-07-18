@@ -6,7 +6,7 @@ import ceGUI
 import cx_Exceptions
 import wx
 
-__all__ = ["BaseControl", "List", "Notebook", "Tree", "TreeItem"]
+__all__ = ["BaseControl", "Choice", "List", "Notebook", "Tree", "TreeItem"]
 
 
 class BaseControl(object):
@@ -84,6 +84,35 @@ class BaseControl(object):
         else:
             value = str(value)
         self.settings.Write(settingsName, value)
+
+
+class Choice(BaseControl, wx.Choice):
+
+    def __init__(self, parent, choices):
+        displayValues = []
+        self.indexesByDataValue = {}
+        self.dataValuesByIndex = {}
+        for choiceIndex, choice in enumerate(choices):
+            if isinstance(choice, (list, tuple)):
+                if len(choice) == 1:
+                    dataValue = displayValue = choice[0]
+                else:
+                    dataValue, displayValue = choice
+            else:
+                dataValue = displayValue = choice
+            displayValues.append(displayValue)
+            self.indexesByDataValue[dataValue] = choiceIndex
+            self.dataValuesByIndex[choiceIndex] = dataValue
+        wx.Choice.__init__(self, parent, choices = displayValues)
+        self._Initialize()
+
+    def GetValue(self):
+        choiceIndex = self.GetSelection()
+        return self.dataValuesByIndex[choiceIndex]
+
+    def SetValue(self, value):
+        choiceIndex = self.indexesByDataValue[value]
+        self.SetSelection(choiceIndex)
 
 
 class List(BaseControl, wx.ListCtrl):
