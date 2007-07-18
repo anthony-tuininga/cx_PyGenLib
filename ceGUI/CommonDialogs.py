@@ -23,7 +23,7 @@ class AboutDialog(ceGUI.Dialog):
     def OnCreate(self):
         app = wx.GetApp()
         self.SetTitle("About %s" % app.description)
-        self.panel = ceGUI.Panel(self, -1, style = wx.SUNKEN_BORDER)
+        self.panel = ceGUI.Panel(self, wx.SUNKEN_BORDER)
         aboutText = app.description
         if app.version is not None:
             aboutText = "%s\n\nVersion %s" % (aboutText, app.version)
