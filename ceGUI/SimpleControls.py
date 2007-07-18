@@ -108,10 +108,11 @@ class Choice(BaseControl, wx.Choice):
 
     def GetValue(self):
         choiceIndex = self.GetSelection()
-        return self.dataValuesByIndex[choiceIndex]
+        if choiceIndex != wx.NOT_FOUND:
+            return self.dataValuesByIndex[choiceIndex]
 
     def SetValue(self, value):
-        choiceIndex = self.indexesByDataValue[value]
+        choiceIndex = self.indexesByDataValue.get(value, wx.NOT_FOUND)
         self.SetSelection(choiceIndex)
 
 
