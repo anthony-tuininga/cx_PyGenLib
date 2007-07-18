@@ -6,7 +6,8 @@ import ceGUI
 import cx_Exceptions
 import wx
 
-__all__ = ["BaseControl", "Choice", "List", "Notebook", "Tree", "TreeItem"]
+__all__ = ["BaseControl", "Choice", "List", "Notebook", "TextField", "Tree",
+           "TreeItem"]
 
 
 class BaseControl(object):
@@ -319,6 +320,22 @@ class Notebook(BaseControl, wx.Notebook):
     def SaveSettings(self):
         for page in self.IterPages():
             page.SaveSettings()
+
+
+class TextField(BaseControl, wx.TextCtrl):
+    copyAppAttributes = False
+
+    def __init__(self, parent, style = 0):
+        wx.TextCtrl.__init__(self, parent, style = style)
+        self._Initialize()
+
+    def GetValue(self):
+        value = wx.TextCtrl.GetValue(self)
+        if value:
+            return value
+
+    def SetValue(self, value):
+        wx.TextCtrl.SetValue(self, value or "")
 
 
 class Tree(BaseControl, wx.TreeCtrl):
