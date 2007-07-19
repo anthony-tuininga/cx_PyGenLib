@@ -14,12 +14,12 @@ __all__ = [ "GridEditWindow", "SubWindow" ]
 
 class GridEditWindow(ceGUI.Frame):
     retrievalAttrNames = None
+    gridClassName = "Grid"
     hasMenus = False
 
     def _GetGrid(self):
-        module = __import__(self.__class__.__module__)
-        dataSet = module.DataSet(self.config.connection)
-        return module.Grid(self, dataSet)
+        gridClass = self._GetClass(self.gridClassName)
+        return gridClass(self)
 
     def _OnCreate(self):
         self.grid = self._GetGrid()
