@@ -12,12 +12,19 @@ __all__ = ["Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
+    dataSetClassName = "DataSet"
 
-    def __init__(self, parent, dataSet):
+    def __init__(self, parent):
         wx.grid.Grid.__init__(self, parent)
-        self.table = GridTable(dataSet)
-        self.SetTable(self.table)
         self._Initialize(parent)
+
+    def _GetDataSet(self):
+        cls = self._GetClass(self.dataSetClassName)
+        return cls(self.config.connection)
+
+    def _GetTable(self):
+        dataSet = self._GetDataSet()
+        return GridTable(dataSet)
 
     def _Initialize(self, parent):
         """Note that the margins have to be set to negative pixels in order to
@@ -32,6 +39,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         parent.BindEvent(self, wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
                 self.OnLabelClicked, skipEvent = False)
         super(Grid, self)._Initialize()
+
+    def _OnCreate(self):
+        self.table = self._GetTable()
+        self.SetTable(self.table)
+        super(Grid, self)._OnCreate()
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
@@ -48,8 +60,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def AddColumn(self, cls, *args, **kwargs):
         column = cls(*args, **kwargs)
-        self.table.columns.append(column)
-        self.SetColAttr(len(self.table.columns) - 1, column.attr)
+        self.table.AddColumn(column)
+        columnIndex = self.table.GetNumberCols() - 1
+        self.SetColAttr(columnIndex, column.attr)
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_COLS_APPENDED, 1)
         self.ProcessTableMessage(msg)
@@ -62,13 +75,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.ProcessTableMessage(msg)
 
     def GetAllRows(self):
-        return [self.table.dataSet.rows[h] for h in self.table.rowHandles]
+        return self.table.GetAllRows()
 
     def GetCurrentRow(self):
         row = self.GetGridCursorRow()
-        if row < len(self.table.rowHandles):
-            handle = self.table.rowHandles[row]
-            return self.table.dataSet.rows[handle]
+        return self.table.GetRow(row)
 
     def GetInsertChoicesDialog(self, parent):
         pass
@@ -113,7 +124,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.SortItems(event.GetCol())
 
     def PendingChanges(self):
-        return self.table.dataSet.PendingChanges()
+        return self.table.PendingChanges()
 
     def RestoreColumnWidths(self):
         widths = self.ReadSetting("ColumnWidths", isComplex = True)
@@ -140,18 +151,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self.WriteSetting("ColumnWidths", tuple(widths), isComplex = True)
 
     def SortItems(self, columnIndex = None):
-        row = self.GetGridCursorRow()
-        numRows = self.table.GetNumberRows()
-        if row < numRows:
-            handle = self.table.rowHandles[row]
-            col = self.GetGridCursorCol()
-        self.table.SortItems(columnIndex)
+        col = self.GetGridCursorCol()
+        row = self.table.SortItems(columnIndex, self.GetGridCursorRow())
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         self.ProcessTableMessage(msg)
-        if row < numRows:
-            row = self.table.rowHandles.index(handle)
-            self.SetGridCursor(row, col)
+        self.SetGridCursor(row, col)
 
     def Update(self):
         self.table.dataSet.Update()
@@ -165,6 +170,9 @@ class GridTable(wx.grid.PyGridTableBase):
         self.columns = []
         self.rowHandles = []
         self.sortByColumnIndexes = []
+
+    def AddColumn(self, column):
+        self.columns.append(column)
 
     def AppendRows(self, numRows = 1):
         for rowNum in range(numRows):
@@ -185,6 +193,9 @@ class GridTable(wx.grid.PyGridTableBase):
             self.rowHandles.pop(pos)
             numRows -= 1
 
+    def GetAllRows(self):
+        return [self.dataSet.rows[h] for h in self.rowHandles]
+
     def GetColLabelValue(self, col):
         return self.columns[col].label
 
@@ -193,6 +204,11 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def GetNumberRows(self):
         return len(self.rowHandles)
+
+    def GetRow(self, row):
+        if row < len(self.rowHandles):
+            handle = self.rowHandles[row]
+            return self.dataSet.rows[handle]
 
     def GetValue(self, row, col):
         column = self.columns[col]
@@ -205,6 +221,9 @@ class GridTable(wx.grid.PyGridTableBase):
             handle, row = self.dataSet.InsertRow(choice)
             self.rowHandles.insert(pos + rowNum, handle)
 
+    def PendingChanges(self):
+        return self.dataSet.PendingChanges()
+
     def Retrieve(self, *args):
         self.dataSet.Retrieve(*args)
         self.SortItems()
@@ -215,7 +234,9 @@ class GridTable(wx.grid.PyGridTableBase):
         value = column.FromString(rawValue)
         self.dataSet.SetValue(handle, column.attrName, value)
 
-    def SortItems(self, columnIndex = None):
+    def SortItems(self, columnIndex = None, rowIndex = None):
+        if rowIndex is not None and rowIndex < len(self.rowHandles):
+            handle = self.rowHandles[rowIndex]
         if columnIndex is not None:
             if columnIndex in self.sortByColumnIndexes:
                 self.sortByColumnIndexes.remove(columnIndex)
@@ -229,6 +250,9 @@ class GridTable(wx.grid.PyGridTableBase):
                 for h, i in self.dataSet.rows.iteritems()]
         itemsToSort.sort()
         self.rowHandles = [i[1] for i in itemsToSort]
+        if rowIndex is not None and rowIndex < len(self.rowHandles):
+            rowIndex = self.rowHandles.index(handle)
+        return rowIndex
 
 
 class GridColumn(object):

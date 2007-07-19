@@ -26,6 +26,16 @@ class BaseControl(object):
                     createBusyCursor = createBusyCursor)
         return item
 
+    def _GetClass(self, name):
+        parts = name.split(".")
+        if len(parts) == 2:
+            moduleName, attrName = parts
+        else:
+            moduleName = self.__class__.__module__
+            attrName = name
+        module = __import__(moduleName)
+        return getattr(module, attrName)
+
     def _GetSettingsName(self, name):
         baseSettingsName = self.baseSettingsName
         if baseSettingsName is None:
