@@ -75,8 +75,16 @@ class DataSetMetaClass(type):
         cls.attrNames = cls.rowClass.attrNames
         if isinstance(cls.pkAttrNames, basestring):
             cls.pkAttrNames = cls.pkAttrNames.split()
+        if isinstance(cls.uniqueAttrNames, basestring):
+            cls.uniqueAttrNames = cls.uniqueAttrNames.split()
+        if isinstance(cls.insertAttrNames, basestring):
+            cls.insertAttrNames = cls.insertAttrNames.split()
+        if isinstance(cls.updateAttrNames, basestring):
+            cls.updateAttrNames = cls.updateAttrNames.split()
         if isinstance(cls.retrievalAttrNames, basestring):
             cls.retrievalAttrNames = cls.retrievalAttrNames.split()
+        cls.retrievalAttrIndexes = \
+                dict([(n, i) for i, n in enumerate(cls.retrievalAttrNames)])
 
 
 class DataSet(object):
@@ -87,15 +95,35 @@ class DataSet(object):
     attrNames = []
     pkAttrNames = []
     retrievalAttrNames = []
+    insertAttrNames = []
+    updateAttrNames = []
+    uniqueAttrNames = []
+    pkIsIdentity = False
 
-    def __init__(self, connection):
+    def __init__(self, connection, contextItem = None):
         self.connection = connection
+        self.childDataSets = []
+        self.contextItem = contextItem
+        self.retrievalArgs = [None] * len(self.retrievalAttrNames)
         self.Clear()
 
     def _DeleteRowsInDatabase(self, cursor):
-        cx_Logging.Debug("deleting rows in database....")
         for row in self.deletedRows.itervalues():
             self.DeleteRowInDatabase(cursor, row)
+
+    def _GetArgsFromNames(self, names, row = None):
+        args = []
+        contextItem = self.contextItem
+        for name in names:
+            if row is not None and hasattr(row, name):
+                value = getattr(row, name)
+            elif contextItem is not None and hasattr(contextItem, name):
+                value = getattr(contextItem, name)
+            else:
+                argIndex = self.retrievalAttrIndexes[name]
+                value = self.retrievalArgs[argIndex]
+            args.append(value)
+        return args
 
     def _GetNewRowHandle(self):
         if self.rows:
@@ -107,6 +135,21 @@ class DataSet(object):
             if existingHandle >= handle:
                 handle = existingHandle + 1
         return handle
+
+    def _GetRows(self, args):
+        sql = self._GetSqlForRetrieve()
+        cursor = self.connection.cursor()
+        cursor.execute(sql, args)
+        cursor.rowfactory = self.rowClass
+        self.retrievalArgs = args
+        return cursor
+
+    def _GetSqlForRetrieve(self):
+        sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
+        if self.retrievalAttrNames:
+            whereClauses = ["%s = ?" % n for n in self.retrievalAttrNames]
+            sql += " where %s" % " and ".join(whereClauses)
+        return sql
 
     def _InsertRowsInDatabase(self, cursor):
         for row in self.insertedRows.itervalues():
@@ -127,10 +170,25 @@ class DataSet(object):
     def _PreUpdate(self):
         pass
 
+    def _Update(self, cursor):
+        if self.deletedRows:
+            self._DeleteRowsInDatabase(cursor)
+        if self.updatedRows:
+            self._UpdateRowsInDatabase(cursor)
+        if self.insertedRows:
+            self._InsertRowsInDatabase(cursor)
+        for dataSet in self.childDataSets:
+            dataSet._Update(cursor)
+
     def _UpdateRowsInDatabase(self, cursor):
         for handle, origRow in self.updatedRows.iteritems():
             row = self.rows[handle]
             self.UpdateRowInDatabase(cursor, row, origRow)
+
+    def AddChildDataSet(self, cls, contextItem = None):
+        dataSet = cls(self.connection, contextItem)
+        self.childDataSets.append(dataSet)
+        return dataSet
 
     def CanDeleteRow(self, rowHandle):
         return True
@@ -138,14 +196,20 @@ class DataSet(object):
     def CanInsertRow(self):
         return True
 
-    def Clear(self):
+    def Clear(self, includeChildren = True):
         self.rows = {}
-        self.ClearChanges()
+        if includeChildren:
+            for dataSet in self.childDataSets:
+                dataSet.Clear()
+        self.ClearChanges(includeChildren = False)
 
-    def ClearChanges(self):
+    def ClearChanges(self, includeChildren = True):
         self.insertedRows = {}
         self.updatedRows = {}
         self.deletedRows = {}
+        if includeChildren:
+            for dataSet in self.childDataSets:
+                dataSet.ClearChanges()
 
     def DeleteRow(self, handle):
         row = self.rows[handle]
@@ -159,11 +223,14 @@ class DataSet(object):
             self.deletedRows[handle] = row
 
     def DeleteRowInDatabase(self, cursor, row):
-        args = [getattr(row, n) for n in self.pkAttrNames]
+        args = self._GetArgsFromNames(self.pkAttrNames, row)
         clauses = ["%s = ?" % n for n in self.pkAttrNames]
         sql = "delete from %s where %s" % \
                 (self.tableName, " and ".join(clauses))
         cursor.execute(sql, args)
+
+    def GetKeyedDataSet(self, *attrNames):
+        return KeyedDataSet(self, attrNames)
 
     def InsertRow(self, choice = None):
         handle = self._GetNewRowHandle()
@@ -173,27 +240,43 @@ class DataSet(object):
         return handle, row
 
     def InsertRowInDatabase(self, cursor, row):
-        args = [getattr(row, n) for n in self.attrNames]
-        names = [n for n in self.attrNames]
-        values = ["?"] * len(self.attrNames)
+        if self.insertAttrNames:
+            names = self.insertAttrNames
+        elif self.pkIsIdentity:
+            names = [n for n in self.attrNames if n not in self.pkAttrNames]
+        else:
+            names = self.attrNames
+        args = self._GetArgsFromNames(names, row)
+        values = ["?"] * len(names)
         sql = "insert into %s (%s) values (%s)" % \
                 (self.tableName, ",".join(names), ",".join(values))
         cursor.execute(sql, args)
+        if self.pkIsIdentity:
+            selectItems = ",".join(self.pkAttrNames)
+            whereClauses = ["%s = ?" % n for n in self.uniqueAttrNames]
+            sql = "select %s from %s where %s" % \
+                    (",".join(self.pkAttrNames), self.tableName,
+                     " and ".join(whereClauses))
+            args = self._GetArgsFromNames(self.uniqueAttrNames, row)
+            cursor.execute(sql, args)
+            pkValues, = cursor.fetchall()
+            for attrIndex, value in enumerate(pkValues):
+                setattr(row, self.pkAttrNames[attrIndex], value)
 
     def PendingChanges(self):
-        return bool(self.insertedRows or self.updatedRows or self.deletedRows)
+        if self.insertedRows or self.updatedRows or self.deletedRows:
+            return True
+        for dataSet in self.childDataSets:
+            if dataSet.PendingChanges():
+                return True
+        return False
 
     def Retrieve(self, *args):
         self.Clear()
-        sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
-        if self.retrievalAttrNames:
-            whereClauses = ["%s = ?" % n for n in self.retrievalAttrNames]
-            sql += " where %s" % " and ".join(whereClauses)
-        cursor = self.connection.cursor()
-        cursor.execute(sql, args)
-        cursor.rowfactory = self.rowClass
+        if not args and self.retrievalAttrNames:
+            args = self._GetArgsFromNames(self.retrievalAttrNames)
         self.retrievalArgs = args
-        self.rows = dict(enumerate(cursor))
+        self.rows = dict(enumerate(self._GetRows(args)))
 
     def SetValue(self, handle, attrName, value):
         row = self.rows[handle]
@@ -214,12 +297,7 @@ class DataSet(object):
         self._PreUpdate()
         cursor = self.connection.cursor()
         try:
-            if self.deletedRows:
-                self._DeleteRowsInDatabase(cursor)
-            if self.updatedRows:
-                self._UpdateRowsInDatabase(cursor)
-            if self.insertedRows:
-                self._InsertRowsInDatabase(cursor)
+            self._Update(cursor)
             self.connection.commit()
         except:
             self.connection.rollback()
@@ -228,12 +306,64 @@ class DataSet(object):
         self._PostUpdate()
 
     def UpdateRowInDatabase(self, cursor, row, origRow):
-        dataAttrNames = [n for n in self.attrNames if n not in self.pkAttrNames]
-        args = [getattr(row, n) for n in dataAttrNames + self.pkAttrNames]
+        if self.updateAttrNames:
+            dataAttrNames = self.updateAttrNames
+        else:
+            dataAttrNames = [n for n in self.attrNames \
+                    if n not in self.pkAttrNames]
+        args = self._GetArgsFromNames(dataAttrNames + self.pkAttrNames, row)
         setClauses = ["%s = ?" % n for n in dataAttrNames]
         whereClauses = ["%s = ?" % n for n in self.pkAttrNames]
         sql = "update %s set %s where %s" % \
                 (self.tableName, ", ".join(setClauses),
                 " and ".join(whereClauses))
         cursor.execute(sql, args)
+
+
+class KeyedDataSet(object):
+
+    def __init__(self, dataSet, attrNames):
+        self.dataSet = dataSet
+        self.rows = {}
+        for handle, row in dataSet.rows.iteritems():
+            key = tuple([getattr(row, n) for n in attrNames])
+            self.rows[key] = handle
+
+    def DeleteRow(self, *key):
+        try:
+            handle = self.rows.pop(key)
+        except KeyError:
+            return
+        self.dataSet.DeleteRow(handle)
+
+    def FindRow(self, *key):
+        handle = self.rows.get(key)
+        if handle is not None:
+            return RowForUpdate(self.dataSet, handle)
+
+    def InsertRow(self, choice = None):
+        handle, row = self.dataSet.InsertRow(choice)
+        return RowForUpdate(self.dataSet, handle)
+
+
+class RowForUpdate(object):
+
+    def __init__(self, dataSet, handle):
+        self._dataSet = dataSet
+        self._handle = handle
+        self._row = dataSet.rows[handle]
+
+    def __getattr__(self, attrName):
+        if attrName.startswith("_"):
+            return object.__getattr__(self, attrName)
+        return getattr(self._row, attrName)
+
+    def __setattr__(self, attrName, value):
+        if attrName.startswith("_"):
+            object.__setattr__(self, attrName, value)
+        else:
+            self._dataSet.SetValue(self._handle, attrName, value)
+
+    def Delete(self):
+        self._dataSet.DeleteRow(self._handle)
 
