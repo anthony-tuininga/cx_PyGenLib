@@ -3,6 +3,7 @@ Define classes and methods suitable for accessing databases in a generic way.
 """
 
 import cx_Logging
+import datetime
 
 def _NormalizeValue(bases, classDict, name):
     """Helper routine for row metaclass."""
@@ -170,6 +171,13 @@ class DataSet(object):
     def _PreUpdate(self):
         pass
 
+    def _SortRep(self, value):
+        if isinstance(value, basestring):
+            return value.upper()
+        elif isinstance(value, (datetime.datetime, datetime.date)):
+            return str(value)
+        return value
+
     def _Update(self, cursor):
         if self.deletedRows:
             self._DeleteRowsInDatabase(cursor)
@@ -231,6 +239,16 @@ class DataSet(object):
 
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, attrNames)
+
+    def GetSortedRows(self, *attrNames):
+        handles = self.GetSortedRowHandles(*attrNames)
+        return [self.rows[h] for h in handles]
+
+    def GetSortedRowHandles(self, *attrNames):
+        itemsToSort = [([self._SortRep(getattr(i, n)) for n in attrNames], h) \
+                for h, i in self.rows.iteritems()]
+        itemsToSort.sort()
+        return [i[1] for i in itemsToSort]
 
     def InsertRow(self, choice = None):
         handle = self._GetNewRowHandle()
