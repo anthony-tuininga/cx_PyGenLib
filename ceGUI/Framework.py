@@ -72,7 +72,9 @@ def OpenWindow(name, parent = None, forceNewInstance = False,
             if isinstance(child, cls) and child.instanceName == instanceName:
                 child.SetFocus()
                 return child
-    return cls(parent, instanceName = instanceName)
+    window = cls(parent)
+    window.instanceName = instanceName
+    return window
 
 
 def SortRep(value):
