@@ -13,6 +13,7 @@ __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "ScrolledPanel",
 
 class BaseContainer(ceGUI.BaseControl):
     saveSize = savePosition = bindClose = True
+    instanceName = None
     minSize = None
 
     def _Initialize(self):
@@ -99,10 +100,8 @@ class Dialog(BaseContainer, wx.Dialog):
     createOkButton = createCancelButton = True
     title = ""
 
-    def __init__(self, parent = None, style = wx.DEFAULT_DIALOG_STYLE,
-            instanceName = None):
+    def __init__(self, parent = None, style = wx.DEFAULT_DIALOG_STYLE):
         wx.Dialog.__init__(self, parent, title = self.title, style = style)
-        self.instanceName = instanceName
         self._Initialize()
 
     def _OnCreate(self):
@@ -134,10 +133,8 @@ class Frame(BaseContainer, wx.Frame):
     hasToolbar = hasMenus = True
     title = ""
 
-    def __init__(self, parent = None, style = wx.DEFAULT_FRAME_STYLE,
-            instanceName = None):
+    def __init__(self, parent = None, style = wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, title = self.title, style = style)
-        self.instanceName = instanceName
         self._Initialize()
 
     def _OnCreate(self):
@@ -223,11 +220,11 @@ class ScrolledPanel(Panel, wx.ScrolledWindow):
 class StandardDialog(Dialog):
     resizable = True
 
-    def __init__(self, parent = None, instanceName = None):
+    def __init__(self, parent = None):
         style = wx.CAPTION
         if self.resizable:
             style |= wx.RESIZE_BORDER
-        super(StandardDialog, self).__init__(parent, style, instanceName)
+        super(StandardDialog, self).__init__(parent, style)
 
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
