@@ -5,12 +5,11 @@ such things as exception handling and managing busy cursors.
 
 import cx_Exceptions
 import cx_Logging
-import datetime
 import wx
 import sys
 
 __all__ = ["BusyCursorContext", "EventHandler", "OpenWindow",
-           "SortRep", "TransactionContext"]
+           "TransactionContext"]
 
 
 class BusyCursorContext(object):
@@ -75,14 +74,6 @@ def OpenWindow(name, parent = None, forceNewInstance = False,
     window = cls(parent)
     window.instanceName = instanceName
     return window
-
-
-def SortRep(value):
-    if isinstance(value, basestring):
-        return value.upper()
-    elif isinstance(value, (datetime.datetime, datetime.date)):
-        return str(value)
-    return value
 
 
 class TransactionContext(BusyCursorContext):
