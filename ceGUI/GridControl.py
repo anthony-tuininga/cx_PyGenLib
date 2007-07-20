@@ -241,15 +241,11 @@ class GridTable(wx.grid.PyGridTableBase):
             if columnIndex in self.sortByColumnIndexes:
                 self.sortByColumnIndexes.remove(columnIndex)
             self.sortByColumnIndexes.insert(0, columnIndex)
-        method = ceGUI.SortRep
         attrNames = [self.columns[i].attrName \
                 for i in self.sortByColumnIndexes]
         attrNames.extend([c.attrName for c in self.columns \
                 if c.attrName not in attrNames])
-        itemsToSort = [([method(getattr(i, n)) for n in attrNames], h) \
-                for h, i in self.dataSet.rows.iteritems()]
-        itemsToSort.sort()
-        self.rowHandles = [i[1] for i in itemsToSort]
+        self.rowHandles = self.dataSet.GetSortedRowHandles(*attrNames)
         if rowIndex is not None and rowIndex < len(self.rowHandles):
             rowIndex = self.rowHandles.index(handle)
         return rowIndex
