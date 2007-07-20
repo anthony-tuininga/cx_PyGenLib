@@ -71,13 +71,16 @@ class DataSetMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
         super(DataSetMetaClass, cls).__init__(name, bases, classDict)
-        cls.rowClass = RowMetaClass("%sRow" % name, (Row,),
-                dict(attrNames = cls.attrNames))
+        classDict = dict(attrNames = cls.attrNames,
+                extraAttrNames = cls.extraAttrNames)
+        cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         if isinstance(cls.pkAttrNames, basestring):
             cls.pkAttrNames = cls.pkAttrNames.split()
         if isinstance(cls.uniqueAttrNames, basestring):
             cls.uniqueAttrNames = cls.uniqueAttrNames.split()
+        if isinstance(cls.sortByAttrNames, basestring):
+            cls.sortByAttrNames = cls.sortByAttrNames.split()
         if isinstance(cls.insertAttrNames, basestring):
             cls.insertAttrNames = cls.insertAttrNames.split()
         if isinstance(cls.updateAttrNames, basestring):
@@ -94,8 +97,10 @@ class DataSet(object):
     __metaclass__ = DataSetMetaClass
     tableName = None
     attrNames = []
+    extraAttrNames = []
     pkAttrNames = []
     retrievalAttrNames = []
+    sortByAttrNames = []
     insertAttrNames = []
     updateAttrNames = []
     uniqueAttrNames = []
@@ -137,19 +142,21 @@ class DataSet(object):
                 handle = existingHandle + 1
         return handle
 
-    def _GetRows(self, args):
+    def _GetRows(self, *args):
         sql = self._GetSqlForRetrieve()
         cursor = self.connection.cursor()
         cursor.execute(sql, args)
         cursor.rowfactory = self.rowClass
         self.retrievalArgs = args
-        return cursor
+        return cursor.fetchall()
 
     def _GetSqlForRetrieve(self):
         sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
         if self.retrievalAttrNames:
             whereClauses = ["%s = ?" % n for n in self.retrievalAttrNames]
             sql += " where %s" % " and ".join(whereClauses)
+        if self.sortByAttrNames:
+            sql += " order by %s" % ",".join(self.sortByAttrNames)
         return sql
 
     def _InsertRowsInDatabase(self, cursor):
@@ -294,7 +301,7 @@ class DataSet(object):
         if not args and self.retrievalAttrNames:
             args = self._GetArgsFromNames(self.retrievalAttrNames)
         self.retrievalArgs = args
-        self.rows = dict(enumerate(self._GetRows(args)))
+        self.rows = dict(enumerate(self._GetRows(*args)))
 
     def SetValue(self, handle, attrName, value):
         row = self.rows[handle]
