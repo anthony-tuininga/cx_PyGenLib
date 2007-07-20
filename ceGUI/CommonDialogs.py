@@ -174,7 +174,7 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def OnCharPressed(self, event):
         if event.GetKeyCode() == 1: # Ctrl-A
-            self.selectionList.SetSelectedItems(self.selectionList.items)
+            self.selectionList.SelectAll()
         event.Skip()
 
     def OnLayout(self):
@@ -199,15 +199,14 @@ class SelectionListDialog(ceGUI.StandardDialog):
     def RestoreSettings(self):
         self.selectionList.RestoreColumnWidths()
 
+    def Retrieve(self, *args):
+        self.selectionList.Retrieve(*args)
+
     def SaveSettings(self):
         self.selectionList.SaveColumnWidths()
 
-    def SetSelectionItems(self, items, selectedItems = [], sort = True):
-        self.selectionList.SetItems(items, refresh = not sort)
-        if selectedItems:
-            self.selectionList.SetSelectedItems(selectedItems)
-        if sort:
-            self.selectionList.SortItems()
+    def SelectItems(self, items):
+        self.selectionList.SelectItems(items)
 
 
 class SelectionTreeDialog(ceGUI.StandardDialog):
