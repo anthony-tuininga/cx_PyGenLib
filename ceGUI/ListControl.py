@@ -135,7 +135,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 break
             yield itemIndex
 
-    def InsertRow(self, pos = None, choice = None, refresh = True):
+    def InsertItem(self, pos = None, choice = None, refresh = True):
         if pos is None:
             pos = len(self.rowHandles)
         handle, row = self.dataSet.InsertRow(choice)
