@@ -135,6 +135,15 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 break
             yield itemIndex
 
+    def InsertRow(self, pos = None, choice = None, refresh = True):
+        if pos is None:
+            pos = len(self.rowHandles)
+        handle, row = self.dataSet.InsertRow(choice)
+        self.rowHandles.insert(pos, handle)
+        self.SetItemCount(len(self.rowHandles))
+        if refresh:
+            self.Refresh()
+
     def OnGetItemText(self, itemIndex, columnIndex):
         handle = self.rowHandles[itemIndex]
         row = self.dataSet.rows[handle]
@@ -143,6 +152,11 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if value is None:
             value = ""
         return value
+
+    def RefreshFromDataSet(self):
+        self.rowHandles = self.dataSet.rows.keys()
+        self.SetItemCount(len(self.rowHandles))
+        self.Refresh()
 
     def RestoreColumnWidths(self):
         widths = self.ReadSetting("ColumnWidths", isComplex = True)
