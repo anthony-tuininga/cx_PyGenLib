@@ -5,7 +5,7 @@ Defines classes used for manipulating lists.
 import ceGUI
 import wx
 
-__all__ = [ "List", "ListColumn" ]
+__all__ = [ "List", "ListColumn", "ListDateColumn" ]
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
@@ -88,7 +88,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         return column
 
     def AppendItem(self, choice = None, refresh = True):
-        self.InsertItem(len(self.rowHandles), choice, refresh)
+        return self.InsertItem(len(self.rowHandles), choice, refresh)
 
     def Clear(self):
         self.rowHandles = []
@@ -144,6 +144,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.SetItemCount(len(self.rowHandles))
         if refresh:
             self.Refresh()
+        return row
 
     def OnGetItemText(self, itemIndex, columnIndex):
         handle = self.rowHandles[itemIndex]
@@ -192,6 +193,12 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
                     wx.LIST_STATE_SELECTED)
 
+    def SetItemValue(self, itemIndex, attrName, value, refresh = True):
+        handle = self.rowHandles[itemIndex]
+        self.dataSet.SetValue(handle, attrName, value)
+        if refresh:
+            self.Refresh()
+
     def SortItems(self, attrName = None, refresh = True):
         if attrName is not None:
             if attrName in self.sortByAttrNames:
@@ -217,7 +224,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.dataSet.Update()
 
 
-class ListColumn(object):
+class ListColumn(ceGUI.BaseControl):
 
     def __init__(self, attrName, heading = "", defaultWidth = -1,
             justification = wx.LIST_FORMAT_LEFT):
@@ -225,9 +232,19 @@ class ListColumn(object):
         self.attrName = attrName
         self.defaultWidth = defaultWidth
         self.justification = justification
+        self._Initialize()
 
     def GetValue(self, row):
         if self.attrName is not None:
             return getattr(row, self.attrName)
         return row
+
+
+class ListDateColumn(ListColumn):
+    dateFormat = "%Y/%m/%d %H:%M"
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is not None:
+            return value.strftime(self.dateFormat)
 
