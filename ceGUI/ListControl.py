@@ -87,6 +87,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self._AddColumn(column)
         return column
 
+    def AppendItem(self, choice = None, refresh = True):
+        self.InsertItem(len(self.rowHandles), choice, refresh)
+
     def Clear(self):
         self.rowHandles = []
 
@@ -135,9 +138,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 break
             yield itemIndex
 
-    def InsertItem(self, pos = None, choice = None, refresh = True):
-        if pos is None:
-            pos = len(self.rowHandles)
+    def InsertItem(self, pos = 0, choice = None, refresh = True):
         handle, row = self.dataSet.InsertRow(choice)
         self.rowHandles.insert(pos, handle)
         self.SetItemCount(len(self.rowHandles))
