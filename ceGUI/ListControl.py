@@ -3,6 +3,7 @@ Defines classes used for manipulating lists.
 """
 
 import ceGUI
+import datetime
 import wx
 
 __all__ = [ "List", "ListColumn", "ListDateColumn" ]
@@ -34,6 +35,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
            be left justified, no matter what format is specified."""
         columnIndex = len(self.columns)
         self.columns.append(column)
+        self.columnsByAttrName[column.attrName] = column
         self.InsertColumn(columnIndex, column.heading, column.justification,
                 column.defaultWidth)
         if columnIndex == 0 and column.justification == wx.LIST_FORMAT_RIGHT:
@@ -45,6 +47,17 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if self.dataSetClassName is not None:
             cls = self._GetClass(self.dataSetClassName)
             return cls(self.config.connection)
+
+    def _GetItemIndexesWithState(self, state):
+        itemIndex = -1
+        while True:
+            itemIndex = self.GetNextItem(itemIndex, state = state)
+            if itemIndex < 0:
+                break
+            yield itemIndex
+
+    def _GetSortKey(self, item, sortColumns):
+        return [c.GetSortValue(item) for c in sortColumns]
 
     def _OnColumnClick(self, event):
         column = self.columns[event.GetColumn()]
@@ -79,6 +92,18 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 self.SetColumnWidth(numColumns - 1, width)
             self.Refresh()
 
+    def _RestoreItemState(self, itemIndexDict, rowHandles, state):
+        for handle in rowHandles:
+            itemIndex = itemIndexDict[handle]
+            self.SetItemState(itemIndex, state, state)
+
+    def _SaveItemState(self, state):
+        rowHandles = []
+        for itemIndex in self._GetItemIndexesWithState(state):
+            self.SetItemState(itemIndex, 0, state)
+            rowHandles.append(self.rowHandles[itemIndex])
+        return rowHandles
+
     def AddColumn(self, attrName, heading = "", defaultWidth = -1,
             justification = wx.LIST_FORMAT_LEFT, cls = None):
         if cls is None:
@@ -97,6 +122,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         super(List, self).ClearAll()
         self.Clear()
         self.columns = []
+        self.columnsByAttrName = {}
         self.sortByAttrNames = []
         if self.__class__.sortByAttrNames:
             self.sortByAttrNames.extend(self.__class__.sortByAttrNames.split())
@@ -130,13 +156,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 for i in self.GetSelectedItemIndexes()]
 
     def GetSelectedItemIndexes(self):
-        itemIndex = -1
-        while True:
-            itemIndex = self.GetNextItem(itemIndex,
-                    state = wx.LIST_STATE_SELECTED)
-            if itemIndex < 0:
-                break
-            yield itemIndex
+        return self._GetItemIndexesWithState(wx.LIST_STATE_SELECTED)
 
     def InsertItem(self, pos = 0, choice = None, refresh = True):
         handle, row = self.dataSet.InsertRow(choice)
@@ -204,19 +224,19 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             if attrName in self.sortByAttrNames:
                 self.sortByAttrNames.remove(attrName)
             self.sortByAttrNames.insert(0, attrName)
-        extraAttrNames = [c.attrName for c in self.columns \
-                if c.attrName not in self.sortByAttrNames]
-        attrNames = self.sortByAttrNames + extraAttrNames
-        selectedRowHandles = []
-        for itemIndex in self.GetSelectedItemIndexes():
-            selectedRowHandles.append(self.rowHandles[itemIndex])
-            self.SetItemState(itemIndex, 0, wx.LIST_STATE_SELECTED)
-        self.rowHandles = self.dataSet.GetSortedRowHandles(*attrNames)
+        sortColumns = [self.columnsByAttrName[n] for n in self.sortByAttrNames]
+        focusedState = self._SaveItemState(wx.LIST_STATE_FOCUSED)
+        selectedState = self._SaveItemState(wx.LIST_STATE_SELECTED)
+        rowDict = self.dataSet.rows
+        itemsToSort = [(self._GetSortKey(rowDict[h], sortColumns), h) \
+                for h in self.rowHandles]
+        itemsToSort.sort()
+        self.rowHandles = [i[1] for i in itemsToSort]
         itemIndexDict = dict([(h, i) for i, h in enumerate(self.rowHandles)])
-        for handle in selectedRowHandles:
-            itemIndex = itemIndexDict[handle]
-            self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
-                    wx.LIST_STATE_SELECTED)
+        self._RestoreItemState(itemIndexDict, focusedState,
+                wx.LIST_STATE_FOCUSED)
+        self._RestoreItemState(itemIndexDict, selectedState,
+                wx.LIST_STATE_SELECTED)
         if refresh:
             self.Refresh()
 
@@ -238,6 +258,16 @@ class ListColumn(ceGUI.BaseControl):
         if self.attrName is not None:
             return getattr(row, self.attrName)
         return row
+
+    def GetSortValue(self, row):
+        if self.attrName is None:
+            return row
+        value = getattr(row, self.attrName)
+        if isinstance(value, basestring):
+            return value.upper()
+        elif isinstance(value, (datetime.datetime, datetime.date)):
+            return str(value)
+        return value
 
 
 class ListDateColumn(ListColumn):
