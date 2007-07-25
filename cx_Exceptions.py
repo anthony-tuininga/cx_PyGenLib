@@ -116,7 +116,7 @@ class BaseException(Exception):
         """Print the exception to the given file."""
         if f is None:
             f = sys.stderr
-        print "Exception encountered:", self.message.rstrip()
+        print >> f, "Exception encountered:", self.message.rstrip()
         print >> f, "Template Id:", self.templateId
         print >> f, "Arguments:"
         for name, value in self.arguments.iteritems():
