@@ -71,8 +71,7 @@ def OpenWindow(name, parent = None, forceNewInstance = False,
             if isinstance(child, cls) and child.instanceName == instanceName:
                 child.SetFocus()
                 return child
-    window = cls(parent)
-    window.instanceName = instanceName
+    window = cls(parent, instanceName = instanceName)
     return window
 
 
