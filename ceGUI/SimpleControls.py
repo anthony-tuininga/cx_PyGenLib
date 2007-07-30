@@ -112,15 +112,32 @@ class Choice(BaseControl, wx.Choice):
             else:
                 dataValue = displayValue = choice
             displayValues.append(displayValue)
-            self.indexesByDataValue[dataValue] = choiceIndex
-            self.dataValuesByIndex[choiceIndex] = dataValue
+            self.__AddChoice(dataValue, choiceIndex)
         wx.Choice.__init__(self, parent, choices = displayValues)
         self._Initialize()
+
+    def __AddChoice(self, dataValue, choiceIndex):
+        self.indexesByDataValue[dataValue] = choiceIndex
+        self.dataValuesByIndex[choiceIndex] = dataValue
+
+    def Append(self, dataValue, displayValue = None):
+        if displayValue is None:
+            displayValue = dataValue
+        choiceIndex = super(Choice, self).Append(displayValue)
+        self.__AddChoice(dataValue, choiceIndex)
+        return choiceIndex
 
     def GetValue(self):
         choiceIndex = self.GetSelection()
         if choiceIndex != wx.NOT_FOUND:
             return self.dataValuesByIndex[choiceIndex]
+
+    def Insert(self, insertIndex, dataValue, displayValue = None):
+        if displayValue is None:
+            displayValue = dataValue
+        choiceIndex = super(Choice, self).Insert(displayValue, insertIndex)
+        self.__AddChoice(dataValue, choiceIndex)
+        return choiceIndex
 
     def SetValue(self, value):
         choiceIndex = self.indexesByDataValue.get(value, wx.NOT_FOUND)
