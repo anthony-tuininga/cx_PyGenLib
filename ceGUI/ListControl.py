@@ -180,8 +180,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.SetItemCount(len(self.rowHandles))
         self.Refresh()
 
-    def RestoreColumnWidths(self):
-        widths = self.ReadSetting("ColumnWidths", isComplex = True)
+    def RestoreColumnWidths(self, settingsName = "ColumnWidths"):
+        widths = self.ReadSetting(settingsName, isComplex = True)
         if widths is not None:
             for columnIndex, width in enumerate(widths):
                 self.SetColumnWidth(columnIndex, width)
@@ -194,11 +194,11 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if self.sortOnRetrieve:
             self.SortItems()
 
-    def SaveColumnWidths(self):
+    def SaveColumnWidths(self, settingsName = "ColumnWidths"):
         numColumns = self.GetColumnCount()
         if numColumns > 1:
             widths = [self.GetColumnWidth(i) for i in range(numColumns - 1)]
-            self.WriteSetting("ColumnWidths", tuple(widths), isComplex = True)
+            self.WriteSetting(settingsName, tuple(widths), isComplex = True)
 
     def SelectAll(self):
         for itemIndex in range(len(self.rowHandles)):
