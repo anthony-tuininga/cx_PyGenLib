@@ -100,20 +100,8 @@ class BaseControl(object):
 class Choice(BaseControl, wx.Choice):
 
     def __init__(self, parent, choices):
-        displayValues = []
-        self.indexesByDataValue = {}
-        self.dataValuesByIndex = {}
-        for choiceIndex, choice in enumerate(choices):
-            if isinstance(choice, (list, tuple)):
-                if len(choice) == 1:
-                    dataValue = displayValue = choice[0]
-                else:
-                    dataValue, displayValue = choice
-            else:
-                dataValue = displayValue = choice
-            displayValues.append(displayValue)
-            self.__AddChoice(dataValue, choiceIndex)
-        wx.Choice.__init__(self, parent, choices = displayValues)
+        wx.Choice.__init__(self, parent)
+        self.SetChoices(choices)
         self._Initialize()
 
     def __AddChoice(self, dataValue, choiceIndex):
@@ -138,6 +126,23 @@ class Choice(BaseControl, wx.Choice):
         choiceIndex = super(Choice, self).Insert(displayValue, insertIndex)
         self.__AddChoice(dataValue, choiceIndex)
         return choiceIndex
+
+    def SetChoices(self, choices):
+        self.Clear()
+        displayValues = []
+        self.indexesByDataValue = {}
+        self.dataValuesByIndex = {}
+        for choiceIndex, choice in enumerate(choices):
+            if isinstance(choice, (list, tuple)):
+                if len(choice) == 1:
+                    dataValue = displayValue = choice[0]
+                else:
+                    dataValue, displayValue = choice
+            else:
+                dataValue = displayValue = choice
+            displayValues.append(displayValue)
+            self.__AddChoice(dataValue, choiceIndex)
+        self.AppendItems(displayValues)
 
     def SetValue(self, value):
         choiceIndex = self.indexesByDataValue.get(value, wx.NOT_FOUND)
