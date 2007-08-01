@@ -68,6 +68,9 @@ class BaseContainer(ceGUI.BaseControl):
     def AddChoiceField(self, *choices):
         return ceGUI.Choice(self, choices)
 
+    def AddIntegerField(self, style = 0):
+        return ceGUI.IntegerField(self, style)
+
     def AddLabel(self, label = ""):
         return wx.StaticText(self, -1, label)
 

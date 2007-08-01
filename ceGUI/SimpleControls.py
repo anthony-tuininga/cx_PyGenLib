@@ -6,8 +6,8 @@ import ceGUI
 import cx_Exceptions
 import wx
 
-__all__ = ["BaseControl", "Choice", "Notebook", "TextField", "Tree",
-           "TreeItem"]
+__all__ = ["BaseControl", "Choice", "IntegerField", "Notebook", "TextField",
+           "Tree", "TreeItem"]
 
 
 class BaseControl(object):
@@ -182,6 +182,31 @@ class TextField(BaseControl, wx.TextCtrl):
 
     def SetValue(self, value):
         wx.TextCtrl.SetValue(self, value or "")
+
+
+class IntegerField(TextField):
+
+    def _Initialize(self):
+        super(IntegerField, self)._Initialize()
+        self.GetParent().BindEvent(self, wx.EVT_CHAR, self.OnChar,
+                skipEvent = False)
+
+    def GetValue(self):
+        value = super(IntegerField, self).GetValue()
+        if value is not None:
+            return int(value)
+
+    def OnChar(self, event):
+        key = event.GetKeyCode()
+        if key in (wx.WXK_BACK, wx.WXK_DELETE) or key > 127:
+            event.Skip()
+        if key >= ord('0') and key <= ord('9'):
+            event.Skip()
+
+    def SetValue(self, value):
+        if value is not None:
+            value = str(value)
+        super(IntegerField, self).SetValue(value)
 
 
 class Tree(BaseControl, wx.TreeCtrl):
