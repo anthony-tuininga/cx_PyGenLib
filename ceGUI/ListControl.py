@@ -137,9 +137,17 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         for itemIndex in range(len(self.rowHandles)):
             self.SetItemState(itemIndex, 0, wx.LIST_STATE_SELECTED)
 
+    def ExportItems(self, outputFile):
+        for item in self.GetItems():
+            exportValues = self.GetItemExportValues(item)
+            print >> outputFile, ",".join(exportValues)
+
     def GetItem(self, itemIndex):
         handle = self.rowHandles[itemIndex]
         return self.dataSet.rows[handle]
+
+    def GetItemExportValues(self, item):
+        return [c.GetExportValue(item) for c in self.columns]
 
     def GetItems(self):
         for handle in self.rowHandles:
@@ -254,10 +262,13 @@ class ListColumn(ceGUI.BaseControl):
         self.justification = justification
         self._Initialize()
 
-    def GetValue(self, row):
-        if self.attrName is not None:
-            return getattr(row, self.attrName)
-        return row
+    def GetExportValue(self, row):
+        value = getattr(row, self.attrName)
+        if isinstance(value, basestring):
+            return '"%s"' % value.replace('"', '""')
+        elif value is not None:
+            return str(value)
+        return ""
 
     def GetSortValue(self, row):
         if self.attrName is None:
@@ -268,6 +279,11 @@ class ListColumn(ceGUI.BaseControl):
         elif isinstance(value, (datetime.datetime, datetime.date)):
             return str(value)
         return value
+
+    def GetValue(self, row):
+        if self.attrName is not None:
+            return getattr(row, self.attrName)
+        return row
 
 
 class ListDateColumn(ListColumn):
