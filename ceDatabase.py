@@ -27,12 +27,19 @@ class RowMetaClass(type):
     def __new__(cls, name, bases, classDict):
         attrNames = _NormalizeValue(bases, classDict, "attrNames")
         extraAttrNames = _NormalizeValue(bases, classDict, "extraAttrNames")
-        _NormalizeValue(bases, classDict, "pkAttrNames")
+        charBooleanAttrNames = \
+                _NormalizeValue(bases, classDict, "charBooleanAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
         if useSlots:
             classDict["__slots__"] = attrNames + extraAttrNames
         if attrNames:
-            initLines = ["    self.%s = %s\n" % (n, n) for n in attrNames]
+            initLines = []
+            for name in attrNames:
+                if name in charBooleanAttrNames:
+                    value = '%s == "Y"' % name
+                else:
+                    value = "%s" % name
+                initLines.append("    self.%s = %s\n" % (name, value))
             codeString = "def __init__(self, %s):\n%s" % \
                     (", ".join(attrNames), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
@@ -50,7 +57,7 @@ class Row(object):
     __slots__ = []
     attrNames = []
     extraAttrNames = []
-    pkAttrNames = []
+    charBooleanAttrNames = []
     useSlots = True
 
     def __repr__(self):
@@ -72,7 +79,8 @@ class DataSetMetaClass(type):
     def __init__(cls, name, bases, classDict):
         super(DataSetMetaClass, cls).__init__(name, bases, classDict)
         classDict = dict(attrNames = cls.attrNames,
-                extraAttrNames = cls.extraAttrNames)
+                extraAttrNames = cls.extraAttrNames,
+                charBooleanAttrNames = cls.charBooleanAttrNames)
         cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         if isinstance(cls.pkAttrNames, basestring):
@@ -99,15 +107,18 @@ class DataSet(object):
     attrNames = []
     extraAttrNames = []
     pkAttrNames = []
+    charBooleanAttrNames = []
     retrievalAttrNames = []
     sortByAttrNames = []
     insertAttrNames = []
     updateAttrNames = []
     uniqueAttrNames = []
     pkIsIdentity = False
+    pkSequenceName = None
 
     def __init__(self, connection, contextItem = None):
         self.connection = connection
+        self.isOracle = connection.__class__.__module__.startswith("cx_Oracle")
         self.childDataSets = []
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
@@ -128,6 +139,8 @@ class DataSet(object):
             else:
                 argIndex = self.retrievalAttrIndexes[name]
                 value = self.retrievalArgs[argIndex]
+            if name in self.charBooleanAttrNames:
+                value = value and "Y" or "N"
             args.append(value)
         return args
 
@@ -153,11 +166,18 @@ class DataSet(object):
     def _GetSqlForRetrieve(self):
         sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
         if self.retrievalAttrNames:
-            whereClauses = ["%s = ?" % n for n in self.retrievalAttrNames]
+            whereClauses = self._GetWhereClauses(self.retrievalAttrNames)
             sql += " where %s" % " and ".join(whereClauses)
         if self.sortByAttrNames:
             sql += " order by %s" % ",".join(self.sortByAttrNames)
         return sql
+
+    def _GetWhereClauses(self, names, paramsUsed = 0):
+        if self.isOracle:
+            return ["%s = :%s" % (n, paramsUsed + i + 1) \
+                    for i, n in enumerate(names)]
+        else:
+            return ["%s = ?" % n for n in names]
 
     def _InsertRowsInDatabase(self, cursor):
         for row in self.insertedRows.itervalues():
@@ -239,7 +259,7 @@ class DataSet(object):
 
     def DeleteRowInDatabase(self, cursor, row):
         args = self._GetArgsFromNames(self.pkAttrNames, row)
-        clauses = ["%s = ?" % n for n in self.pkAttrNames]
+        clauses = self._GetWhereClauses(self.pkAttrNames)
         sql = "delete from %s where %s" % \
                 (self.tableName, " and ".join(clauses))
         cursor.execute(sql, args)
@@ -265,6 +285,11 @@ class DataSet(object):
         return handle, row
 
     def InsertRowInDatabase(self, cursor, row):
+        if self.pkSequenceName is not None:
+            attrName, = self.pkAttrNames
+            cursor.execute("select %s.nextval from dual" % self.pkSequenceName)
+            value, = cursor.fetchone()
+            setattr(row, attrName, value)
         if self.insertAttrNames:
             names = self.insertAttrNames
         elif self.pkIsIdentity:
@@ -272,7 +297,10 @@ class DataSet(object):
         else:
             names = self.attrNames
         args = self._GetArgsFromNames(names, row)
-        values = ["?"] * len(names)
+        if self.isOracle:
+            values = [":%s" % i for i in range(len(names))]
+        else:
+            values = ["?"] * len(names)
         sql = "insert into %s (%s) values (%s)" % \
                 (self.tableName, ",".join(names), ",".join(values))
         cursor.execute(sql, args)
@@ -337,8 +365,12 @@ class DataSet(object):
             dataAttrNames = [n for n in self.attrNames \
                     if n not in self.pkAttrNames]
         args = self._GetArgsFromNames(dataAttrNames + self.pkAttrNames, row)
-        setClauses = ["%s = ?" % n for n in dataAttrNames]
-        whereClauses = ["%s = ?" % n for n in self.pkAttrNames]
+        if self.isOracle:
+            setClauses = ["%s = :%s" % (n, i + 1) \
+                    for i, n in enumerate(dataAttrNames)]
+        else:
+            setClauses = ["%s = ?" % n for n in dataAttrNames]
+        whereClauses = self._GetWhereClauses(self.pkAttrNames, len(setClauses))
         sql = "update %s set %s where %s" % \
                 (self.tableName, ", ".join(setClauses),
                 " and ".join(whereClauses))
