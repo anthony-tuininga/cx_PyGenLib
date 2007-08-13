@@ -113,7 +113,7 @@ class DataSet(object):
     insertAttrNames = []
     updateAttrNames = []
     uniqueAttrNames = []
-    pkIsIdentity = False
+    pkIsGenerated = False
     pkSequenceName = None
 
     def __init__(self, connection, contextItem = None):
@@ -285,14 +285,14 @@ class DataSet(object):
         return handle, row
 
     def InsertRowInDatabase(self, cursor, row):
-        if self.pkSequenceName is not None:
+        if self.pkIsGenerated and self.pkSequenceName is not None:
             attrName, = self.pkAttrNames
             cursor.execute("select %s.nextval from dual" % self.pkSequenceName)
             value, = cursor.fetchone()
             setattr(row, attrName, value)
         if self.insertAttrNames:
             names = self.insertAttrNames
-        elif self.pkIsIdentity:
+        elif self.pkIsGenerated and self.pkSequenceName is None:
             names = [n for n in self.attrNames if n not in self.pkAttrNames]
         else:
             names = self.attrNames
@@ -304,7 +304,7 @@ class DataSet(object):
         sql = "insert into %s (%s) values (%s)" % \
                 (self.tableName, ",".join(names), ",".join(values))
         cursor.execute(sql, args)
-        if self.pkIsIdentity:
+        if self.pkIsGenerated and self.pkSequenceName is None:
             selectItems = ",".join(self.pkAttrNames)
             whereClauses = ["%s = ?" % n for n in self.uniqueAttrNames]
             sql = "select %s from %s where %s" % \
