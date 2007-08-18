@@ -12,9 +12,6 @@ import os
 import wx
 import sys
 
-if sys.platform == "win32":
-    from win32com.shell import shell, shellcon
-
 __all__ = ["Application"]
 
 
@@ -33,8 +30,8 @@ class Application(wx.App):
 
     def GetDefaultLoggingFileName(self):
         baseName = "%s.log" % self.GetAppName()
-        path = str(shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0))
-        return os.path.join(path, baseName)
+        standardPaths = wx.StandardPaths.Get()
+        return os.path.join(standardPaths.GetUserDataDir(), baseName)
 
     def GetTopWindow(self):
         return ceGUI.OpenWindow("w_TopLevelFrame.Frame")
@@ -48,7 +45,14 @@ class Application(wx.App):
         self.topWindow = None
         if self.vendorName is not None:
             self.SetVendorName(self.vendorName)
-        self.settings = wx.ConfigBase.Get()
+        if sys.platform == "win32":
+            self.settings = wx.ConfigBase.Get()
+        else:
+            standardPaths = wx.StandardPaths.Get()
+            dir = standardPaths.GetUserDataDir()
+            fileName = os.path.join(dir, "settings.cfg")
+            self.settings = wx.FileConfig(localFilename = fileName)
+            wx.ConfigBase.Set(self.settings)
         self.StartLogging()
         sys.excepthook = self._ExceptionHandler
         self.copyAttributes = self.copyAttributes.split()
