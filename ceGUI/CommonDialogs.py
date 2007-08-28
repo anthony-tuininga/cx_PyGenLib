@@ -148,9 +148,11 @@ class PreferencesDialog(ceGUI.StandardDialog):
 
 
 class SelectionListDialog(ceGUI.StandardDialog):
+    listClassName = "List"
 
     def _GetList(self):
-        cls = ceGUI.GetModuleItem(self.__class__.__module__, "List")
+        cls = ceGUI.GetModuleItem(self.__class__.__module__,
+                self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
 
     def GetSelectedItem(self):
