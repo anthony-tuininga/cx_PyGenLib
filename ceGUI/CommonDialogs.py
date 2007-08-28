@@ -150,7 +150,7 @@ class PreferencesDialog(ceGUI.StandardDialog):
 class SelectionListDialog(ceGUI.StandardDialog):
 
     def _GetList(self):
-        cls = __import__(self.__class__.__module__).List
+        cls = ceGUI.GetModuleItem(self.__class__.__module__, "List")
         return cls(self, wx.SUNKEN_BORDER)
 
     def GetSelectedItem(self):
@@ -212,7 +212,7 @@ class SelectionListDialog(ceGUI.StandardDialog):
 class SelectionTreeDialog(ceGUI.StandardDialog):
 
     def _GetTree(self):
-        cls = __import__(self.__class__.__module__).Tree
+        cls = ceGUI.GetModuleItem(self.__class__.__module__, "Tree")
         return cls(self, -1, style = wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | \
                 wx.TR_LINES_AT_ROOT)
 

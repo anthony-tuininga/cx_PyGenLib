@@ -57,7 +57,7 @@ class Application(wx.App):
         sys.excepthook = self._ExceptionHandler
         self.copyAttributes = self.copyAttributes.split()
         self.copyAttributes.append("settings")
-        cls = __import__(self.__class__.__module__).Config
+        cls = ceGUI.GetModuleItem(self.__class__.__module__, "Config")
         self.config = cls(self)
         self.copyAttributes.append("config")
         self.OnStartup()
