@@ -295,7 +295,7 @@ class DataSet(object):
         elif self.pkIsGenerated and self.pkSequenceName is None:
             names = [n for n in self.attrNames if n not in self.pkAttrNames]
         else:
-            names = self.attrNames
+            names = self.attrNames + self.retrievalAttrNames
         args = self._GetArgsFromNames(names, row)
         if self.isOracle:
             values = [":%s" % i for i in range(len(names))]
