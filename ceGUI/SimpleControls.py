@@ -27,14 +27,14 @@ class BaseControl(object):
         return item
 
     def _GetClass(self, name):
-        parts = name.split(".")
-        if len(parts) == 2:
-            moduleName, attrName = parts
-        else:
+        pos = name.rfind(".")
+        if pos < 0:
             moduleName = self.__class__.__module__
             attrName = name
-        module = __import__(moduleName)
-        return getattr(module, attrName)
+        else:
+            moduleName = name[:pos]
+            attrName = name[pos + 1:]
+        return ceGUI.GetModuleItem(moduleName, attrName)
 
     def _GetSettingsName(self, name):
         baseSettingsName = self.baseSettingsName
