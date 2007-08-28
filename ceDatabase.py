@@ -34,12 +34,12 @@ class RowMetaClass(type):
             classDict["__slots__"] = attrNames + extraAttrNames
         if attrNames:
             initLines = []
-            for name in attrNames:
-                if name in charBooleanAttrNames:
-                    value = '%s == "Y"' % name
+            for attrName in attrNames:
+                if attrName in charBooleanAttrNames:
+                    value = '%s == "Y"' % attrName
                 else:
-                    value = "%s" % name
-                initLines.append("    self.%s = %s\n" % (name, value))
+                    value = "%s" % attrName
+                initLines.append("    self.%s = %s\n" % (attrName, value))
             codeString = "def __init__(self, %s):\n%s" % \
                     (", ".join(attrNames), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
