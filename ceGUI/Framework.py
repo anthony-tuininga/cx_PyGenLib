@@ -61,20 +61,21 @@ class EventHandler(object):
             app.OnException(exc, self.parent)
 
 
-def GetModuleItem(moduleName, attrName):
+def GetModuleItem(moduleName, attrName = None):
     """Return the item from the module. Note that the __import__() method has a
        quirk in that if the last parameter to the method is empty it only loads
        the top level package instead of the submodule."""
+    if attrName is None:
+        pos = moduleName.rfind(".")
+        attrName = moduleName[pos + 1:]
+        moduleName = moduleName[:pos]
     module = __import__(moduleName, globals(), locals(), [""])
     return getattr(module, attrName)
 
 
 def OpenWindow(name, parent = None, forceNewInstance = False,
         instanceName = None):
-    pos = name.rfind(".")
-    attrName = name[pos + 1:]
-    moduleName = name[:pos]
-    cls = GetModuleItem(moduleName, attrName)
+    cls = GetModuleItem(name)
     if parent is not None and not forceNewInstance:
         for child in parent.GetChildren():
             if isinstance(child, cls) and child.instanceName == instanceName:
