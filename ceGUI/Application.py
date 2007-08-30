@@ -73,6 +73,9 @@ class Application(wx.App):
     def StartLogging(self):
         defaultFileName = self.GetDefaultLoggingFileName()
         fileName = self.settings.Read("LogFileName", defaultFileName)
+        dirName = os.path.dirname(fileName)
+        if not os.path.isdir(dirName):
+            os.makedirs(dirName)
         levelName = self.settings.Read("LogLevel", "ERROR")
         level = getattr(cx_Logging, levelName)
         cx_Logging.StartLogging(fileName, level)
