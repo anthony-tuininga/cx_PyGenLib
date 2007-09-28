@@ -35,14 +35,15 @@ modules = [
 
 setup(
         name = "cx_PyGenLib",
-        version = "HEAD",
+        version = "2.5",
         description = "Set of general Python modules",
-        license = "See LICENSE.txt",
-        long_description = "Set of general Python modules used by a " + \
-                "number of Computronix projects (cx_OracleTools, " + \
-                "cx_OracleDBATools, etc.)",
+        license = "Python Software Foundation License",
+        long_description = "Set of general Python modules used by a " \
+                "number of projects (cx_OracleTools, cx_OracleDBATools, etc.)",
         author = "Anthony Tuininga",
         author_email = "anthony.tuininga@gmail.com",
-        url = "http://starship.python.net/crew/atuining",
+        maintainer = "Anthony Tuininga",
+        maintainer_email = "anthony.tuininga@gmail.com",
+        url = "http://cx-pygenlib.sourceforge.net",
         py_modules = modules)
 

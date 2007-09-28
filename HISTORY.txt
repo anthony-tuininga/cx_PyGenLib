@@ -1,3 +1,22 @@
+Changes from 2.4 to 2.5
+ 1) Added new package ceGUI that extends the wxPython framework by adding such
+    things as logging and saving/restoring settings automatically
+ 2) Added new module ceDatabase which supports common tasks when dealing with
+    sets of data in databases; works with both cx_Oracle and ceODBC
+ 3) In cx_Win32Service, removed extraneous code; used cx_Logging instead of
+    print statements; added a Service object to support getting information
+    about and controlling services; added support for getting a list of
+    service names starting with a particular string
+ 4) In cx_ClassLibrary, ensured that a class can be built that does not require
+    any arguments in its constructor
+ 5) In cx_XML, removed code for SAX parser since the cElementTree module is
+    far more efficient and is not builtin to Python 2.5 and higher
+ 6) In cx_OptionParser, simplified the interface for determining if traceback
+    is desired or not
+ 7) In cx_Threads, correctly specify the logging statements so that the
+    presence of a % character in the message does not cause an exception to be
+    raised
+
 Changes from 2.3 to 2.4
  1) In cx_ClassLibrary, improved class factory class.
  2) In cx_Exceptions, used the original arguments when formatting the message
