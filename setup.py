@@ -10,6 +10,7 @@ import sys
 from distutils.core import setup
 
 modules = [
+        "ceDatabase",
         "cx_ClassLibrary",
         "cx_CVS",
         "cx_DatabaseTable",
@@ -45,5 +46,6 @@ setup(
         maintainer = "Anthony Tuininga",
         maintainer_email = "anthony.tuininga@gmail.com",
         url = "http://cx-pygenlib.sourceforge.net",
-        py_modules = modules)
+        py_modules = modules,
+        packages = ["ceGUI"])
 
