@@ -65,6 +65,9 @@ class BaseContainer(ceGUI.BaseControl):
             self.BindEvent(button, wx.EVT_BUTTON, method)
         return button
 
+    def AddCheckBox(self, label = ""):
+        return wx.CheckBox(self, -1, label)
+
     def AddChoiceField(self, *choices):
         return ceGUI.Choice(self, choices)
 
@@ -74,11 +77,13 @@ class BaseContainer(ceGUI.BaseControl):
     def AddLabel(self, label = ""):
         return wx.StaticText(self, -1, label)
 
-    def AddTextField(self, style = 0):
+    def AddTextField(self, style = 0, maxLength = 0):
         field = ceGUI.TextField(self, style)
         if style & wx.TE_READONLY:
             color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
             field.SetBackgroundColour(color)
+        if maxLength > 0:
+            field.SetMaxLength(maxLength)
         return field
 
     def CreateFieldLayout(self, *controls):
