@@ -3,12 +3,13 @@ Defines classes used for manipulating grids.
 """
 
 import ceGUI
+import datetime
 import functools
 import wx
 import wx.grid
 
-__all__ = ["Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
-           "GridColumnInt", "GridColumnStr" ]
+__all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
+            "GridColumnInt", "GridColumnStr", "GridTable" ]
 
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
@@ -171,6 +172,9 @@ class GridTable(wx.grid.PyGridTableBase):
         self.rowHandles = []
         self.sortByColumnIndexes = []
 
+    def _GetSortKey(self, item, sortByColumns):
+        return [c.GetSortValue(item) for c in sortByColumns]
+
     def AddColumn(self, column):
         self.columns.append(column)
 
@@ -226,6 +230,7 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def Retrieve(self, *args):
         self.dataSet.Retrieve(*args)
+        self.rowHandles = self.dataSet.rows.keys()
         self.SortItems()
 
     def SetValue(self, row, col, rawValue):
@@ -241,17 +246,20 @@ class GridTable(wx.grid.PyGridTableBase):
             if columnIndex in self.sortByColumnIndexes:
                 self.sortByColumnIndexes.remove(columnIndex)
             self.sortByColumnIndexes.insert(0, columnIndex)
-        attrNames = [self.columns[i].attrName \
-                for i in self.sortByColumnIndexes]
-        attrNames.extend([c.attrName for c in self.columns \
-                if c.attrName not in attrNames])
-        self.rowHandles = self.dataSet.GetSortedRowHandles(*attrNames)
+        sortByColumns = [self.columns[i] for i in self.sortByColumnIndexes]
+        sortByColumns.extend([c for c in self.columns \
+                if c not in sortByColumns])
+        rowDict = self.dataSet.rows
+        itemsToSort = [(self._GetSortKey(rowDict[h], sortByColumns), h) \
+                for h in self.rowHandles]
+        itemsToSort.sort()
+        self.rowHandles = [i[1] for i in itemsToSort]
         if rowIndex is not None and rowIndex < len(self.rowHandles):
             rowIndex = self.rowHandles.index(handle)
         return rowIndex
 
 
-class GridColumn(object):
+class GridColumn(ceGUI.BaseControl):
 
     def __init__(self, label, attrName, readOnly = False):
         self.label = label
@@ -259,10 +267,19 @@ class GridColumn(object):
         self.attr = wx.grid.GridCellAttr()
         if readOnly:
             self.attr.SetReadOnly()
+        self._Initialize()
 
     def FromString(self, value):
         if value:
             return value
+
+    def GetSortValue(self, row):
+        value = getattr(row, self.attrName)
+        if isinstance(value, basestring):
+            return value.upper()
+        elif isinstance(value, (datetime.datetime, datetime.date)):
+            return str(value)
+        return value
 
     def ToString(self, value):
         if value is None:
@@ -307,6 +324,10 @@ class GridColumnChoice(GridColumn):
 
     def FromString(self, value):
         return self.dataValuesByDisplayValue[value]
+
+    def GetSortValue(self, row):
+        value = getattr(row, self.attrName)
+        return self.displayValuesByDataValue[value]
 
     def ToString(self, value):
         return self.displayValuesByDataValue[value]
