@@ -4,7 +4,6 @@ Defines classes used for manipulating grids.
 
 import ceGUI
 import datetime
-import functools
 import wx
 import wx.grid
 
@@ -33,8 +32,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.SetRowLabelSize(0)
         self.SetMargins(-10, 0)
         self.DisableDragRowSize()
-        parent.BindEvent(self, wx.grid.EVT_GRID_CELL_RIGHT_CLICK,
-                self.OnCellRightClick)
+        eventHandler = wx.EvtHandler()
+        self.GetGridWindow().PushEventHandler(eventHandler)
+        eventHandler.Bind(wx.EVT_RIGHT_DOWN, self.OnContextMenu)
         parent.BindEvent(self, wx.EVT_SIZE, self._Resize)
         parent.BindEvent(self, wx.grid.EVT_GRID_COL_SIZE, self._Resize)
         parent.BindEvent(self, wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
@@ -44,7 +44,27 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _OnCreate(self):
         self.table = self._GetTable()
         self.SetTable(self.table)
+        self.menu = wx.Menu()
+        self._AddMenuItem(self.menu, "Retrieve", method = self.Retrieve,
+                passEvent = False)
+        self._AddMenuItem(self.menu, "Update", method = self.Update,
+                passEvent = False)
+        self.menu.AppendSeparator()
+        self.insertMenuItem = self._AddMenuItem(self.menu, "Insert",
+                method = self._OnInsert)
+        self.deleteMenuItem = self._AddMenuItem(self.menu, "Delete",
+                method = self._OnDelete)
         super(Grid, self)._OnCreate()
+
+    def _OnDelete(self, event):
+        self.DeleteRows(self.contextRow)
+
+    def _OnInsert(self, event):
+        if self.contextRow == wx.NOT_FOUND:
+            row = len(self.table.rowHandles)
+        else:
+            row = self.contextRow
+        self.InsertRows(row + 1)
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
@@ -100,26 +120,14 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.SetGridCursor(row, 0)
         self.MakeCellVisible(row, 0)
 
-    def OnCellRightClick(self, event):
-        menu = wx.Menu()
-        row = event.GetRow()
-        self._AddMenuItem(menu, "Retrieve", method = self.Retrieve,
-                passEvent = False)
-        self._AddMenuItem(menu, "Update", method = self.Update,
-                passEvent = False)
-        menu.AppendSeparator()
-        insertMenuItem = self._AddMenuItem(menu, "Insert",
-                method = functools.partial(self.InsertRows, row + 1),
-                passEvent = False)
-        if not self.table.CanInsertRow():
-            insertMenuItem.Enable(False)
-        deleteMenuItem = self._AddMenuItem(menu, "Delete",
-                method = functools.partial(self.DeleteRows, row),
-                passEvent = False)
-        if not self.table.CanDeleteRow(row):
-            deleteMenuItem.Enable(False)
-        self.PopupMenu(menu)
-        menu.Destroy()
+    def OnContextMenu(self, event):
+        x, y = self.CalcUnscrolledPosition(event.GetPosition())
+        self.contextRow = self.YToRow(y)
+        self.insertMenuItem.Enable(self.table.CanInsertRow())
+        deleteEnabled = self.contextRow != wx.NOT_FOUND \
+                and self.table.CanDeleteRow(self.contextRow)
+        self.deleteMenuItem.Enable(deleteEnabled)
+        self.PopupMenu(self.menu)
 
     def OnLabelClicked(self, event):
         self.SortItems(event.GetCol())
