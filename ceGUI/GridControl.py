@@ -32,9 +32,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.SetRowLabelSize(0)
         self.SetMargins(-10, 0)
         self.DisableDragRowSize()
-        eventHandler = wx.EvtHandler()
-        self.GetGridWindow().PushEventHandler(eventHandler)
-        eventHandler.Bind(wx.EVT_RIGHT_DOWN, self.OnContextMenu)
+        self.BindEvent(self.GetGridWindow(), wx.EVT_RIGHT_DOWN,
+                self.OnContextMenu)
         parent.BindEvent(self, wx.EVT_SIZE, self._Resize)
         parent.BindEvent(self, wx.grid.EVT_GRID_COL_SIZE, self._Resize)
         parent.BindEvent(self, wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
