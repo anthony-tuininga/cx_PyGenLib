@@ -77,14 +77,8 @@ class BaseContainer(ceGUI.BaseControl):
     def AddLabel(self, label = ""):
         return wx.StaticText(self, -1, label)
 
-    def AddTextField(self, style = 0, maxLength = 0):
-        field = ceGUI.TextField(self, style)
-        if style & wx.TE_READONLY:
-            color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
-            field.SetBackgroundColour(color)
-        if maxLength > 0:
-            field.SetMaxLength(maxLength)
-        return field
+    def AddTextField(self, style = 0, maxLength = 0, cls = ceGUI.TextField):
+        return cls(self, style, maxLength)
 
     def CreateFieldLayout(self, *controls):
         numRows = len(controls) / 2

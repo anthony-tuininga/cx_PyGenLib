@@ -7,7 +7,7 @@ import cx_Exceptions
 import wx
 
 __all__ = ["BaseControl", "Choice", "IntegerField", "Notebook", "TextField",
-           "Tree", "TreeItem"]
+           "Tree", "TreeItem", "UpperCaseTextField"]
 
 
 class BaseControl(object):
@@ -171,8 +171,14 @@ class Notebook(BaseControl, wx.Notebook):
 class TextField(BaseControl, wx.TextCtrl):
     copyAppAttributes = False
 
-    def __init__(self, parent, style = 0):
+    def __init__(self, parent, style = 0, maxLength = 0):
         wx.TextCtrl.__init__(self, parent, style = style)
+        self.maxLength = maxLength
+        if style & wx.TE_READONLY:
+            color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+            self.SetBackgroundColour(color)
+        if maxLength > 0:
+            self.SetMaxLength(maxLength)
         self._Initialize()
 
     def GetValue(self):
@@ -182,6 +188,25 @@ class TextField(BaseControl, wx.TextCtrl):
 
     def SetValue(self, value):
         wx.TextCtrl.SetValue(self, value or "")
+
+
+class UpperCaseTextField(TextField):
+
+    def _Initialize(self):
+        super(UpperCaseTextField, self)._Initialize()
+        self.GetParent().BindEvent(self, wx.EVT_CHAR, self.OnChar,
+                skipEvent = False)
+
+    def OnChar(self, event):
+        key = event.GetKeyCode()
+        if key < ord('a') or key > ord('z'):
+            event.Skip()
+        elif self.maxLength > 0 \
+                and len(wx.TextCtrl.GetValue(self)) >= self.maxLength:
+            event.Skip()
+        else:
+            char = chr(key).upper()
+            self.WriteText(char)
 
 
 class IntegerField(TextField):
