@@ -194,7 +194,7 @@ class UpperCaseTextField(TextField):
 
     def _Initialize(self):
         super(UpperCaseTextField, self)._Initialize()
-        self.GetParent().BindEvent(self, wx.EVT_CHAR, self.OnChar,
+        ceGUI.EventHandler(self.GetParent(), self, wx.EVT_CHAR, self.OnChar,
                 skipEvent = False)
 
     def OnChar(self, event):
@@ -213,7 +213,7 @@ class IntegerField(TextField):
 
     def _Initialize(self):
         super(IntegerField, self)._Initialize()
-        self.GetParent().BindEvent(self, wx.EVT_CHAR, self.OnChar,
+        ceGUI.EventHandler(self.GetParent(), self, wx.EVT_CHAR, self.OnChar,
                 skipEvent = False)
 
     def GetValue(self):
