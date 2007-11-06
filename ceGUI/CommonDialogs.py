@@ -175,8 +175,12 @@ class SelectionListDialog(ceGUI.StandardDialog):
                 self.OnCharPressed)
 
     def OnCharPressed(self, event):
-        if event.GetKeyCode() == 1: # Ctrl-A
+        key = event.GetKeyCode()
+        if key == 1 and not self.selectionList.singleSelection: # Ctrl-A
             self.selectionList.SelectAll()
+        elif key == wx.WXK_RETURN and self.GetSelectedItems():
+            self._OnOk(event)
+            self.EndModal(wx.ID_OK)
         event.Skip()
 
     def OnLayout(self):
@@ -255,5 +259,5 @@ class SelectionTreeDialog(ceGUI.StandardDialog):
 
 
 class LoggingFileNameNotSpecified(cx_Exceptions.BaseException):
-        message = "Logging file name must be specified."
+    message = "Logging file name must be specified."
 
