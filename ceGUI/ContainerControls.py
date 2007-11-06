@@ -59,8 +59,8 @@ class BaseContainer(ceGUI.BaseControl):
         self.SaveSettings()
         self.settings.Flush()
 
-    def AddButton(self, label, method = None):
-        button = wx.Button(self, -1, label)
+    def AddButton(self, label = "", method = None, size = (-1, -1)):
+        button = wx.Button(self, -1, label, size = size)
         if method is not None:
             self.BindEvent(button, wx.EVT_BUTTON, method)
         return button
