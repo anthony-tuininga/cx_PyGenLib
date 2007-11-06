@@ -3,6 +3,7 @@ Defines classes used for manipulating lists.
 """
 
 import ceGUI
+import cx_Exceptions
 import datetime
 import wx
 
@@ -293,4 +294,8 @@ class ListDateColumn(ListColumn):
         value = getattr(row, self.attrName)
         if value is not None:
             return value.strftime(self.dateFormat)
+
+
+class WrongNumberOfRowsSelected(cx_Exceptions.BaseException):
+    message = "Wrong number of rows selected."
 
