@@ -128,6 +128,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.deleteMenuItem.Enable(deleteEnabled)
         self.PopupMenu(self.menu)
 
+    def OnInvalidValueEntered(self, rowIndex, colIndex, rawValue):
+        self.SetGridCursor(rowIndex, colIndex)
+        self.EnableCellEditControl(True)
+
     def OnLabelClicked(self, event):
         self.SortItems(event.GetCol())
 
@@ -224,8 +228,8 @@ class GridTable(wx.grid.PyGridTableBase):
     def GetValue(self, row, col):
         column = self.columns[col]
         handle = self.rowHandles[row]
-        value = getattr(self.dataSet.rows[handle], column.attrName)
-        return column.ToString(value)
+        row = self.dataSet.rows[handle]
+        return column.GetValue(row)
 
     def InsertRows(self, pos = 0, choices = [None]):
         for rowNum, choice in enumerate(choices):
@@ -240,11 +244,14 @@ class GridTable(wx.grid.PyGridTableBase):
         self.rowHandles = self.dataSet.rows.keys()
         self.SortItems()
 
-    def SetValue(self, row, col, rawValue):
-        column = self.columns[col]
-        handle = self.rowHandles[row]
-        value = column.FromString(rawValue)
-        self.dataSet.SetValue(handle, column.attrName, value)
+    def SetValue(self, rowIndex, colIndex, rawValue):
+        column = self.columns[colIndex]
+        handle = self.rowHandles[rowIndex]
+        row = self.dataSet.rows[handle]
+        grid = self.GetView()
+        if not column.SetValue(grid, self.dataSet, handle, row, rawValue):
+            wx.CallAfter(grid.OnInvalidValueEntered, rowIndex, colIndex,
+                    rawValue)
 
     def SortItems(self, columnIndex = None, rowIndex = None):
         if rowIndex is not None and rowIndex < len(self.rowHandles):
@@ -276,10 +283,6 @@ class GridColumn(ceGUI.BaseControl):
             self.attr.SetReadOnly()
         self._Initialize()
 
-    def FromString(self, value):
-        if value:
-            return value
-
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
         if isinstance(value, basestring):
@@ -288,10 +291,19 @@ class GridColumn(ceGUI.BaseControl):
             return str(value)
         return value
 
-    def ToString(self, value):
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
         if value is None:
             return ""
         return str(value)
+
+    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
+        if rawValue:
+            value = rawValue
+        else:
+            value = None
+        dataSet.SetValue(rowHandle, self.attrName, value)
+        return True
 
 
 class GridColumnBool(GridColumn):
@@ -304,11 +316,14 @@ class GridColumnBool(GridColumn):
         self.attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         self.attr.SetRenderer(wx.grid.GridCellBoolRenderer())
 
-    def FromString(self, value):
-        return bool(int(value))
-
-    def ToString(self, value):
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
         return str(int(value))
+
+    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
+        value = bool(int(rawValue))
+        dataSet.SetValue(rowHandle, self.attrName, value)
+        return True
 
 
 class GridColumnChoice(GridColumn):
@@ -329,15 +344,18 @@ class GridColumnChoice(GridColumn):
         editor = wx.grid.GridCellChoiceEditor(displayValues)
         self.attr.SetEditor(editor)
 
-    def FromString(self, value):
-        return self.dataValuesByDisplayValue[value]
-
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
         return self.displayValuesByDataValue[value]
 
-    def ToString(self, value):
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
         return self.displayValuesByDataValue[value]
+
+    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
+        value = self.dataValuesByDisplayValue[rawValue]
+        dataSet.SetValue(rowHandle, self.attrName, value)
+        return True
 
 
 class GridColumnInt(GridColumn):
@@ -348,9 +366,13 @@ class GridColumnInt(GridColumn):
         self.attr.SetEditor(editor)
         self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
 
-    def FromString(self, value):
-        if value:
-            return int(value)
+    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
+        if rawValue:
+            value = int(rawValue)
+        else:
+            value = None
+        dataSet.SetValue(rowHandle, self.attrName, value)
+        return True
 
 
 class GridColumnStr(GridColumn):
