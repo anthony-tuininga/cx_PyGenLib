@@ -248,7 +248,7 @@ class Tree(BaseControl, wx.TreeCtrl):
     def _PopulateBranch(self, parentItemId, items):
         for item in items:
             text = getattr(item.data, item.textAttrName)
-            itemId = self.AppendItem(parentItemId, text)
+            itemId = self.AppendItem(parentItemId, text, item.image)
             self.idsByItem[item.data] = itemId
             self.SetPyData(itemId, item)
             if item.getChildItemsMethod is not None:
@@ -290,8 +290,9 @@ class Tree(BaseControl, wx.TreeCtrl):
 class TreeItem(object):
     textAttrName = "description"
 
-    def __init__(self, data, getChildItemsMethod = None):
+    def __init__(self, data, getChildItemsMethod = None, image = -1):
         self.data = data
+        self.image = image
         self.expanded = False
         self.getChildItemsMethod = getChildItemsMethod
 
