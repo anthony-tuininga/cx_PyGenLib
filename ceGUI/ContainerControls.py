@@ -100,11 +100,12 @@ class BaseContainer(ceGUI.BaseControl):
 
 class Dialog(BaseContainer, wx.Dialog):
     createOkButton = createCancelButton = True
+    style = wx.DEFAULT_DIALOG_STYLE
     title = ""
 
-    def __init__(self, parent = None, style = wx.DEFAULT_DIALOG_STYLE,
-            instanceName = None):
-        wx.Dialog.__init__(self, parent, title = self.title, style = style)
+    def __init__(self, parent = None, instanceName = None):
+        wx.Dialog.__init__(self, parent, title = self.title,
+                style = self.style)
         self.instanceName = instanceName
         self._Initialize()
 
@@ -134,12 +135,12 @@ class Dialog(BaseContainer, wx.Dialog):
 
 
 class Frame(BaseContainer, wx.Frame):
+    style = wx.DEFAULT_FRAME_STYLE
     hasToolbar = hasMenus = True
     title = ""
 
-    def __init__(self, parent = None, style = wx.DEFAULT_FRAME_STYLE,
-            instanceName = None):
-        wx.Frame.__init__(self, parent, title = self.title, style = style)
+    def __init__(self, parent = None, instanceName = None):
+        wx.Frame.__init__(self, parent, title = self.title, style = self.style)
         self.instanceName = instanceName
         self._Initialize()
 
@@ -228,13 +229,7 @@ class ScrolledPanel(Panel, wx.ScrolledWindow):
 
 
 class StandardDialog(Dialog):
-    resizable = True
-
-    def __init__(self, parent = None, instanceName = None):
-        style = wx.CAPTION
-        if self.resizable:
-            style |= wx.RESIZE_BORDER
-        super(StandardDialog, self).__init__(parent, style, instanceName)
+    style = wx.CAPTION | wx.RESIZE_BORDER
 
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
