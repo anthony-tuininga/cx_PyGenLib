@@ -74,8 +74,8 @@ class BaseContainer(ceGUI.BaseControl):
     def AddIntegerField(self, style = 0):
         return ceGUI.IntegerField(self, style)
 
-    def AddLabel(self, label = ""):
-        return wx.StaticText(self, -1, label)
+    def AddLabel(self, label = "", size = (-1, -1)):
+        return wx.StaticText(self, -1, label, size = size)
 
     def AddTextField(self, style = 0, maxLength = 0, cls = ceGUI.TextField):
         return cls(self, style, maxLength)
