@@ -47,5 +47,6 @@ setup(
         maintainer_email = "anthony.tuininga@gmail.com",
         url = "http://cx-pygenlib.sourceforge.net",
         py_modules = modules,
-        packages = ["ceGUI"])
+        packages = ["ceGUI"],
+        scripts = ["img2py.py"])
 
