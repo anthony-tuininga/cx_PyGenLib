@@ -21,18 +21,19 @@ class Image(object):
         stream = cStringIO.StringIO(data)
         return wx.ImageFromStream(stream)
 
-# borrowed from the custom tree control in wx.lib
-Checked = Image( \
-        "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfAhkiA" \
-        "AAAKlJREFUKJFjlAls+M9AImBhYGBgODYxFi7AyMjEwMQEwczMzAxMTMxwmomJiUEz" \
-        "rp+BCdkEQhqYmCDKmYjRYLDBCCrHjNBESAMDAwPcNrgmmAarXXZYNcDUMDIyompiZo" \
-        "ZYbbrVAkPDjYjrDIyMjKg2wUyGAVwaGBlRnAdx0oWAcyjxga4BxXnIwXol5BJODWh+" \
-        "QsQDExMzXg0YoQfTjE8DAwMDAyM5aQ8AoE8ebApv5jgAAAAASUVORK5CYII=")
 
 # borrowed from the custom tree control in wx.lib
-Unchecked = Image( \
-        "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfAhkiA" \
-        "AAAG1JREFUKJGd0sENgDAIBdDPhzHcwGk8eXUU757cyM30UKOlF38lIU0ID5IGG6b1" \
-        "RGcEABzb/BRI3ulwD7g7IspLOsZlB+sJX4As7ewBpL9IBWmTChqkgYRU0CANmFVIBW" \
-        "aWN6kgfYQKAMD+3N4FsAcJ4jYyX4sAAAAASUVORK5CYII=")
+Checked = Image(
+        "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfAhkiAAA"
+        "AKlJREFUKJFjlAls+M9AImBhYGBgODYxFi7AyMjEwMQEwczMzAxMTMxwmomJiUEzrp+B"
+        "CdkEQhqYmCDKmYjRYLDBCCrHjNBESAMDAwPcNrgmmAarXXZYNcDUMDIyompiZoZYbbrV"
+        "AkPDjYjrDIyMjKg2wUyGAVwaGBlRnAdx0oWAcyjxga4BxXnIwXol5BJODWh+QsQDExMz"
+        "Xg0YoQfTjE8DAwMDAyM5aQ8AoE8ebApv5jgAAAAASUVORK5CYII=")
+
+# borrowed from the custom tree control in wx.lib
+Unchecked = Image(
+        "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfAhkiAAA"
+        "AG1JREFUKJGd0sENgDAIBdDPhzHcwGk8eXUU757cyM30UKOlF38lIU0ID5IGG6b1RGcE"
+        "ABzb/BRI3ulwD7g7IspLOsZlB+sJX4As7ewBpL9IBWmTChqkgYRU0CANmFVIBWaWN6kg"
+        "fYQKAMD+3N4FsAcJ4jYyX4sAAAAASUVORK5CYII=")
 
