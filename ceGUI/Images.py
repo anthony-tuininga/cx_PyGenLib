@@ -10,35 +10,29 @@ __all__ = [ "Image" ]
 
 class Image(object):
 
-    def GetBitmap(cls):
-        return wx.BitmapFromImage(cls.GetImage())
+    def __init__(self, data):
+        self.data = data
 
-    GetBitmap = classmethod(GetBitmap)
+    def GetBitmap(self):
+        return wx.BitmapFromImage(self.GetImage())
 
-    def GetImage(cls):
-        data = base64.b64decode(cls.data)
+    def GetImage(self):
+        data = base64.b64decode(self.data)
         stream = cStringIO.StringIO(data)
         return wx.ImageFromStream(stream)
 
-    GetImage = classmethod(GetImage)
-
+# borrowed from the custom tree control in wx.lib
+Checked = Image( \
+        "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfAhkiA" \
+        "AAAKlJREFUKJFjlAls+M9AImBhYGBgODYxFi7AyMjEwMQEwczMzAxMTMxwmomJiUEz" \
+        "rp+BCdkEQhqYmCDKmYjRYLDBCCrHjNBESAMDAwPcNrgmmAarXXZYNcDUMDIyompiZo" \
+        "ZYbbrVAkPDjYjrDIyMjKg2wUyGAVwaGBlRnAdx0oWAcyjxga4BxXnIwXol5BJODWh+" \
+        "QsQDExMzXg0YoQfTjE8DAwMDAyM5aQ8AoE8ebApv5jgAAAAASUVORK5CYII=")
 
 # borrowed from the custom tree control in wx.lib
-class Checked(Image):
-    data = \
-            "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfA" \
-            "hkiAAAAKlJREFUKJFjlAls+M9AImBhYGBgODYxFi7AyMjEwMQEwczMzAxMTMxw" \
-            "momJiUEzrp+BCdkEQhqYmCDKmYjRYLDBCCrHjNBESAMDAwPcNrgmmAarXXZYNc" \
-            "DUMDIyompiZoZYbbrVAkPDjYjrDIyMjKg2wUyGAVwaGBlRnAdx0oWAcyjxga4B" \
-            "xXnIwXol5BJODWh+QsQDExMzXg0YoQfTjE8DAwMDAyM5aQ8AoE8ebApv5jgAAA" \
-            "AASUVORK5CYII="
-
-
-# borrowed from the custom tree control in wx.lib
-class Unchecked(Image):
-    data = \
-            "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfA" \
-            "hkiAAAAG1JREFUKJGd0sENgDAIBdDPhzHcwGk8eXUU757cyM30UKOlF38lIU0I" \
-            "D5IGG6b1RGcEABzb/BRI3ulwD7g7IspLOsZlB+sJX4As7ewBpL9IBWmTChqkgY" \
-            "RU0CANmFVIBWaWN6kgfYQKAMD+3N4FsAcJ4jYyX4sAAAAASUVORK5CYII="
+Unchecked = Image( \
+        "iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAABHNCSVQICAgIfAhkiA" \
+        "AAAG1JREFUKJGd0sENgDAIBdDPhzHcwGk8eXUU757cyM30UKOlF38lIU0ID5IGG6b1" \
+        "RGcEABzb/BRI3ulwD7g7IspLOsZlB+sJX4As7ewBpL9IBWmTChqkgYRU0CANmFVIBW" \
+        "aWN6kgfYQKAMD+3N4FsAcJ4jYyX4sAAAAASUVORK5CYII=")
 
