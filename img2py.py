@@ -8,10 +8,9 @@ need to deal with a different type of image.
 import base64
 import sys
 import wx
-import zlib
 
 for argIndex, inputFileName in enumerate(sys.argv[1:]):
-    data = base64.b64encode(zlib.compress(file(inputFileName, "rb").read()))
+    data = base64.b64encode(file(inputFileName, "rb").read())
     print "# image from %s" % inputFileName
     print "class Image%s(ceGUI.Image):" % (argIndex + 1)
     print "    data = \\"
