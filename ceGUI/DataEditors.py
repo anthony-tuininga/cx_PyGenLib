@@ -49,26 +49,6 @@ class GridEditWindow(ceGUI.Frame):
         self.subWindows.append(subWindow)
         return subWindow
 
-    def ContinueQuery(self, allowCancel = True):
-        self.grid.SaveEditControlValue()
-        if self.grid.PendingChanges():
-            message = "Do you want to save your changes?"
-            flag = wx.YES_NO | wx.ICON_EXCLAMATION
-            if allowCancel:
-                flag |= wx.CANCEL
-            dialog = wx.MessageDialog(self, message, self.GetTitle(), flag)
-            response = dialog.ShowModal()
-            if response == wx.ID_YES:
-                self.grid.Update()
-            elif response == wx.ID_CANCEL:
-                return False
-        for subWindow in self.subWindows:
-            if not subWindow.window:
-                continue
-            if not subWindow.window.ContinueQuery(allowCancel):
-                return False
-        return True
-
     def GetCurrentRow(self):
         return self.grid.GetCurrentRow()
 
@@ -82,20 +62,11 @@ class GridEditWindow(ceGUI.Frame):
     def OnCellSelected(self, event):
         currentRow = self.grid.GetGridCursorRow()
         if event.GetRow() != currentRow and self.subWindows:
-            for subWindow in self.subWindows:
-                if not subWindow.window:
-                    continue
-                if not subWindow.window.ContinueQuery():
-                    event.Veto()
-                    return
+            if not self.ContinueQueryChildren():
+                event.Veto()
+                return
             wx.CallAfter(self.RetrieveSubWindows)
         event.Skip()
-
-    def OnClose(self, event):
-        if self.ContinueQuery():
-            event.Skip()
-        else:
-            event.Veto()
 
     def OnCreateToolbar(self):
         self.retrieveToolbarItem = self.AddToolbarItem("Retrieve",
@@ -150,6 +121,10 @@ class GridEditWindow(ceGUI.Frame):
         self.grid.SaveEditControlValue()
         self.grid.Update()
 
+    def PendingChanges(self):
+        self.grid.SaveEditControlValue()
+        return self.grid.PendingChanges()
+
     def RestoreSettings(self):
         self.grid.RestoreColumnWidths()
 
@@ -170,6 +145,9 @@ class GridEditWindow(ceGUI.Frame):
 
     def SaveSettings(self):
         self.grid.SaveColumnWidths()
+
+    def UpdateChanges(self):
+        self.grid.Update()
 
 
 class SubWindow(object):

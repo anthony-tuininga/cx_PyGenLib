@@ -80,6 +80,28 @@ class BaseContainer(ceGUI.BaseControl):
     def AddTextField(self, style = 0, maxLength = 0, cls = ceGUI.TextField):
         return cls(self, style, maxLength)
 
+    def ContinueQuery(self, allowCancel = True):
+        if self.PendingChanges():
+            message = "Do you want to save your changes?"
+            flag = wx.YES_NO | wx.ICON_EXCLAMATION
+            if allowCancel:
+                flag |= wx.CANCEL
+            dialog = wx.MessageDialog(self, message, self.GetTitle(), flag)
+            response = dialog.ShowModal()
+            if response == wx.ID_YES:
+                self.UpdateChanges()
+            elif response == wx.ID_CANCEL:
+                return False
+        return self.ContinueQueryChildren(allowCancel)
+
+    def ContinueQueryChildren(self, allowCancel = True):
+        for window in self.GetChildren():
+            if not isinstance(window, BaseContainer):
+                continue
+            if not window.ContinueQuery(allowCancel):
+                return False
+        return True
+
     def CreateFieldLayout(self, *controls):
         numRows = len(controls) / 2
         sizer = wx.FlexGridSizer(rows = numRows, cols = 2, vgap = 5, hgap = 5)
@@ -92,10 +114,19 @@ class BaseContainer(ceGUI.BaseControl):
         return sizer
 
     def OnClose(self, event):
-        event.Skip()
+        if self.ContinueQuery():
+            event.Skip()
+        else:
+            event.Veto()
 
     def OpenWindow(self, name, forceNewInstance = False, instanceName = None):
         return ceGUI.OpenWindow(name, self, forceNewInstance, instanceName)
+
+    def PendingChanges(self):
+        return False
+
+    def UpdateChanges(self):
+        pass
 
 
 class Dialog(BaseContainer, wx.Dialog):
@@ -191,15 +222,6 @@ class Frame(BaseContainer, wx.Frame):
             self.BindEvent(item, wx.EVT_TOOL, method,
                     createBusyCursor = createBusyCursor, passEvent = passEvent)
         return item
-
-    def OnClose(self, event):
-        for window in self.GetChildren():
-            if not isinstance(window, ceGUI.Frame):
-                continue
-            if not window.Close():
-                event.Veto()
-                return
-        event.Skip()
 
     def OnCreateToolbar(self):
         pass
