@@ -171,7 +171,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.SetGridCursor(row, col)
 
     def Update(self):
+        self.SaveEditControlValue()
         self.table.dataSet.Update()
+        self.Refresh()
 
 
 class GridTable(wx.grid.PyGridTableBase):

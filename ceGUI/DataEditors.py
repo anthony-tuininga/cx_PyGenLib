@@ -118,7 +118,6 @@ class GridEditWindow(ceGUI.Frame):
         pass
 
     def OnUpdate(self, event):
-        self.grid.SaveEditControlValue()
         self.grid.Update()
 
     def PendingChanges(self):
