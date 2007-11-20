@@ -44,15 +44,15 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.table = self._GetTable()
         self.SetTable(self.table)
         self.menu = wx.Menu()
-        self.retrieveMenuItem = self._AddMenuItem(self.menu, "Retrieve",
-                method = self.Retrieve, passEvent = False)
-        self.updateMenuItem = self._AddMenuItem(self.menu, "Update",
-                method = self.Update, passEvent = False)
+        self.retrieveMenuItem = self._AddMenuItem(self.menu,
+                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
+        self.updateMenuItem = self._AddMenuItem(self.menu,
+                "Save\tCtrl-S", method = self.Update, passEvent = False)
         self.menu.AppendSeparator()
-        self.insertMenuItem = self._AddMenuItem(self.menu, "Insert",
-                method = self._OnInsert)
-        self.deleteMenuItem = self._AddMenuItem(self.menu, "Delete",
-                method = self._OnDelete)
+        self.insertMenuItem = self._AddMenuItem(self.menu,
+                "Insert\tCtrl-I", method = self._OnInsert)
+        self.deleteMenuItem = self._AddMenuItem(self.menu,
+                "Delete\tCtrl-D", method = self._OnDelete)
         accelerators = [
                 ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
                 ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
