@@ -44,22 +44,37 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.table = self._GetTable()
         self.SetTable(self.table)
         self.menu = wx.Menu()
-        self._AddMenuItem(self.menu, "Retrieve", method = self.Retrieve,
-                passEvent = False)
-        self._AddMenuItem(self.menu, "Update", method = self.Update,
-                passEvent = False)
+        self.retrieveMenuItem = self._AddMenuItem(self.menu, "Retrieve",
+                method = self.Retrieve, passEvent = False)
+        self.updateMenuItem = self._AddMenuItem(self.menu, "Update",
+                method = self.Update, passEvent = False)
         self.menu.AppendSeparator()
         self.insertMenuItem = self._AddMenuItem(self.menu, "Insert",
                 method = self._OnInsert)
         self.deleteMenuItem = self._AddMenuItem(self.menu, "Delete",
                 method = self._OnDelete)
+        accelerators = [
+                ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
+                ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
+                ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ),
+                ( wx.ACCEL_CTRL, ord('S'), self.updateMenuItem.GetId() )
+        ]
+        self.acceleratorTable = wx.AcceleratorTable(accelerators)
+        self.SetAcceleratorTable(self.acceleratorTable)
+        self.contextRow = None
         super(Grid, self)._OnCreate()
 
     def _OnDelete(self, event):
-        self.DeleteRows(self.contextRow)
+        if self.contextRow is None:
+            row = self.GetGridCursorRow()
+        else:
+            row = self.contextRow
+        self.DeleteRows(row)
 
     def _OnInsert(self, event):
-        if self.contextRow == wx.NOT_FOUND:
+        if self.contextRow is None:
+            row = self.GetGridCursorRow()
+        elif self.contextRow == wx.NOT_FOUND:
             row = len(self.table.rowHandles)
         else:
             row = self.contextRow
@@ -127,6 +142,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 and self.table.CanDeleteRow(self.contextRow)
         self.deleteMenuItem.Enable(deleteEnabled)
         self.PopupMenu(self.menu)
+        self.contextRow = None
 
     def OnInvalidValueEntered(self, rowIndex, colIndex, rawValue):
         self.SetGridCursor(rowIndex, colIndex)
