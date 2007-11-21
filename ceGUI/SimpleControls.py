@@ -4,6 +4,7 @@ Defines simple controls with extensions to wx functionality.
 
 import ceGUI
 import cx_Exceptions
+import datetime
 import wx
 
 __all__ = ["BaseControl", "Choice", "IntegerField", "Notebook", "TextField",
@@ -246,8 +247,10 @@ class Tree(BaseControl, wx.TreeCtrl):
         self._PopulateRootItems()
 
     def _PopulateBranch(self, parentItemId, items):
-        for item in items:
-            text = getattr(item.data, item.textAttrName)
+        itemsToSort = [(i.GetSortValue(), i) for i in items]
+        itemsToSort.sort()
+        for sortValue, item in itemsToSort:
+            text = item.GetTextValue()
             itemId = self.AppendItem(parentItemId, text, item.image)
             self.idsByItem[item.data] = itemId
             self.SetPyData(itemId, item)
@@ -288,7 +291,7 @@ class Tree(BaseControl, wx.TreeCtrl):
 
 
 class TreeItem(object):
-    textAttrName = "description"
+    textAttrName = sortAttrName = "description"
 
     def __init__(self, data, getChildItemsMethod = None, image = -1):
         self.data = data
@@ -298,6 +301,20 @@ class TreeItem(object):
 
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.data)
+
+    def GetSortValue(self):
+        value = getattr(self.data, self.sortAttrName)
+        if isinstance(value, basestring):
+            return value.upper()
+        elif isinstance(value, (datetime.datetime, datetime.date)):
+            return str(value)
+        return value
+
+    def GetTextValue(self):
+        value = getattr(self.data, self.textAttrName)
+        if value is None:
+            return ""
+        return value
 
 
 class WrongNumberOfItemsSelected(cx_Exceptions.BaseException):
