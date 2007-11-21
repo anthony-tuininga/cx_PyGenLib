@@ -42,6 +42,10 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         if item.getChildItemsMethod is not None:
             self.SetItemHasChildren(itemId)
 
+    def DeleteItem(self, item):
+        itemId = self.idsByItem[item]
+        self.Delete(itemId)
+
     def GetItemParents(self, item):
         while True:
             itemId = self.idsByItem[item]
