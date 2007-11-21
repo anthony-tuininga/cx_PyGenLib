@@ -4,6 +4,7 @@ from Application import *
 from SimpleControls import *
 from ListControl import *
 from GridControl import *
+from TreeControl import *
 from ContainerControls import *
 from CommonDialogs import *
 from DataEditors import *
