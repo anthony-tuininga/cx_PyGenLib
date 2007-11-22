@@ -18,6 +18,24 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         wx.grid.Grid.__init__(self, parent)
         self._Initialize(parent)
 
+    def _CreateContextMenu(self):
+        self.menu = wx.Menu()
+        self.retrieveMenuItem = self._AddMenuItem(self.menu,
+                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
+        self.updateMenuItem = self._AddMenuItem(self.menu,
+                "Save\tCtrl-S", method = self.Update, passEvent = False)
+        self.menu.AppendSeparator()
+        self.insertMenuItem = self._AddMenuItem(self.menu,
+                "Insert\tCtrl-I", method = self._OnInsert)
+        self.deleteMenuItem = self._AddMenuItem(self.menu,
+                "Delete\tCtrl-D", method = self._OnDelete)
+
+    def _GetAccelerators(self):
+        return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('S'), self.updateMenuItem.GetId() ) ]
+
     def _GetDataSet(self):
         cls = self._GetClass(self.dataSetClassName)
         return cls(self.config.connection)
@@ -43,22 +61,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _OnCreate(self):
         self.table = self._GetTable()
         self.SetTable(self.table)
-        self.menu = wx.Menu()
-        self.retrieveMenuItem = self._AddMenuItem(self.menu,
-                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
-        self.updateMenuItem = self._AddMenuItem(self.menu,
-                "Save\tCtrl-S", method = self.Update, passEvent = False)
-        self.menu.AppendSeparator()
-        self.insertMenuItem = self._AddMenuItem(self.menu,
-                "Insert\tCtrl-I", method = self._OnInsert)
-        self.deleteMenuItem = self._AddMenuItem(self.menu,
-                "Delete\tCtrl-D", method = self._OnDelete)
-        accelerators = [
-                ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
-                ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
-                ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ),
-                ( wx.ACCEL_CTRL, ord('S'), self.updateMenuItem.GetId() )
-        ]
+        self._CreateContextMenu()
+        accelerators = self._GetAccelerators()
         self.acceleratorTable = wx.AcceleratorTable(accelerators)
         self.SetAcceleratorTable(self.acceleratorTable)
         self.contextRow = None
