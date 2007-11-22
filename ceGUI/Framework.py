@@ -5,11 +5,21 @@ such things as exception handling and managing busy cursors.
 
 import cx_Exceptions
 import cx_Logging
+import cx_Threads
 import wx
 import sys
 
-__all__ = ["BusyCursorContext", "EventHandler", "GetModuleItem", "OpenWindow",
-           "TransactionContext"]
+__all__ = [ "BusyCursorContext", "EventHandler", "EVT_THREAD_TERMINATED",
+            "GetModuleItem", "OpenWindow", "Thread", "TransactionContext" ]
+
+EVT_THREAD_TERMINATED = wx.NewEventType()
+
+class ThreadTerminatedEvent(wx.PyEvent):
+
+    def __init__(self, thread):
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_THREAD_TERMINATED)
+        self.thread = thread
 
 
 class BusyCursorContext(object):
@@ -100,4 +110,15 @@ class TransactionContext(BusyCursorContext):
             self.connection.rollback()
             return super(TransactionContext, self).__exit__(excType, excValue,
                     excTraceback)
+
+
+class Thread(cx_Threads.Thread):
+
+    def __init__(self, window, method, *args, **kwargs):
+        super(Thread, self).__init__(method, *args, **kwargs)
+        self.window = window
+
+    def OnThreadEnd(self):
+        super(Thread, self).OnThreadEnd()
+        wx.PostEvent(self.window, ThreadTerminatedEvent(self))
 

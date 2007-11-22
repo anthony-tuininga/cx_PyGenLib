@@ -36,8 +36,9 @@ class Application(wx.App):
     def GetTopWindow(self):
         return ceGUI.OpenWindow("w_TopLevelFrame.Frame")
 
-    def OnException(self, exc, parent = None):
-        cx_Logging.LogException(exc)
+    def OnException(self, exc, parent = None, logException = True):
+        if logException:
+            cx_Logging.LogException(exc)
         wx.MessageBox(exc.message, "Error", wx.OK | wx.ICON_EXCLAMATION,
                 parent)
 
