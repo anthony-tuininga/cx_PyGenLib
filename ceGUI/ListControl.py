@@ -138,7 +138,10 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         for itemIndex in range(len(self.rowHandles)):
             self.SetItemState(itemIndex, 0, wx.LIST_STATE_SELECTED)
 
-    def ExportItems(self, outputFile):
+    def ExportItems(self, outputFile, exportHeaders = False):
+        if exportHeaders:
+            exportValues = self.GetItemExportHeadings()
+            print >> outputFile, ",".join(exportValues)
         for item in self.GetItems():
             exportValues = self.GetItemExportValues(item)
             print >> outputFile, ",".join(exportValues)
@@ -146,6 +149,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def GetItem(self, itemIndex):
         handle = self.rowHandles[itemIndex]
         return self.dataSet.rows[handle]
+
+    def GetItemExportHeadings(self):
+        return [c.GetExportHeading() for c in self.columns]
 
     def GetItemExportValues(self, item):
         return [c.GetExportValue(item) for c in self.columns]
@@ -262,6 +268,11 @@ class ListColumn(ceGUI.BaseControl):
         self.defaultWidth = defaultWidth
         self.justification = justification
         self._Initialize()
+
+    def GetExportHeading(self):
+        if self.heading:
+            return '"%s"' % self.heading.replace('"', '""')
+        return ""
 
     def GetExportValue(self, row):
         value = getattr(row, self.attrName)
