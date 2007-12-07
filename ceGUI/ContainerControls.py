@@ -253,13 +253,15 @@ class ScrolledPanel(Panel, wx.ScrolledWindow):
 class StandardDialog(Dialog):
     style = wx.CAPTION | wx.RESIZE_BORDER
 
+    def _GetButtons(self):
+        return [self.okButton, self.cancelButton]
+
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
         buttonSizer.AddStretchSpacer()
-        buttonSizer.Add(self.okButton,
-                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
-        buttonSizer.Add(self.cancelButton,
-                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
+        for button in self._GetButtons():
+            buttonSizer.Add(button, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+                    border = 5)
         topSizer.Add(buttonSizer, flag = wx.EXPAND)
         super(StandardDialog, self)._OnLayout(topSizer)
 
