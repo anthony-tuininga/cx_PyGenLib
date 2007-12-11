@@ -137,6 +137,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.ProcessTableMessage(msg)
         self.SetGridCursor(row, 0)
         self.MakeCellVisible(row, 0)
+        self.EnableCellEditControl(True)
 
     def OnContextMenu(self, event):
         x, y = self.CalcUnscrolledPosition(event.GetPosition())
