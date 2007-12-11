@@ -104,6 +104,7 @@ class DataSet(object):
        deletion of rows in a database."""
     __metaclass__ = DataSetMetaClass
     tableName = None
+    updateTableName = None
     attrNames = []
     extraAttrNames = []
     pkAttrNames = []
@@ -122,6 +123,8 @@ class DataSet(object):
         self.childDataSets = []
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
+        if self.updateTableName is None:
+            self.updateTableName = self.tableName
         self.Clear()
 
     def _DeleteRowsInDatabase(self, cursor):
@@ -261,7 +264,7 @@ class DataSet(object):
         args = self._GetArgsFromNames(self.pkAttrNames, row)
         clauses = self._GetWhereClauses(self.pkAttrNames)
         sql = "delete from %s where %s" % \
-                (self.tableName, " and ".join(clauses))
+                (self.updateTableName, " and ".join(clauses))
         cursor.execute(sql, args)
 
     def GetKeyedDataSet(self, *attrNames):
@@ -304,7 +307,7 @@ class DataSet(object):
         else:
             values = ["?"] * len(names)
         sql = "insert into %s (%s) values (%s)" % \
-                (self.tableName, ",".join(names), ",".join(values))
+                (self.updateTableName, ",".join(names), ",".join(values))
         cursor.execute(sql, args)
         if self.pkIsGenerated and self.pkSequenceName is None:
             selectItems = ",".join(self.pkAttrNames)
@@ -374,7 +377,7 @@ class DataSet(object):
             setClauses = ["%s = ?" % n for n in dataAttrNames]
         whereClauses = self._GetWhereClauses(self.pkAttrNames, len(setClauses))
         sql = "update %s set %s where %s" % \
-                (self.tableName, ", ".join(setClauses),
+                (self.updateTableName, ", ".join(setClauses),
                 " and ".join(whereClauses))
         cursor.execute(sql, args)
 
