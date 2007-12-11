@@ -12,6 +12,7 @@ __all__ = [ "List", "ListColumn", "ListDateColumn" ]
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
     dataSetClassName = "DataSet"
+    createContextMenu = False
     singleSelection = False
     sortByAttrNames = None
     sortOnRetrieve = True
@@ -25,6 +26,13 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 createBusyCursor = True)
         parent.BindEvent(self, wx.EVT_SIZE, self._OnResize)
         parent.BindEvent(self, wx.EVT_LIST_COL_END_DRAG, self._OnResize)
+        if self.createContextMenu:
+            self._CreateContextMenu()
+            accelerators = self._GetAccelerators()
+            self.acceleratorTable = wx.AcceleratorTable(accelerators)
+            self.SetAcceleratorTable(self.acceleratorTable)
+            self.contextRow = None
+            parent.BindEvent(self, wx.EVT_CONTEXT_MENU, self.OnContextMenu)
         self.ClearAll()
         self._Initialize()
         self._Resize()
@@ -43,6 +51,26 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.InsertColumn(columnIndex + 1, column.heading,
                     column.justification, column.defaultWidth)
             self.DeleteColumn(columnIndex)
+
+    def _CreateContextMenu(self):
+        self.menu = wx.Menu()
+        self.retrieveMenuItem = self._AddMenuItem(self.menu,
+                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
+        self.saveMenuItem = self._AddMenuItem(self.menu,
+                "Save\tCtrl-S", method = self.Update, passEvent = False)
+        self.menu.AppendSeparator()
+        self.insertMenuItem = self._AddMenuItem(self.menu,
+                "Insert\tCtrl-I", method = self.OnInsertItems,
+                passEvent = False)
+        self.deleteMenuItem = self._AddMenuItem(self.menu,
+                "Delete\tCtrl-D", method = self.OnDeleteItems,
+                passEvent = False)
+
+    def _GetAccelerators(self):
+        return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('S'), self.saveMenuItem.GetId() ) ]
 
     def _GetDataSet(self):
         if self.dataSetClassName is not None:
@@ -116,6 +144,12 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def AppendItem(self, choice = None, refresh = True):
         return self.InsertItem(len(self.rowHandles), choice, refresh)
 
+    def CanDeleteItems(self, items):
+        return True
+
+    def CanInsertItems(self):
+        return True
+
     def Clear(self):
         self.rowHandles = []
 
@@ -128,11 +162,12 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if self.__class__.sortByAttrNames:
             self.sortByAttrNames.extend(self.__class__.sortByAttrNames.split())
 
-    def DeleteItem(self, itemIndex):
+    def DeleteItem(self, itemIndex, refresh = True):
         handle = self.rowHandles.pop(itemIndex)
         self.dataSet.DeleteRow(handle)
         self.SetItemCount(len(self.rowHandles))
-        self.Refresh()
+        if refresh:
+            self.Refresh()
 
     def DeselectAll(self):
         for itemIndex in range(len(self.rowHandles)):
@@ -145,6 +180,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         for item in self.GetItems():
             exportValues = self.GetItemExportValues(item)
             print >> outputFile, ",".join(exportValues)
+
+    def GetInsertChoicesDialog(self, parent):
+        pass
 
     def GetItem(self, itemIndex):
         handle = self.rowHandles[itemIndex]
@@ -181,6 +219,26 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.Refresh()
         return row
 
+    def OnContextMenu(self, event):
+        x, y = event.GetPosition()
+        row, flags = self.HitTest((x,y))
+        if flags & wx.LIST_HITTEST_ONITEM:
+            self.contextRow = row
+        else:
+            self.contextRow = None
+        selectedItems = self.GetSelectedItems()
+        deleteEnabled = len(selectedItems) > 0 \
+                and self.CanDeleteItems(selectedItems)
+        self.insertMenuItem.Enable(self.CanInsertItems())
+        self.deleteMenuItem.Enable(deleteEnabled)
+        self.PopupMenu(self.menu)
+        self.contextRow = None
+
+    def OnDeleteItems(self):
+        for pos, itemIndex in enumerate(self.GetSelectedItemIndexes()):
+            self.DeleteItem(itemIndex - pos, refresh = False)
+        self.Refresh()
+
     def OnGetItemText(self, itemIndex, columnIndex):
         handle = self.rowHandles[itemIndex]
         row = self.dataSet.rows[handle]
@@ -189,6 +247,12 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if value is None:
             value = ""
         return value
+
+    def OnInsertItems(self):
+        pass
+
+    def PendingChanges(self):
+        return self.dataSet.PendingChanges()
 
     def RefreshFromDataSet(self):
         self.rowHandles = self.dataSet.rows.keys()
@@ -202,6 +266,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 self.SetColumnWidth(columnIndex, width)
 
     def Retrieve(self, *args):
+        if not args:
+            args = self.dataSet.retrievalArgs
         self.DeleteAllItems()
         self.dataSet.Retrieve(*args)
         self.rowHandles = self.dataSet.rows.keys()
