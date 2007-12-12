@@ -329,6 +329,20 @@ class DataSet(object):
                 return True
         return False
 
+    def RevertChanges(self, includeChildren = True):
+        while self.insertedRows:
+            handle, row = self.insertedRows.popitem()
+            del self.rows[handle]
+        while self.deletedRows:
+            handle, row = self.deletedRows.popitem()
+            self.rows[handle] = row
+        while self.updatedRows:
+            handle, row = self.updatedRows.popitem()
+            self.rows[handle] = row
+        if includeChildren:
+            for dataSet in self.childDataSets:
+                dataSet.RevertChanges()
+
     def Retrieve(self, *args):
         self.Clear()
         if not args and self.retrievalAttrNames:
