@@ -127,17 +127,22 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         dialog = self.GetInsertChoicesDialog(self.GetParent())
         if dialog is None:
             choices = [None] * numRows
-        elif dialog.ShowModal() != wx.ID_OK:
-            return
         else:
-            choices = dialog.GetSelectedItems()
+            if dialog.ShowModal() == wx.ID_OK:
+                choices = dialog.GetSelectedItems()
+            else:
+                choices = []
+            dialog.Destroy()
+            if not choices:
+                return
         self.table.InsertRows(row, choices)
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, len(choices))
         self.ProcessTableMessage(msg)
         self.SetGridCursor(row, 0)
         self.MakeCellVisible(row, 0)
-        self.EnableCellEditControl(True)
+        if dialog is None:
+            self.EnableCellEditControl(True)
 
     def OnContextMenu(self, event):
         x, y = self.CalcUnscrolledPosition(event.GetPosition())
