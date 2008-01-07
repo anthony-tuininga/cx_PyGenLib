@@ -77,8 +77,9 @@ class BaseContainer(ceGUI.BaseControl):
     def AddLabel(self, label = "", size = (-1, -1)):
         return wx.StaticText(self, -1, label, size = size)
 
-    def AddTextField(self, style = 0, maxLength = 0, cls = ceGUI.TextField):
-        return cls(self, style, maxLength)
+    def AddTextField(self, style = 0, maxLength = 0, cls = ceGUI.TextField,
+            size = (-1, -1)):
+        return cls(self, style, maxLength, size)
 
     def ContinueQuery(self, allowCancel = True):
         if self.PendingChanges():

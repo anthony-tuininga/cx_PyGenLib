@@ -172,8 +172,8 @@ class Notebook(BaseControl, wx.Notebook):
 class TextField(BaseControl, wx.TextCtrl):
     copyAppAttributes = False
 
-    def __init__(self, parent, style = 0, maxLength = 0):
-        wx.TextCtrl.__init__(self, parent, style = style)
+    def __init__(self, parent, style = 0, maxLength = 0, size = (-1, -1)):
+        wx.TextCtrl.__init__(self, parent, style = style, size = size)
         self.maxLength = maxLength
         if style & wx.TE_READONLY:
             color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
