@@ -119,7 +119,8 @@ class DataSet(object):
 
     def __init__(self, connection, contextItem = None):
         self.connection = connection
-        self.isOracle = connection.__class__.__module__.startswith("cx_Oracle")
+        self.isOracle = \
+                connection.__class__.__module__.startswith("cx_Oracle")
         self.childDataSets = []
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
@@ -267,6 +268,15 @@ class DataSet(object):
                 (self.updateTableName, " and ".join(clauses))
         cursor.execute(sql, args)
 
+    def GetGeneratedPrimaryKey(self, cursor):
+        if self.isOracle:
+            sql = "select %s.nextval from dual" % self.pkSequenceName
+        else:
+            sql = "select nextval('%s')::integer" % self.pkSequenceName
+        cursor.execute(sql)
+        value, = cursor.fetchone()
+        return value
+
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, attrNames)
 
@@ -290,8 +300,7 @@ class DataSet(object):
     def InsertRowInDatabase(self, cursor, row):
         if self.pkIsGenerated and self.pkSequenceName is not None:
             attrName, = self.pkAttrNames
-            cursor.execute("select %s.nextval from dual" % self.pkSequenceName)
-            value, = cursor.fetchone()
+            value = self.GetGeneratedPrimaryKey(cursor)
             setattr(row, attrName, value)
         if self.insertAttrNames:
             names = self.insertAttrNames
