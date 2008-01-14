@@ -306,6 +306,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 self.sortByAttrNames.remove(attrName)
             self.sortByAttrNames.insert(0, attrName)
         sortColumns = [self.columnsByAttrName[n] for n in self.sortByAttrNames]
+        sortColumns.extend([c for c in self.columns if c not in sortColumns])
         focusedState = self._SaveItemState(wx.LIST_STATE_FOCUSED)
         selectedState = self._SaveItemState(wx.LIST_STATE_SELECTED)
         rowDict = self.dataSet.rows
