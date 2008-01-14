@@ -85,6 +85,7 @@ class DataSetMetaClass(type):
         cls.attrNames = cls.rowClass.attrNames
         if isinstance(cls.pkAttrNames, basestring):
             cls.pkAttrNames = cls.pkAttrNames.split()
+        cls.rowClass.pkAttrNames = cls.pkAttrNames
         if isinstance(cls.uniqueAttrNames, basestring):
             cls.uniqueAttrNames = cls.uniqueAttrNames.split()
         if isinstance(cls.sortByAttrNames, basestring):
