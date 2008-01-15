@@ -29,6 +29,7 @@ class RowMetaClass(type):
         extraAttrNames = _NormalizeValue(bases, classDict, "extraAttrNames")
         charBooleanAttrNames = \
                 _NormalizeValue(bases, classDict, "charBooleanAttrNames")
+        pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
         if useSlots:
             classDict["__slots__"] = attrNames + extraAttrNames
@@ -58,6 +59,7 @@ class Row(object):
     attrNames = []
     extraAttrNames = []
     charBooleanAttrNames = []
+    pkAttrNames = []
     useSlots = True
 
     def __repr__(self):
@@ -80,12 +82,11 @@ class DataSetMetaClass(type):
         super(DataSetMetaClass, cls).__init__(name, bases, classDict)
         classDict = dict(attrNames = cls.attrNames,
                 extraAttrNames = cls.extraAttrNames,
-                charBooleanAttrNames = cls.charBooleanAttrNames)
+                charBooleanAttrNames = cls.charBooleanAttrNames,
+                pkAttrNames = cls.pkAttrNames)
         cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
-        if isinstance(cls.pkAttrNames, basestring):
-            cls.pkAttrNames = cls.pkAttrNames.split()
-        cls.rowClass.pkAttrNames = cls.pkAttrNames
+        cls.pkAttrNames = cls.rowClass.pkAttrNames
         if isinstance(cls.uniqueAttrNames, basestring):
             cls.uniqueAttrNames = cls.uniqueAttrNames.split()
         if isinstance(cls.sortByAttrNames, basestring):
