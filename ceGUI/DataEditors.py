@@ -93,18 +93,14 @@ class EditColumn(object):
 class EditDialog(ceGUI.StandardDialog):
     dataSetClassName = "DataSet"
 
-    def __init__(self, parent, parentItem = None, instanceName = None):
+    def __init__(self, parent, instanceName = None, parentItem = None):
         self.columns = []
         self.parentItem = parentItem
+        cls = ceGUI.GetModuleItem(self.__class__.__module__,
+                self.dataSetClassName)
+        self.dataSet = cls(parent.config.connection)
+        self.Retrieve(parent)
         super(EditDialog, self).__init__(parent, instanceName)
-        if parentItem is None:
-            handle, row = self.dataSet.InsertRow()
-            self.OnNewRow(row)
-        else:
-            args = [getattr(parentItem, n) for n in parentItem.pkAttrNames]
-            self.dataSet.Retrieve(*args)
-            if len(self.dataSet.rows) != 1:
-                raise cx_Exceptions.NoDataFound()
         focusField = None
         row = self.dataSet.rows[0]
         for column in self.columns:
@@ -116,15 +112,6 @@ class EditDialog(ceGUI.StandardDialog):
                     focusField = column.field
         if focusField is not None:
             focusField.SetFocus()
-
-    def _GetDataSet(self):
-        cls = ceGUI.GetModuleItem(self.__class__.__module__,
-                self.dataSetClassName)
-        return cls(self.config.connection)
-
-    def _OnCreate(self):
-        super(EditDialog, self)._OnCreate()
-        self.dataSet = self._GetDataSet()
 
     def AddColumn(self, attrName, labelText, field, required = False):
         label = self.AddLabel(labelText)
@@ -148,10 +135,25 @@ class EditDialog(ceGUI.StandardDialog):
                 column.field.SetFocus()
                 raise RequiredFieldHasNoValue()
             self.dataSet.SetValue(0, column.attrName, value)
+        self.OnUpdate()
         self.dataSet.Update()
 
     def OnNewRow(self, row):
         pass
+
+    def OnUpdate(self):
+        pass
+
+    def Retrieve(self, parent):
+        if self.parentItem is None:
+            handle, row = self.dataSet.InsertRow()
+            self.OnNewRow(row)
+        else:
+            args = [getattr(self.parentItem, n) \
+                    for n in self.parentItem.pkAttrNames]
+            self.dataSet.Retrieve(*args)
+            if len(self.dataSet.rows) != 1:
+                raise cx_Exceptions.NoDataFound()
 
 
 class GridEditWindow(ceGUI.Frame):
