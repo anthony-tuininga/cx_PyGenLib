@@ -84,14 +84,14 @@ def GetModuleItem(moduleName, attrName = None):
 
 
 def OpenWindow(name, parent = None, forceNewInstance = False,
-        instanceName = None):
+        instanceName = None, **kwargs):
     cls = GetModuleItem(name)
     if parent is not None and not forceNewInstance:
         for child in parent.GetChildren():
             if isinstance(child, cls) and child.instanceName == instanceName:
                 child.SetFocus()
                 return child
-    window = cls(parent, instanceName = instanceName)
+    window = cls(parent, instanceName = instanceName, **kwargs)
     return window
 
 

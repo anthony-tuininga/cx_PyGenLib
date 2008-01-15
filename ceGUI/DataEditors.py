@@ -9,7 +9,149 @@ import functools
 import os
 import wx
 
-__all__ = [ "GridEditWindow", "SubWindow" ]
+__all__ = [ "DataList", "DataListPanel", "EditDialog", "GridEditWindow",
+            "SubWindow" ]
+
+
+class DataList(ceGUI.List):
+    createContextMenu = True
+    singleSelection = True
+
+    def OnInsertItems(self):
+        parent = self.GetParent()
+        parent.InsertItem()
+
+
+class DataListPanel(ceGUI.Panel):
+    listClassName = "List"
+
+    def _GetList(self):
+        cls = ceGUI.GetModuleItem(self.__class__.__module__,
+                self.listClassName)
+        return cls(self, wx.SUNKEN_BORDER)
+
+    def _UpdateListItem(self, item, row):
+        for attrName in item.attrNames:
+            if not hasattr(row, attrName):
+                continue
+            value = getattr(row, attrName)
+            setattr(item, attrName, value)
+
+    def InsertItem(self):
+        dialog = self.OpenWindow(self.editDialogName)
+        if dialog.ShowModal() == wx.ID_OK:
+            row = dialog.dataSet.rows[0]
+            item = self.list.AppendItem(row, refresh = False)
+            self.list.dataSet.ClearChanges()
+            self._UpdateListItem(item, row)
+            self.list.Refresh()
+        dialog.Destroy()
+
+    def OnCreate(self):
+        self.list = self._GetList()
+        self.BindEvent(self.list, wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
+        self.Retrieve()
+
+    def OnDoubleClick(self, event):
+        x, y = event.GetPosition()
+        row, flags = self.list.HitTest((x,y))
+        if flags & wx.LIST_HITTEST_ONITEM:
+            handle = self.list.rowHandles[row]
+            contextItem = self.list.dataSet.rows[handle]
+            dialog = self.OpenWindow(self.editDialogName,
+                    parentItem = contextItem)
+            if dialog.ShowModal() == wx.ID_OK:
+                row = dialog.dataSet.rows[0]
+                self._UpdateListItem(contextItem, row)
+                self.list.Refresh()
+            dialog.Destroy()
+
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.HORIZONTAL)
+        topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
+        return topSizer
+
+    def RestoreSettings(self):
+        self.list.RestoreColumnWidths()
+
+    def Retrieve(self):
+        self.list.Retrieve()
+
+    def SaveSettings(self):
+        self.list.SaveColumnWidths()
+
+
+class EditColumn(object):
+
+    def __init__(self, attrName, label, field, required):
+        self.attrName = attrName
+        self.label = label
+        self.field = field
+        self.required = required
+
+
+class EditDialog(ceGUI.StandardDialog):
+    dataSetClassName = "DataSet"
+
+    def __init__(self, parent, parentItem = None, instanceName = None):
+        self.columns = []
+        self.parentItem = parentItem
+        super(EditDialog, self).__init__(parent, instanceName)
+        if parentItem is None:
+            handle, row = self.dataSet.InsertRow()
+            self.OnNewRow(row)
+        else:
+            args = [getattr(parentItem, n) for n in parentItem.pkAttrNames]
+            self.dataSet.Retrieve(*args)
+            if len(self.dataSet.rows) != 1:
+                raise cx_Exceptions.NoDataFound()
+        focusField = None
+        row = self.dataSet.rows[0]
+        for column in self.columns:
+            value = getattr(row, column.attrName)
+            column.field.SetValue(value)
+            if focusField is None:
+                if not isinstance(column.field, wx.TextCtrl) \
+                        or column.field.IsEditable():
+                    focusField = column.field
+        if focusField is not None:
+            focusField.SetFocus()
+
+    def _GetDataSet(self):
+        cls = ceGUI.GetModuleItem(self.__class__.__module__,
+                self.dataSetClassName)
+        return cls(self.config.connection)
+
+    def _OnCreate(self):
+        super(EditDialog, self)._OnCreate()
+        self.dataSet = self._GetDataSet()
+
+    def AddColumn(self, attrName, labelText, field, required = False):
+        label = self.AddLabel(labelText)
+        column = EditColumn(attrName, label, field, required)
+        self.columns.append(column)
+
+    def OnLayout(self):
+        args = []
+        for column in self.columns:
+            args.append(column.label)
+            args.append(column.field)
+        fieldsSizer = self.CreateFieldLayout(*args)
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, border = 5)
+        return topSizer
+
+    def OnOk(self):
+        for column in self.columns:
+            value = column.field.GetValue()
+            if column.required and value is None:
+                column.field.SetFocus()
+                raise RequiredFieldHasNoValue()
+            self.dataSet.SetValue(0, column.attrName, value)
+        self.dataSet.Update()
+
+    def OnNewRow(self, row):
+        pass
 
 
 class GridEditWindow(ceGUI.Frame):
@@ -147,6 +289,10 @@ class GridEditWindow(ceGUI.Frame):
 
     def UpdateChanges(self):
         self.grid.Update()
+
+
+class RequiredFieldHasNoValue(cx_Exceptions.BaseException):
+    message = "Required field has no value."
 
 
 class SubWindow(object):
