@@ -120,8 +120,10 @@ class BaseContainer(ceGUI.BaseControl):
         else:
             event.Veto()
 
-    def OpenWindow(self, name, forceNewInstance = False, instanceName = None):
-        return ceGUI.OpenWindow(name, self, forceNewInstance, instanceName)
+    def OpenWindow(self, name, forceNewInstance = False, instanceName = None,
+            **kwargs):
+        return ceGUI.OpenWindow(name, self, forceNewInstance, instanceName,
+                **kwargs)
 
     def PendingChanges(self):
         return False
