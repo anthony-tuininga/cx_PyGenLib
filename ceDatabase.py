@@ -83,7 +83,7 @@ class DataSetMetaClass(type):
         classDict = dict(attrNames = cls.attrNames,
                 extraAttrNames = cls.extraAttrNames,
                 charBooleanAttrNames = cls.charBooleanAttrNames,
-                pkAttrNames = cls.pkAttrNames)
+                pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots)
         cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         cls.pkAttrNames = cls.rowClass.pkAttrNames
@@ -118,6 +118,7 @@ class DataSet(object):
     uniqueAttrNames = []
     pkIsGenerated = False
     pkSequenceName = None
+    useSlots = True
 
     def __init__(self, connection, contextItem = None):
         self.connection = connection
