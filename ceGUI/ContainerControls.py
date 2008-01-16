@@ -257,7 +257,12 @@ class StandardDialog(Dialog):
     style = wx.CAPTION | wx.RESIZE_BORDER
 
     def _GetButtons(self):
-        return [self.okButton, self.cancelButton]
+        buttons = []
+        if self.createOkButton:
+            buttons.append(self.okButton)
+        if self.createCancelButton:
+            buttons.append(self.cancelButton)
+        return buttons
 
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
