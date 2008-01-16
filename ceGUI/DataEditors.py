@@ -37,8 +37,13 @@ class DataListPanel(ceGUI.Panel):
             value = getattr(row, attrName)
             setattr(item, attrName, value)
 
+    def GetEditWindow(self):
+        return self.OpenWindow(self.editDialogName)
+
     def InsertItem(self):
-        dialog = self.OpenWindow(self.editDialogName)
+        dialog = self.GetEditWindow()
+        if dialog is None:
+            return
         if dialog.ShowModal() == wx.ID_OK:
             row = dialog.dataSet.rows[0]
             item = self.list.AppendItem(row, refresh = False)
@@ -138,7 +143,7 @@ class EditDialog(ceGUI.StandardDialog):
         self.OnUpdate()
         self.dataSet.Update()
 
-    def OnNewRow(self, row):
+    def OnNewRow(self, parent, row):
         pass
 
     def OnUpdate(self):
@@ -147,7 +152,7 @@ class EditDialog(ceGUI.StandardDialog):
     def Retrieve(self, parent):
         if self.parentItem is None:
             handle, row = self.dataSet.InsertRow()
-            self.OnNewRow(row)
+            self.OnNewRow(parent, row)
         else:
             args = [getattr(self.parentItem, n) \
                     for n in self.parentItem.pkAttrNames]
