@@ -17,6 +17,54 @@ class DataList(ceGUI.List):
     createContextMenu = True
     singleSelection = True
 
+    def _CreateContextMenu(self):
+        self.menu = wx.Menu()
+        self.retrieveMenuItem = self._AddMenuItem(self.menu,
+                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
+        self.menu.AppendSeparator()
+        self.insertMenuItem = self._AddMenuItem(self.menu,
+                "Insert\tCtrl-I", method = self.OnInsertItems,
+                passEvent = False)
+        self.deleteMenuItem = self._AddMenuItem(self.menu,
+                "Delete\tCtrl-D", method = self.OnDeleteItems,
+                passEvent = False)
+
+    def _GetAccelerators(self):
+        return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ) ]
+
+    def _OnCreate(self):
+        super(DataList, self)._OnCreate()
+        self._CreateContextMenu()
+        accelerators = self._GetAccelerators()
+        self.acceleratorTable = wx.AcceleratorTable(accelerators)
+        self.SetAcceleratorTable(self.acceleratorTable)
+        self.contextRow = None
+        parent = self.GetParent()
+        parent.BindEvent(self, wx.EVT_CONTEXT_MENU, self.OnContextMenu)
+
+    def CanDeleteItems(self, items):
+        return True
+
+    def CanInsertItems(self):
+        return True
+
+    def OnContextMenu(self, event):
+        x, y = event.GetPosition()
+        row, flags = self.HitTest((x,y))
+        if flags & wx.LIST_HITTEST_ONITEM:
+            self.contextRow = row
+        else:
+            self.contextRow = None
+        selectedItems = self.GetSelectedItems()
+        deleteEnabled = len(selectedItems) > 0 \
+                and self.CanDeleteItems(selectedItems)
+        self.insertMenuItem.Enable(self.CanInsertItems())
+        self.deleteMenuItem.Enable(deleteEnabled)
+        self.PopupMenu(self.menu)
+        self.contextRow = None
+
     def OnInsertItems(self):
         parent = self.GetParent()
         parent.InsertItem()
@@ -37,8 +85,8 @@ class DataListPanel(ceGUI.Panel):
             value = getattr(row, attrName)
             setattr(item, attrName, value)
 
-    def GetEditWindow(self):
-        return self.OpenWindow(self.editDialogName)
+    def GetEditWindow(self, item = None):
+        return self.OpenWindow(self.editDialogName, parentItem = item)
 
     def InsertItem(self):
         dialog = self.GetEditWindow()
@@ -63,8 +111,7 @@ class DataListPanel(ceGUI.Panel):
         if flags & wx.LIST_HITTEST_ONITEM:
             handle = self.list.rowHandles[row]
             contextItem = self.list.dataSet.rows[handle]
-            dialog = self.OpenWindow(self.editDialogName,
-                    parentItem = contextItem)
+            dialog = self.GetEditWindow(contextItem)
             if dialog.ShowModal() == wx.ID_OK:
                 row = dialog.dataSet.rows[0]
                 self._UpdateListItem(contextItem, row)
