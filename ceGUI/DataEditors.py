@@ -52,18 +52,22 @@ class DataList(ceGUI.List):
         return True
 
     def CanEditItem(self, item):
-        return True
+        parent = self.GetParent()
+        return parent.editDialogName is not None
 
     def CanInsertItems(self):
-        return True
+        parent = self.GetParent()
+        return parent.editDialogName is not None
 
     def OnContextMenu(self, event):
         x, y = self.ScreenToClient(event.GetPosition())
         row, flags = self.HitTest((x,y))
         if flags & wx.LIST_HITTEST_ONITEM:
             self.contextRow = row
+            handle = self.rowHandles[self.contextRow]
+            self.contextItem = self.dataSet.rows[handle]
         else:
-            self.contextRow = None
+            self.contextRow = self.contextItem = None
         selectedItems = self.GetSelectedItems()
         deleteEnabled = len(selectedItems) > 0 \
                 and self.CanDeleteItems(selectedItems)
@@ -77,9 +81,7 @@ class DataList(ceGUI.List):
 
     def OnEditItem(self):
         parent = self.GetParent()
-        handle = self.rowHandles[self.contextRow]
-        item = self.dataSet.rows[handle]
-        parent.EditItem(item)
+        parent.EditItem(self.contextItem)
 
     def OnInsertItems(self):
         parent = self.GetParent()
@@ -88,6 +90,7 @@ class DataList(ceGUI.List):
 
 class DataListPanel(ceGUI.Panel):
     listClassName = "List"
+    editDialogName = None
 
     def _GetList(self):
         cls = ceGUI.GetModuleItem(self.__class__.__module__,
@@ -103,6 +106,8 @@ class DataListPanel(ceGUI.Panel):
 
     def EditItem(self, item):
         dialog = self.GetEditWindow(item)
+        if dialog is None:
+            return
         if dialog.ShowModal() == wx.ID_OK:
             row = dialog.dataSet.rows[0]
             self._UpdateListItem(item, row)
@@ -110,7 +115,8 @@ class DataListPanel(ceGUI.Panel):
         dialog.Destroy()
 
     def GetEditWindow(self, item = None):
-        return self.OpenWindow(self.editDialogName, parentItem = item)
+        if self.editDialogName is not None:
+            return self.OpenWindow(self.editDialogName, parentItem = item)
 
     def InsertItem(self):
         dialog = self.GetEditWindow()
