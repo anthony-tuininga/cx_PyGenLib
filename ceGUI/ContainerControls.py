@@ -15,6 +15,7 @@ class BaseContainer(ceGUI.BaseControl):
     saveSize = savePosition = bindClose = True
     instanceName = None
     minSize = None
+    closing = False
 
     def _Initialize(self):
         if self.minSize is not None:
@@ -22,6 +23,7 @@ class BaseContainer(ceGUI.BaseControl):
         super(BaseContainer, self)._Initialize()
 
     def _OnClose(self, event):
+        self.closing = True
         self._SaveSettings()
         self.OnClose(event)
 
