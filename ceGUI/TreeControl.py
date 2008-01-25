@@ -39,22 +39,27 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         itemId = wx.TreeCtrl.AppendItem(self, parentItemId, text, item.image)
         self.idsByItem[item.data] = itemId
         self.SetPyData(itemId, item)
-        if item.getChildItemsMethod is not None:
+        if item.HasChildItems():
             self.SetItemHasChildren(itemId)
 
     def DeleteItem(self, item):
         itemId = self.idsByItem[item]
         self.Delete(itemId)
 
+    def GetItemParent(self, item):
+        itemId = self.idsByItem[item]
+        parentItemId = super(Tree, self).GetItemParent(itemId)
+        parentItem = self.GetPyData(parentItemId)
+        if parentItem is not None:
+            return parentItem.data
+
     def GetItemParents(self, item):
         while True:
-            itemId = self.idsByItem[item]
-            parentItemId = self.GetItemParent(itemId)
-            parentItem = self.GetPyData(parentItemId)
+            parentItem = self.GetItemParent(item)
             if parentItem is None:
                 break
-            yield parentItem.data
-            item = parentItem.data
+            yield parentItem
+            item = parentItem
 
     def GetSelectedItem(self):
         itemId = self.GetSelection()
@@ -66,7 +71,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         item = self.GetPyData(itemId)
         if not item.expanded:
             item.expanded = True
-            childItems = item.getChildItemsMethod(item.data)
+            childItems = item.GetChildItems(self)
             self._PopulateBranch(item.data, childItems)
 
     def GetRootItems(self):
@@ -85,6 +90,9 @@ class TreeItem(object):
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.data)
 
+    def GetChildItems(self, tree):
+        return self.getChildItemsMethod(self.data)
+
     def GetSortValue(self):
         value = getattr(self.data, self.sortAttrName)
         if isinstance(value, basestring):
@@ -98,4 +106,7 @@ class TreeItem(object):
         if value is None:
             return ""
         return value
+
+    def HasChildItems(self):
+        return self.getChildItemsMethod is not None
 
