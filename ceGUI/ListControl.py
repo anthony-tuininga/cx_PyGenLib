@@ -327,7 +327,10 @@ class ListColumn(ceGUI.BaseControl):
 
     def GetValue(self, row):
         if self.attrName is not None:
-            return getattr(row, self.attrName)
+            value = getattr(row, self.attrName)
+            if value is not None and not isinstance(value, basestring):
+                return str(value)
+            return value
         return row
 
 
