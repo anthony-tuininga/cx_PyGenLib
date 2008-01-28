@@ -82,7 +82,10 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         if not item.expanded:
             item.expanded = True
             childItems = item.GetChildItems(self)
-            self._PopulateBranch(item.data, childItems)
+            if childItems:
+                self._PopulateBranch(item.data, childItems)
+            else:
+                self.SetItemHasChildren(itemId, False)
 
     def RefreshItem(self, item):
         itemId = self.idsByItem[item]
