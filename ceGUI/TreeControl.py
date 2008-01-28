@@ -73,6 +73,9 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         item = self.GetPyData(itemId)
         return item.data
 
+    def HasItem(self, item):
+        return item in self.idsByItem
+
     def OnExpandItem(self, event):
         itemId = event.GetItem()
         item = self.GetPyData(itemId)
@@ -80,6 +83,12 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
             item.expanded = True
             childItems = item.GetChildItems(self)
             self._PopulateBranch(item.data, childItems)
+
+    def RefreshItem(self, item):
+        itemId = self.idsByItem[item]
+        treeItem = self.GetPyData(itemId)
+        text = treeItem.GetTextValue()
+        self.SetItemText(itemId, text)
 
     def SelectItem(self, item):
         itemId = self.idsByItem[item]
