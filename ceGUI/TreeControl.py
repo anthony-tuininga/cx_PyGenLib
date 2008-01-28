@@ -46,6 +46,10 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         itemId = self.idsByItem[item]
         self.Delete(itemId)
 
+    def ExpandItem(self, item):
+        itemId = self.idsByItem[item]
+        self.Expand(itemId)
+
     def GetItemParent(self, item):
         itemId = self.idsByItem[item]
         parentItemId = super(Tree, self).GetItemParent(itemId)
@@ -61,6 +65,9 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
             yield parentItem
             item = parentItem
 
+    def GetRootItems(self):
+        return []
+
     def GetSelectedItem(self):
         itemId = self.GetSelection()
         item = self.GetPyData(itemId)
@@ -74,8 +81,9 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
             childItems = item.GetChildItems(self)
             self._PopulateBranch(item.data, childItems)
 
-    def GetRootItems(self):
-        return []
+    def SelectItem(self, item):
+        itemId = self.idsByItem[item]
+        super(Tree, self).SelectItem(itemId)
 
 
 class TreeItem(object):
