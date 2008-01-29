@@ -302,6 +302,10 @@ class ListColumn(ceGUI.BaseControl):
         self.justification = justification
         self._Initialize()
 
+    def __repr__(self):
+        return "<%s attrName=%r heading=%r>" % \
+                (self.__class__.__name__, self.attrName, self.heading)
+
     def GetExportHeading(self):
         if self.heading:
             return '"%s"' % self.heading.replace('"', '""')
