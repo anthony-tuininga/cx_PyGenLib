@@ -19,8 +19,8 @@ class DataList(ceGUI.List):
 
     def _CreateContextMenu(self):
         self.menu = wx.Menu()
-        self.retrieveMenuItem = self._AddMenuItem(self.menu,
-                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
+        self.refreshMenuItem = self._AddMenuItem(self.menu,
+                "Refresh\tCtrl-R", method = self.OnRefresh, passEvent = False)
         self.menu.AppendSeparator()
         self.insertMenuItem = self._AddMenuItem(self.menu,
                 "Insert\tCtrl-I", method = self.OnInsertItems,
@@ -36,7 +36,7 @@ class DataList(ceGUI.List):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('E'), self.editMenuItem.GetId() ),
-                 ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ) ]
+                 ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ) ]
 
     def _OnCreate(self):
         super(DataList, self)._OnCreate()
@@ -79,6 +79,10 @@ class DataList(ceGUI.List):
         self.PopupMenu(self.menu)
         self.contextRow = None
 
+    def OnDeleteItems(self):
+        parent = self.GetParent()
+        parent.DeleteItems(self.GetSelectedItems())
+
     def OnEditItem(self):
         parent = self.GetParent()
         parent.EditItem(self.contextItem)
@@ -86,6 +90,9 @@ class DataList(ceGUI.List):
     def OnInsertItems(self):
         parent = self.GetParent()
         parent.InsertItems()
+
+    def OnRefresh(self):
+        self.Retrieve()
 
 
 class DataListPanel(ceGUI.Panel):
