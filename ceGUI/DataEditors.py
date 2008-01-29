@@ -85,7 +85,7 @@ class DataList(ceGUI.List):
 
     def OnInsertItems(self):
         parent = self.GetParent()
-        parent.InsertItem()
+        parent.InsertItems()
 
 
 class DataListPanel(ceGUI.Panel):
@@ -118,7 +118,7 @@ class DataListPanel(ceGUI.Panel):
         if self.editDialogName is not None:
             return self.OpenWindow(self.editDialogName, parentItem = item)
 
-    def InsertItem(self):
+    def InsertItems(self):
         dialog = self.GetEditWindow()
         if dialog is None:
             return
