@@ -169,8 +169,8 @@ class SelectionListDialog(ceGUI.StandardDialog):
                 self.OnItemSelected)
         self.BindEvent(self.selectionList, wx.EVT_LIST_ITEM_DESELECTED,
                 self.OnItemDeselected)
-        self.BindEvent(self.selectionList, wx.EVT_LEFT_DCLICK,
-                self.OnDoubleClick)
+        self.BindEvent(self.selectionList, wx.EVT_LIST_ITEM_ACTIVATED,
+                self.OnItemActivated)
         self.BindEvent(self.selectionList, wx.EVT_CHAR,
                 self.OnCharPressed)
 
@@ -183,17 +183,9 @@ class SelectionListDialog(ceGUI.StandardDialog):
             self.EndModal(wx.ID_OK)
         event.Skip()
 
-    def OnLayout(self):
-        topSizer = wx.BoxSizer(wx.VERTICAL)
-        topSizer.Add(self.selectionList, proportion = 1, flag = wx.EXPAND)
-        return topSizer
-
-    def OnDoubleClick(self, event):
-        x, y = event.GetPosition()
-        row, flags = self.selectionList.HitTest((x,y))
-        if flags & wx.LIST_HITTEST_ONITEM:
-            self._OnOk(event)
-            self.EndModal(wx.ID_OK)
+    def OnItemActivated(self, event):
+        self._OnOk(event)
+        self.EndModal(wx.ID_OK)
 
     def OnItemDeselected(self, event):
         if self.selectionList.GetSelectedItemCount() == 0:
@@ -201,6 +193,11 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def OnItemSelected(self, event):
         self.okButton.Enable()
+
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(self.selectionList, proportion = 1, flag = wx.EXPAND)
+        return topSizer
 
     def RestoreSettings(self):
         self.selectionList.RestoreColumnWidths()
