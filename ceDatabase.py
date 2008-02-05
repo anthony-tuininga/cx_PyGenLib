@@ -37,7 +37,7 @@ class RowMetaClass(type):
             initLines = []
             for attrName in attrNames:
                 if attrName in charBooleanAttrNames:
-                    value = '%s == "Y"' % attrName
+                    value = '%s == "Y" or %s == "1"' % (attrName, attrName)
                 else:
                     value = "%s" % attrName
                 initLines.append("    self.%s = %s\n" % (attrName, value))
