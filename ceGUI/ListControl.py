@@ -7,7 +7,7 @@ import cx_Exceptions
 import datetime
 import wx
 
-__all__ = [ "List", "ListColumn", "ListDateColumn" ]
+__all__ = [ "CheckList", "List", "ListColumn", "ListDateColumn" ]
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
@@ -290,6 +290,59 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
 
     def Update(self):
         self.dataSet.Update()
+
+
+class CheckList(List):
+    checkedAttrName = "checked"
+
+    def _AddImage(self, flag = 0):
+        bitmap = wx.EmptyBitmap(16, 16)
+        dc = wx.MemoryDC(bitmap)
+        dc.Clear()
+        wx.RendererNative.Get().DrawCheckBox(self, dc, (0, 0, 16, 16), flag)
+        dc.SelectObject(wx.NullBitmap)
+        return self.imageList.Add(bitmap)
+
+    def _OnCreate(self):
+        parent = self.GetParent()
+        parent.BindEvent(self, wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        self.imageList = wx.ImageList(16, 16)
+        self.uncheckedImageIndex = self._AddImage()
+        self.checkedImageIndex = self._AddImage(wx.CONTROL_CHECKED)
+        self.SetImageList(self.imageList, wx.IMAGE_LIST_SMALL)
+        super(CheckList, self)._OnCreate()
+
+    def _SetAllChecked(self, value):
+        for item in self.GetItems():
+            setattr(item, self.checkedAttrName, value)
+
+    def CheckAllItems(self):
+        self._SetAllChecked(value = True)
+
+    def GetCheckedItems(self):
+        for item in self.GetItems():
+            checked = getattr(item, self.checkedAttrName)
+            if checked:
+                yield item
+
+    def OnGetItemImage(self, itemIndex):
+        handle = self.rowHandles[itemIndex]
+        item = self.dataSet.rows[handle]
+        checked = getattr(item, self.checkedAttrName)
+        if checked:
+            return self.checkedImageIndex
+        return self.uncheckedImageIndex
+
+    def OnLeftDown(self, event):
+        itemIndex, flags = self.HitTest(event.GetPosition())
+        if flags == wx.LIST_HITTEST_ONITEMICON:
+            handle = self.rowHandles[itemIndex]
+            item = self.dataSet.rows[handle]
+            value = getattr(item, self.checkedAttrName)
+            setattr(item, self.checkedAttrName, not value)
+
+    def UncheckAllItems(self):
+        self._SetAllChecked(value = False)
 
 
 class ListColumn(ceGUI.BaseControl):
