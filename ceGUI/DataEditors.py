@@ -111,6 +111,19 @@ class DataListPanel(ceGUI.Panel):
             value = getattr(row, attrName)
             setattr(item, attrName, value)
 
+    def DeleteItems(self, items):
+        message = "Delete selected items?"
+        flag = wx.YES_NO | wx.ICON_EXCLAMATION
+        dialog = wx.MessageDialog(self, message, "Confirm Delete", flag)
+        response = dialog.ShowModal()
+        dialog.Destroy()
+        if response != wx.ID_YES:
+            return
+        for itemIndex in self.list.GetSelectedItemIndexes():
+            self.list.DeleteItem(itemIndex, refresh = False)
+        self.list.dataSet.Update()
+        self.list.Refresh()
+
     def EditItem(self, item):
         dialog = self.GetEditWindow(item)
         if dialog is None:
