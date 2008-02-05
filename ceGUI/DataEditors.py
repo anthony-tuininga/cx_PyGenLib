@@ -139,16 +139,14 @@ class DataListPanel(ceGUI.Panel):
 
     def OnCreate(self):
         self.list = self._GetList()
-        self.BindEvent(self.list, wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
+        self.BindEvent(self.list, wx.EVT_LIST_ITEM_ACTIVATED,
+                self.OnItemActivated)
         self.Retrieve()
 
-    def OnDoubleClick(self, event):
-        x, y = event.GetPosition()
-        row, flags = self.list.HitTest((x,y))
-        if flags & wx.LIST_HITTEST_ONITEM:
-            handle = self.list.rowHandles[row]
-            contextItem = self.list.dataSet.rows[handle]
-            self.EditItem(contextItem)
+    def OnItemActivated(self, event):
+        handle = self.list.rowHandles[event.GetIndex()]
+        contextItem = self.list.dataSet.rows[handle]
+        self.EditItem(contextItem)
 
     def OnLayout(self):
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
