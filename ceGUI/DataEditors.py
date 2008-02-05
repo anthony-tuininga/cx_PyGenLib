@@ -38,6 +38,17 @@ class DataList(ceGUI.List):
                  ( wx.ACCEL_CTRL, ord('E'), self.editMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ) ]
 
+    def _OnContextMenu(self, event):
+        x, y = self.ScreenToClient(event.GetPosition())
+        row, flags = self.HitTest((x,y))
+        if flags & wx.LIST_HITTEST_ONITEM:
+            self.contextRow = row
+            handle = self.rowHandles[self.contextRow]
+            self.contextItem = self.dataSet.rows[handle]
+        else:
+            self.contextRow = self.contextItem = None
+        self.OnContextMenu()
+
     def _OnCreate(self):
         super(DataList, self)._OnCreate()
         self._CreateContextMenu()
@@ -46,7 +57,7 @@ class DataList(ceGUI.List):
         self.SetAcceleratorTable(self.acceleratorTable)
         self.contextRow = None
         parent = self.GetParent()
-        parent.BindEvent(self, wx.EVT_CONTEXT_MENU, self.OnContextMenu)
+        parent.BindEvent(self, wx.EVT_CONTEXT_MENU, self._OnContextMenu)
 
     def CanDeleteItems(self, items):
         return True
@@ -59,15 +70,7 @@ class DataList(ceGUI.List):
         parent = self.GetParent()
         return parent.editDialogName is not None
 
-    def OnContextMenu(self, event):
-        x, y = self.ScreenToClient(event.GetPosition())
-        row, flags = self.HitTest((x,y))
-        if flags & wx.LIST_HITTEST_ONITEM:
-            self.contextRow = row
-            handle = self.rowHandles[self.contextRow]
-            self.contextItem = self.dataSet.rows[handle]
-        else:
-            self.contextRow = self.contextItem = None
+    def OnContextMenu(self):
         selectedItems = self.GetSelectedItems()
         deleteEnabled = len(selectedItems) > 0 \
                 and self.CanDeleteItems(selectedItems)
