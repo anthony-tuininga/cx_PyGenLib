@@ -9,7 +9,7 @@ import os
 import wx
 
 __all__ = [ "AboutDialog", "PreferencesDialog", "SelectionListDialog",
-            "SelectionTreeDialog" ]
+            "SelectionCheckListDialog", "SelectionTreeDialog" ]
 
 
 class AboutDialog(ceGUI.Dialog):
@@ -210,6 +210,36 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def SelectItems(self, items):
         self.selectionList.SelectItems(items)
+
+
+class SelectionCheckListDialog(ceGUI.StandardDialog):
+    listClassName = "List"
+    checkedAttrName = "checked"
+
+    def _GetList(self):
+        cls = ceGUI.GetModuleItem(self.__class__.__module__,
+                self.listClassName)
+        return cls(self, wx.SUNKEN_BORDER)
+
+    def CheckAllItems(self):
+        self.list.CheckAllItems()
+
+    def GetCheckedItems(self):
+        return self.list.GetCheckedItems()
+
+    def OnCreate(self):
+        self.list = self._GetList()
+
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
+        return topSizer
+
+    def Retrieve(self, *args):
+        self.list.Retrieve(*args)
+
+    def UncheckAllItems(self):
+        self.list.UncheckAllItems()
 
 
 class SelectionTreeDialog(ceGUI.StandardDialog):
