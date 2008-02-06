@@ -185,21 +185,6 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.Refresh()
         return row
 
-    def OnContextMenu(self, event):
-        x, y = event.GetPosition()
-        row, flags = self.HitTest((x,y))
-        if flags & wx.LIST_HITTEST_ONITEM:
-            self.contextRow = row
-        else:
-            self.contextRow = None
-        selectedItems = self.GetSelectedItems()
-        deleteEnabled = len(selectedItems) > 0 \
-                and self.CanDeleteItems(selectedItems)
-        self.insertMenuItem.Enable(self.CanInsertItems())
-        self.deleteMenuItem.Enable(deleteEnabled)
-        self.PopupMenu(self.menu)
-        self.contextRow = None
-
     def OnDeleteItems(self):
         for pos, itemIndex in enumerate(self.GetSelectedItemIndexes()):
             self.DeleteItem(itemIndex - pos, refresh = False)
