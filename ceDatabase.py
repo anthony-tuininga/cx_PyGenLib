@@ -410,7 +410,7 @@ class DataSet(object):
 
 class KeyedDataSet(object):
 
-    def __init__(self, dataSet, attrNames):
+    def __init__(self, dataSet, *attrNames):
         self.dataSet = dataSet
         self.rows = {}
         for handle, row in dataSet.rows.iteritems():
