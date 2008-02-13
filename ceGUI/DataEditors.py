@@ -194,6 +194,10 @@ class EditDialogColumn(ceGUI.BaseControl):
             return self.field.IsEditable()
         return True
 
+    def Layout(self, sizer):
+        sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.field, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+
     def SetValue(self, row):
         value = getattr(row, self.attrName)
         self.field.SetValue(value)
@@ -238,26 +242,31 @@ class EditDialog(ceGUI.StandardDialog):
         return cls(self, attrName, labelText, field, required)
 
     def OnLayout(self):
-        args = []
+        fieldsSizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2,
+                vgap = 5, hgap = 5)
+        fieldsSizer.AddGrowableCol(1)
         for column in self.columns:
-            args.append(column.label)
-            args.append(column.field)
-        fieldsSizer = self.CreateFieldLayout(*args)
+            column.Layout(fieldsSizer)
         topSizer = wx.BoxSizer(wx.VERTICAL)
         topSizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, border = 5)
         return topSizer
 
     def OnOk(self):
         for column in self.columns:
-            column.Verify()
-            column.Update(self.dataSet)
-        self.OnUpdate()
+            if column.IsEditable():
+                column.Verify()
+                column.Update(self.dataSet)
+        self.OnPreUpdate()
         self.dataSet.Update()
+        self.OnPostUpdate()
 
     def OnNewRow(self, parent, row):
         pass
 
-    def OnUpdate(self):
+    def OnPostUpdate(self):
+        pass
+
+    def OnPreUpdate(self):
         pass
 
     def Retrieve(self, parent):
