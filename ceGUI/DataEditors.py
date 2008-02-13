@@ -9,8 +9,8 @@ import functools
 import os
 import wx
 
-__all__ = [ "DataList", "DataListPanel", "EditDialog", "GridEditWindow",
-            "SubWindow" ]
+__all__ = [ "DataList", "DataListPanel", "EditDialog", "EditDialogColumn",
+            "GridEditWindow", "SubWindow" ]
 
 
 class DataList(ceGUI.List):
@@ -179,13 +179,38 @@ class DataListPanel(ceGUI.Panel):
         self.list.SaveColumnWidths()
 
 
-class EditColumn(object):
+class EditDialogColumn(ceGUI.BaseControl):
 
-    def __init__(self, attrName, label, field, required):
+    def __init__(self, parent, attrName, labelText, field, required = False):
         self.attrName = attrName
-        self.label = label
+        self.label = parent.AddLabel(labelText)
         self.field = field
         self.required = required
+        self._Initialize()
+        parent.columns.append(self)
+
+    def IsEditable(self):
+        if isinstance(self.field, wx.TextCtrl):
+            return self.field.IsEditable()
+        return True
+
+    def SetValue(self, row):
+        value = getattr(row, self.attrName)
+        self.field.SetValue(value)
+
+    def Update(self, dataSet):
+        value = self.field.GetValue()
+        dataSet.SetValue(0, self.attrName, value)
+
+    def Verify(self):
+        if self.required:
+            value = self.field.GetValue()
+            if value is None:
+                self.field.SetFocus()
+                raise RequiredFieldHasNoValue()
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.attrName)
 
 
 class EditDialog(ceGUI.StandardDialog):
@@ -202,19 +227,15 @@ class EditDialog(ceGUI.StandardDialog):
         focusField = None
         row = self.dataSet.rows[0]
         for column in self.columns:
-            value = getattr(row, column.attrName)
-            column.field.SetValue(value)
-            if focusField is None:
-                if not isinstance(column.field, wx.TextCtrl) \
-                        or column.field.IsEditable():
-                    focusField = column.field
+            column.SetValue(row)
+            if focusField is None and column.IsEditable():
+                focusField = column.field
         if focusField is not None:
             focusField.SetFocus()
 
-    def AddColumn(self, attrName, labelText, field, required = False):
-        label = self.AddLabel(labelText)
-        column = EditColumn(attrName, label, field, required)
-        self.columns.append(column)
+    def AddColumn(self, attrName, labelText, field, required = False,
+            cls = EditDialogColumn):
+        return cls(self, attrName, labelText, field, required)
 
     def OnLayout(self):
         args = []
@@ -228,11 +249,8 @@ class EditDialog(ceGUI.StandardDialog):
 
     def OnOk(self):
         for column in self.columns:
-            value = column.field.GetValue()
-            if column.required and value is None:
-                column.field.SetFocus()
-                raise RequiredFieldHasNoValue()
-            self.dataSet.SetValue(0, column.attrName, value)
+            column.Verify()
+            column.Update(self.dataSet)
         self.OnUpdate()
         self.dataSet.Update()
 
