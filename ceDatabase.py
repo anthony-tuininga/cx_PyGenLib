@@ -281,7 +281,7 @@ class DataSet(object):
         return value
 
     def GetKeyedDataSet(self, *attrNames):
-        return KeyedDataSet(self, attrNames)
+        return KeyedDataSet(self, *attrNames)
 
     def GetSortedRows(self, *attrNames):
         handles = self.GetSortedRowHandles(*attrNames)
