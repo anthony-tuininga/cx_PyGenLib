@@ -30,6 +30,7 @@ class RowMetaClass(type):
         charBooleanAttrNames = \
                 _NormalizeValue(bases, classDict, "charBooleanAttrNames")
         pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
+        sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
         if useSlots:
             classDict["__slots__"] = attrNames + extraAttrNames
@@ -59,6 +60,7 @@ class Row(object):
     attrNames = []
     extraAttrNames = []
     charBooleanAttrNames = []
+    sortByAttrNames = []
     pkAttrNames = []
     useSlots = True
 
@@ -73,6 +75,24 @@ class Row(object):
         args = [getattr(self, n) for n in cls.attrNames]
         return cls(*args)
 
+    def SortValue(self):
+        if len(self.sortByAttrNames) == 1:
+            value = getattr(self, self.sortByAttrNames[0])
+            if isinstance(value, basestring):
+                return value.upper()
+            elif isinstance(value, (datetime.datetime, datetime.date)):
+                return str(value)
+            return value
+        values = []
+        for attrName in self.sortByAttrNames:
+            value = getattr(self, attrName)
+            if isinstance(value, basestring):
+                value = value.upper()
+            elif isinstance(value, (datetime.datetime, datetime.date)):
+                value = str(value)
+            values.append(value)
+        return tuple(values)
+
 
 class DataSetMetaClass(type):
     """Metaclass for data sets which sets up the class used for retrieval and
@@ -83,7 +103,8 @@ class DataSetMetaClass(type):
         classDict = dict(attrNames = cls.attrNames,
                 extraAttrNames = cls.extraAttrNames,
                 charBooleanAttrNames = cls.charBooleanAttrNames,
-                pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots)
+                pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
+                sortByAttrNames = cls.sortByAttrNames)
         cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         cls.pkAttrNames = cls.rowClass.pkAttrNames
@@ -113,6 +134,7 @@ class DataSet(object):
     charBooleanAttrNames = []
     retrievalAttrNames = []
     sortByAttrNames = []
+    sortReversed = False
     insertAttrNames = []
     updateAttrNames = []
     uniqueAttrNames = []
@@ -168,15 +190,18 @@ class DataSet(object):
         cursor.execute(sql, args)
         cursor.rowfactory = self.rowClass
         self.retrievalArgs = args
-        return cursor.fetchall()
+        rows = cursor.fetchall()
+        if self.sortByAttrNames:
+            rows.sort(key = self.rowClass.SortValue)
+            if self.sortReversed:
+                rows.reverse()
+        return rows
 
     def _GetSqlForRetrieve(self):
         sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
         if self.retrievalAttrNames:
             whereClauses = self._GetWhereClauses(self.retrievalAttrNames)
             sql += " where %s" % " and ".join(whereClauses)
-        if self.sortByAttrNames:
-            sql += " order by %s" % ",".join(self.sortByAttrNames)
         return sql
 
     def _GetWhereClauses(self, names, paramsUsed = 0):
