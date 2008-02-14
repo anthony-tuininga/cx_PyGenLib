@@ -155,7 +155,7 @@ class IniFile(object):
                     # Extract any comment that might exist.
                     for char in COMMENT_CHARS:
                         pos = line.find(char)
-                        if pos >= 0:
+                        if pos == 0 or pos > 0 and line[pos - 1].isspace():
                             comment = line[pos:]
                             line = line[:pos].strip()
                             break
