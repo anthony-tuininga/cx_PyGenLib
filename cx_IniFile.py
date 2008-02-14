@@ -124,7 +124,16 @@ class IniFile(object):
         return self.__sections
 
     def __Parse(self):
-        """Load the file into the internal data structures."""
+        """Load the file into the internal data structures.
+        
+           Note that key/value lines are allowed to have a comment, as in:
+                SomeKey=SomeValue   ; Here is a comment
+           However, ambiguity is introduced when the value itself contains
+           a comment character, as in:
+                LastDB=dsn=prod;uid=admin;pwd=topsekrit   ; Another comment
+           This ambiguity is resolved by examining the character just
+           before the comment character.  If it is whitespace then we
+           assume that the comment character indicates an actual comment."""
         self.sections = []
         self.comments = []
         lines = [line.strip() for line in open(self.fileName).readlines() \
