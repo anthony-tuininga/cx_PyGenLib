@@ -20,8 +20,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def _CreateContextMenu(self):
         self.menu = wx.Menu()
-        self.retrieveMenuItem = self._AddMenuItem(self.menu,
-                "Retrieve\tCtrl-R", method = self.Retrieve, passEvent = False)
+        self.refreshMenuItem = self._AddMenuItem(self.menu,
+                "Refresh\tCtrl-R", method = self.Retrieve, passEvent = False)
         self.updateMenuItem = self._AddMenuItem(self.menu,
                 "Save\tCtrl-S", method = self.Update, passEvent = False)
         self.menu.AppendSeparator()
@@ -33,7 +33,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _GetAccelerators(self):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
-                 ( wx.ACCEL_CTRL, ord('R'), self.retrieveMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('S'), self.updateMenuItem.GetId() ) ]
 
     def _GetDataSet(self):
@@ -73,9 +73,13 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             row = self.GetGridCursorRow()
         else:
             row = self.contextRow
+        if not self.table.CanDeleteRow(row):
+            return
         self.DeleteRows(row)
 
     def _OnInsert(self, event):
+        if not self.table.CanInsertRow():
+            return
         if self.contextRow is None:
             row = self.GetGridCursorRow()
         elif self.contextRow == wx.NOT_FOUND:
