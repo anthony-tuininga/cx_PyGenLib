@@ -101,14 +101,26 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             if width > 0:
                 self.SetColSize(numColumns - 1, width)
 
-    def AddColumn(self, cls, *args, **kwargs):
-        column = cls(*args, **kwargs)
+    def AddColumn(self, attrName, label, defaultWidth = None,
+            horizontalAlignment = None, verticalAlignment = None,
+            readOnly = False, cls = None):
+        if cls is None:
+            cls = GridColumn
+        if horizontalAlignment is None:
+            horizontalAlignment = cls.defaultHorizontalAlignment
+        if verticalAlignment is None:
+            verticalAlignment = cls.defaultVerticalAlignment
+        column = cls(attrName, label, horizontalAlignment, verticalAlignment,
+                readOnly)
+        columnIndex = self.table.GetNumberCols()
         self.table.AddColumn(column)
-        columnIndex = self.table.GetNumberCols() - 1
         self.SetColAttr(columnIndex, column.attr)
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_COLS_APPENDED, 1)
         self.ProcessTableMessage(msg)
+        if defaultWidth is not None:
+            self.SetColSize(columnIndex, defaultWidth)
+        return column
 
     def DeleteRows(self, row, numRows = 1):
         currentNumRows = self.table.GetNumberRows()
@@ -306,11 +318,15 @@ class GridTable(wx.grid.PyGridTableBase):
 
 
 class GridColumn(ceGUI.BaseControl):
+    defaultHorizontalAlignment = wx.ALIGN_LEFT
+    defaultVerticalAlignment = wx.ALIGN_CENTRE
 
-    def __init__(self, label, attrName, readOnly = False):
-        self.label = label
+    def __init__(self, attrName, label, horizontalAlignment,
+            verticalAlignment, readOnly):
         self.attrName = attrName
+        self.label = label
         self.attr = wx.grid.GridCellAttr()
+        self.attr.SetAlignment(horizontalAlignment, verticalAlignment)
         if readOnly:
             self.attr.SetReadOnly()
         self._Initialize()
@@ -339,13 +355,12 @@ class GridColumn(ceGUI.BaseControl):
 
 
 class GridColumnBool(GridColumn):
+    defaultHorizontalAlignment = wx.ALIGN_CENTRE
 
-    def __init__(self, label, attrName, readOnly = False):
-        super(GridColumnBool, self).__init__(label, attrName, readOnly)
+    def OnCreate(self):
         editor = wx.grid.GridCellBoolEditor()
         editor.UseStringValues("1", "0")
         self.attr.SetEditor(editor)
-        self.attr.SetAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         self.attr.SetRenderer(wx.grid.GridCellBoolRenderer())
 
     def GetValue(self, row):
@@ -360,8 +375,7 @@ class GridColumnBool(GridColumn):
 
 class GridColumnChoice(GridColumn):
 
-    def __init__(self, label, attrName, choices, readOnly = False):
-        super(GridColumnChoice, self).__init__(label, attrName, readOnly)
+    def OnCreate(self):
         displayValues = []
         self.dataValuesByDisplayValue = {}
         self.displayValuesByDataValue = {}
@@ -391,11 +405,9 @@ class GridColumnChoice(GridColumn):
 
 
 class GridColumnInt(GridColumn):
+    defaultHorizontalAlignment = wx.ALIGN_RIGHT
 
-    def __init__(self, label, attrName, readOnly = False, min = -1, max = -1):
-        super(GridColumnInt, self).__init__(label, attrName, readOnly)
-        editor = wx.grid.GridCellNumberEditor(min, max)
-        self.attr.SetEditor(editor)
+    def OnCreate(self):
         self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
