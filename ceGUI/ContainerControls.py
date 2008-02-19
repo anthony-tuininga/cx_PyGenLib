@@ -199,7 +199,7 @@ class Frame(BaseContainer, wx.Frame):
 
     def AddMenuItem(self, menu, label, helpString = "", method = None,
             createBusyCursor = False, passEvent = True, radio = False,
-            checkable = False, windowName = None):
+            checkable = False, windowName = None, enabled = True):
         if radio:
             kind = wx.ITEM_RADIO
         elif checkable:
@@ -210,19 +210,22 @@ class Frame(BaseContainer, wx.Frame):
             method = functools.partial(self.SimpleOpenWindow, windowName)
             passEvent = False
         return self._AddMenuItem(menu, label, helpString, kind, method,
-                createBusyCursor, passEvent = passEvent)
+                createBusyCursor, passEvent = passEvent, enabled = enabled)
 
     def AddStockMenuItem(self, menu, stockId, method = None,
-            createBusyCursor = False):
+            createBusyCursor = False, enabled = True):
         return self._AddMenuItem(menu, id = stockId, method = method,
-                createBusyCursor = createBusyCursor)
+                createBusyCursor = createBusyCursor, enabled = enabled)
 
     def AddToolbarItem(self, label, bitmapId, shortHelp = "", longHelp = "",
-            method = None, createBusyCursor = False, passEvent = True):
+            method = None, createBusyCursor = False, passEvent = True,
+            enabled = True):
         bitmap = wx.ArtProvider.GetBitmap(bitmapId, wx.ART_TOOLBAR,
                 self.toolbar.GetToolBitmapSize())
         item = self.toolbar.AddLabelTool(-1, label, bitmap,
                 shortHelp = shortHelp, longHelp = longHelp)
+        if not enabled:
+            item.Enable(False)
         if method is not None:
             self.BindEvent(item, wx.EVT_TOOL, method,
                     createBusyCursor = createBusyCursor, passEvent = passEvent)
