@@ -103,7 +103,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def AddColumn(self, attrName, label, defaultWidth = None,
             horizontalAlignment = None, verticalAlignment = None,
-            readOnly = False, cls = None):
+            readOnly = False, cls = None, required = False):
         if cls is None:
             cls = GridColumn
         if horizontalAlignment is None:
@@ -111,7 +111,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if verticalAlignment is None:
             verticalAlignment = cls.defaultVerticalAlignment
         column = cls(attrName, label, horizontalAlignment, verticalAlignment,
-                readOnly)
+                readOnly, required)
         columnIndex = self.table.GetNumberCols()
         self.table.AddColumn(column)
         self.SetColAttr(columnIndex, column.attr)
@@ -214,6 +214,19 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def Update(self):
         self.SaveEditControlValue()
+        requiredColumns = [c for c in self.table.columns if c.required]
+        if requiredColumns:
+            dataSet = self.table.dataSet
+            for rowIndex, handle in enumerate(self.table.rowHandles):
+                row = dataSet.rows[handle]
+                for column in requiredColumns:
+                    value = getattr(row, column.attrName)
+                    if value is None:
+                        colIndex = self.table.columns.index(column)
+                        self.SetGridCursor(rowIndex, colIndex)
+                        self.MakeCellVisible(rowIndex, colIndex)
+                        self.EnableCellEditControl()
+                        raise ceGUI.RequiredFieldHasNoValue()
         self.table.dataSet.Update()
         self.Refresh()
 
@@ -322,9 +335,10 @@ class GridColumn(ceGUI.BaseControl):
     defaultVerticalAlignment = wx.ALIGN_CENTRE
 
     def __init__(self, attrName, label, horizontalAlignment,
-            verticalAlignment, readOnly):
+            verticalAlignment, readOnly, required):
         self.attrName = attrName
         self.label = label
+        self.required = required
         self.attr = wx.grid.GridCellAttr()
         self.attr.SetAlignment(horizontalAlignment, verticalAlignment)
         if readOnly:
