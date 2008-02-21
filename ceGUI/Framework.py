@@ -10,7 +10,8 @@ import wx
 import sys
 
 __all__ = [ "BusyCursorContext", "EventHandler", "EVT_THREAD_TERMINATED",
-            "GetModuleItem", "OpenWindow", "Thread", "TransactionContext" ]
+            "GetModuleItem", "OpenWindow", "Thread", "TransactionContext",
+            "RequiredFieldHasNoValue" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -93,6 +94,10 @@ def OpenWindow(name, parent = None, forceNewInstance = False,
                 return child
     window = cls(parent, instanceName = instanceName, **kwargs)
     return window
+
+
+class RequiredFieldHasNoValue(cx_Exceptions.BaseException):
+    message = "Required field has no value."
 
 
 class TransactionContext(BusyCursorContext):

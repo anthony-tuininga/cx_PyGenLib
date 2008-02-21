@@ -211,7 +211,7 @@ class EditDialogColumn(ceGUI.BaseControl):
             value = self.field.GetValue()
             if value is None:
                 self.field.SetFocus()
-                raise RequiredFieldHasNoValue()
+                raise ceGUI.RequiredFieldHasNoValue()
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.attrName)
@@ -416,10 +416,6 @@ class GridEditWindow(ceGUI.Frame):
 
     def UpdateChanges(self):
         self.grid.Update()
-
-
-class RequiredFieldHasNoValue(cx_Exceptions.BaseException):
-    message = "Required field has no value."
 
 
 class SubWindow(object):
