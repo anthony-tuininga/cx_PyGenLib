@@ -27,6 +27,8 @@ class HandleManager(object):
         """Remove an object and its handle from the manager."""
         del self.__handlesByObject[obj]
         del self.__objectsByHandle[handle]
+        if handle in self.__handleDescriptors:
+            del self.__handleDescriptors[handle]
         method = getattr(obj, "OnRemoveFromHandleManager", None)
         if method is not None:
             method(handle)
@@ -34,15 +36,36 @@ class HandleManager(object):
     def Clear(self):
         self.__objectsByHandle = {}
         self.__handlesByObject = {}
+        self.__handleDescriptors = {}
 
-    def HandleForObject(self, obj):
+    def DescriptorForHandle(self, handle):
+        return self.__handleDescriptors.get(handle)
+
+    def DumpState(self):
+        """Return the internal state of the manager, for debugging."""
+        lines = []
+        for handle, obj in self.__objectsByHandle.iteritems():
+            descriptor = self.__handleDescriptors.get(handle)
+            if descriptor:
+                lines.append("%i [%s]: %s" % (handle, descriptor, obj))
+            else:
+                lines.append("%i: %s" % (handle, obj))
+        return "\n".join(lines)
+
+    def HandleForObject(self, obj, handleDescriptor = None):
         """Return the handle for an object; if the object is not already
-           managed, allocate a new handle and return it."""
+           managed, allocate a new handle and return it.
+
+           An optional handleDescriptor is passed in, which is simply a
+           piece of text that describes the handle.  This is done solely
+           to allow for debugging."""
         handle = self.__handlesByObject.get(obj)
         if handle is None:
             handle = self.__GetHandle()
             self.__objectsByHandle[handle] = obj
             self.__handlesByObject[obj] = handle
+            if handleDescriptor is not None:
+                self.__handleDescriptors[handle] = handleDescriptor
             method = getattr(obj, "OnAddToHandleManager", None)
             if method is not None:
                 method(handle)
