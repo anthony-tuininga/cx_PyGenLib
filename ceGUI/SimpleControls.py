@@ -7,9 +7,8 @@ import cx_Exceptions
 import datetime
 import wx
 
-__all__ = ["BaseControl", "Choice", "IntegerField", "Notebook", "TextField",
-           "UpperCaseTextField"]
-
+__all__ = ["BaseControl", "Choice", "DateField", "IntegerField", "Notebook",
+           "TextField", "UpperCaseTextField"]
 
 class BaseControl(object):
     copyAppAttributes = True
@@ -150,6 +149,22 @@ class Choice(BaseControl, wx.Choice):
     def SetValue(self, value):
         choiceIndex = self.indexesByDataValue.get(value, wx.NOT_FOUND)
         self.SetSelection(choiceIndex)
+
+
+class DateField(BaseControl, wx.DatePickerCtrl):
+    copyAppAttributes = False
+
+    def __init__(self, parent):
+        wx.DatePickerCtrl.__init__(self, parent)
+
+    def GetValue(self):
+        wxDate = wx.DatePickerCtrl.GetValue(self)
+        return datetime.date(wxDate.GetYear(), wxDate.GetMonth() + 1,
+                wxDate.GetDay())
+
+    def SetValue(self, value):
+        wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
+        wx.DatePickerCtrl.SetValue(self, wxDate)
 
 
 class Notebook(BaseControl, wx.Notebook):
