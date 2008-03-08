@@ -73,6 +73,9 @@ class BaseContainer(ceGUI.BaseControl):
     def AddChoiceField(self, *choices):
         return ceGUI.Choice(self, choices)
 
+    def AddDateField(self):
+        return ceGUI.DateField(self)
+
     def AddIntegerField(self, style = 0):
         return ceGUI.IntegerField(self, style)
 
