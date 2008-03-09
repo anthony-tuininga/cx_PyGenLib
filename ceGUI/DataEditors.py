@@ -39,14 +39,13 @@ class DataList(ceGUI.List):
                  ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ) ]
 
     def _OnContextMenu(self, event):
-        x, y = self.ScreenToClient(event.GetPosition())
-        row, flags = self.HitTest((x,y))
-        if flags & wx.LIST_HITTEST_ONITEM:
-            self.contextRow = row
+        index = event.GetIndex()
+        if index == wx.NOT_FOUND:
+            self.contextRow = self.contextItem = None
+        else:
+            self.contextRow = index
             handle = self.rowHandles[self.contextRow]
             self.contextItem = self.dataSet.rows[handle]
-        else:
-            self.contextRow = self.contextItem = None
         self.OnContextMenu()
 
     def _OnCreate(self):
@@ -57,7 +56,8 @@ class DataList(ceGUI.List):
         self.SetAcceleratorTable(self.acceleratorTable)
         self.contextRow = None
         parent = self.GetParent()
-        parent.BindEvent(self, wx.EVT_CONTEXT_MENU, self._OnContextMenu)
+        parent.BindEvent(self, wx.EVT_LIST_ITEM_RIGHT_CLICK,
+                self._OnContextMenu)
 
     def CanDeleteItems(self, items):
         return True
