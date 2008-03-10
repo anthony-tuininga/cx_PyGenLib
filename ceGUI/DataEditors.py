@@ -7,6 +7,7 @@ import cx_Exceptions
 import cx_Logging
 import functools
 import os
+import sys
 import wx
 
 __all__ = [ "DataList", "DataListPanel", "EditDialog", "EditDialogColumn",
@@ -39,6 +40,17 @@ class DataList(ceGUI.List):
                  ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ) ]
 
     def _OnContextMenu(self, event):
+        x, y = self.ScreenToClient(event.GetPosition())
+        row, flags = self.HitTest((x,y))
+        if flags & wx.LIST_HITTEST_ONITEM:
+            self.contextRow = row
+            handle = self.rowHandles[self.contextRow]
+            self.contextItem = self.dataSet.rows[handle]
+        else:
+            self.contextRow = self.contextItem = None
+        self.OnContextMenu()
+
+    def _OnRightClick(self, event):
         index = event.GetIndex()
         if index == wx.NOT_FOUND:
             self.contextRow = self.contextItem = None
@@ -56,8 +68,12 @@ class DataList(ceGUI.List):
         self.SetAcceleratorTable(self.acceleratorTable)
         self.contextRow = None
         parent = self.GetParent()
-        parent.BindEvent(self, wx.EVT_LIST_ITEM_RIGHT_CLICK,
-                self._OnContextMenu)
+        if sys.platform == "win32":
+            parent.BindEvent(self, wx.EVT_CONTEXT_MENU,
+                    self._OnContextMenu)
+        else:
+            parent.BindEvent(self, wx.EVT_LIST_ITEM_RIGHT_CLICK,
+                    self._OnRightClick)
 
     def CanDeleteItems(self, items):
         return True
