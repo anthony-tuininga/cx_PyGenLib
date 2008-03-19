@@ -214,21 +214,22 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def Update(self):
         self.SaveEditControlValue()
-        requiredColumns = [c for c in self.table.columns if c.required]
-        if requiredColumns:
-            dataSet = self.table.dataSet
-            for rowIndex, handle in enumerate(self.table.rowHandles):
-                row = dataSet.rows[handle]
-                for column in requiredColumns:
-                    value = getattr(row, column.attrName)
-                    if value is None:
-                        colIndex = self.table.columns.index(column)
-                        self.SetGridCursor(rowIndex, colIndex)
-                        self.MakeCellVisible(rowIndex, colIndex)
-                        self.EnableCellEditControl()
-                        raise ceGUI.RequiredFieldHasNoValue()
+        self.VerifyData()
         self.table.dataSet.Update()
         self.Refresh()
+
+    def VerifyData(self):
+        dataSet = self.table.dataSet
+        for rowIndex, handle in enumerate(self.table.rowHandles):
+            row = dataSet.rows[handle]
+            for column in self.table.columns:
+                exc = column.VerifyValue(row)
+                if exc is not None:
+                    colIndex = self.table.columns.index(column)
+                    self.SetGridCursor(rowIndex, colIndex)
+                    self.MakeCellVisible(rowIndex, colIndex)
+                    self.EnableCellEditControl()
+                    raise exc
 
 
 class GridTable(wx.grid.PyGridTableBase):
@@ -366,6 +367,12 @@ class GridColumn(ceGUI.BaseControl):
             value = None
         dataSet.SetValue(rowHandle, self.attrName, value)
         return True
+
+    def VerifyValue(self, row):
+        if self.required:
+            value = getattr(row, self.attrName)
+            if value is None:
+                return ceGUI.RequiredFieldHasNoValue()
 
 
 class GridColumnBool(GridColumn):
