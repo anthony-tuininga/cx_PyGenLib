@@ -13,6 +13,7 @@ __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
     dataSetClassName = "DataSet"
+    sortOnRetrieve = True
 
     def __init__(self, parent):
         wx.grid.Grid.__init__(self, parent)
@@ -193,6 +194,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                     wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, numRows, numRows)
             self.ProcessTableMessage(msg)
         self.table.Retrieve(*args)
+        if self.sortOnRetrieve:
+            self.table.SortItems()
         numRows = self.table.GetNumberRows()
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
@@ -300,7 +303,6 @@ class GridTable(wx.grid.PyGridTableBase):
     def Retrieve(self, *args):
         self.dataSet.Retrieve(*args)
         self.rowHandles = self.dataSet.rows.keys()
-        self.SortItems()
 
     def SetValue(self, rowIndex, colIndex, rawValue):
         column = self.columns[colIndex]
