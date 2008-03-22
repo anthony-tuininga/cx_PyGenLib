@@ -204,6 +204,10 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def Retrieve(self, *args):
         self.selectionList.Retrieve(*args)
+        if len(self.selectionList.rowHandles) > 0:
+            handle = self.selectionList.rowHandles[0]
+            item = self.selectionList.dataSet.rows[handle]
+            self.selectionList.SelectItems([item])
 
     def SaveSettings(self):
         self.selectionList.SaveColumnWidths()
