@@ -16,7 +16,7 @@ class BaseControl(object):
 
     def _AddMenuItem(self, menu, label = "", helpString = "",
             kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
-            id = None, passEvent = True, enabled = True):
+            id = None, skipEvent = True, passEvent = True, enabled = True):
         if id is None:
             id = wx.NewId()
         item = wx.MenuItem(menu, id, label, helpString, kind)
@@ -25,6 +25,7 @@ class BaseControl(object):
             item.Enable(False)
         if method is not None:
             self.BindEvent(item, wx.EVT_MENU, method, passEvent = passEvent,
+                    skipEvent = skipEvent,
                     createBusyCursor = createBusyCursor)
         return item
 
