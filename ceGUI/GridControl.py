@@ -27,9 +27,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 "Save\tCtrl-S", method = self.Update, passEvent = False)
         self.menu.AppendSeparator()
         self.insertMenuItem = self._AddMenuItem(self.menu,
-                "Insert\tCtrl-I", method = self._OnInsert)
+                "Insert\tCtrl-I", method = self._OnInsert, skipEvent = False)
         self.deleteMenuItem = self._AddMenuItem(self.menu,
-                "Delete\tCtrl-D", method = self._OnDelete)
+                "Delete\tCtrl-D", method = self._OnDelete, skipEvent = False)
 
     def _GetAccelerators(self):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
