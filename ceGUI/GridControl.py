@@ -82,12 +82,14 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if not self.table.CanInsertRow():
             return
         if self.contextRow is None:
-            row = self.GetGridCursorRow()
+            row = self.GetGridCursorRow() + 1
         elif self.contextRow == wx.NOT_FOUND:
-            row = len(self.table.rowHandles)
+            row = len(self.table.rowHandles) + 1
         else:
-            row = self.contextRow
-        self.InsertRows(row + 1)
+            row = self.contextRow + 1
+        if len(self.table.rowHandles) == 0:
+            row = 0
+        self.InsertRows(row)
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
