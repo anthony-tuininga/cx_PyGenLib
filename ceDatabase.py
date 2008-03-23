@@ -414,6 +414,30 @@ class DataSet(object):
         self.ClearChanges()
         self._PostUpdate()
 
+    def UpdateSingleRow(self, handle):
+        cursor = self.connection.cursor()
+        try:
+            if handle in self.insertedRows:
+                row = self.insertedRows[handle]
+                self.InsertRowInDatabase(cursor, row)
+            elif handle in self.updatedRows:
+                origRow = self.updatedRows[handle]
+                row = self.rows[handle]
+                self.UpdateRowInDatabase(cursor, row, origRow)
+            elif handle in self.deletedRows:
+                row = self.deletedRows[handle]
+                self.DeleteRowInDatabase(cursor, row)
+            self.connection.commit()
+        except:
+            self.connection.rollback()
+            raise
+        if handle in self.insertedRows:
+            del self.insertedRows[handle]
+        elif handle in self.updatedRows:
+            del self.updatedRows[handle]
+        elif handle in self.deletedRows:
+            del self.deletedRows[handle]
+
     def UpdateRowInDatabase(self, cursor, row, origRow):
         if self.updateAttrNames:
             dataAttrNames = self.updateAttrNames
