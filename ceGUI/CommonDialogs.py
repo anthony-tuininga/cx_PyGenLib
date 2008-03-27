@@ -149,6 +149,7 @@ class PreferencesDialog(ceGUI.StandardDialog):
 
 class SelectionListDialog(ceGUI.StandardDialog):
     listClassName = "List"
+    selectFirstItem = True
 
     def _GetList(self):
         cls = ceGUI.GetModuleItem(self.__class__.__module__,
@@ -204,7 +205,7 @@ class SelectionListDialog(ceGUI.StandardDialog):
 
     def Retrieve(self, *args):
         self.selectionList.Retrieve(*args)
-        if len(self.selectionList.rowHandles) > 0:
+        if self.selectFirstItem and len(self.selectionList.rowHandles) > 0:
             handle = self.selectionList.rowHandles[0]
             item = self.selectionList.dataSet.rows[handle]
             self.selectionList.SelectItems([item])
