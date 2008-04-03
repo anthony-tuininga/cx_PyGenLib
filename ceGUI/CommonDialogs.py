@@ -240,8 +240,14 @@ class SelectionCheckListDialog(ceGUI.StandardDialog):
         topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
+    def RestoreSettings(self):
+        self.list.RestoreColumnWidths()
+
     def Retrieve(self, *args):
         self.list.Retrieve(*args)
+
+    def SaveSettings(self):
+        self.list.SaveColumnWidths()
 
     def UncheckAllItems(self):
         self.list.UncheckAllItems()
