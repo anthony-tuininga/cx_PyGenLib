@@ -137,7 +137,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def GetCurrentRow(self):
         row = self.GetGridCursorRow()
-        return self.table.GetRow(row)
+        if row >= 0:
+            return self.table.GetRow(row)
 
     def GetInsertChoicesDialog(self, parent):
         pass
