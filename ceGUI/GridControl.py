@@ -52,12 +52,22 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.SetMargins(-10, 0)
         self.DisableDragRowSize()
         self.BindEvent(self.GetGridWindow(), wx.EVT_RIGHT_DOWN,
-                self.OnContextMenu)
+                self._OnContextMenu)
         parent.BindEvent(self, wx.EVT_SIZE, self._Resize)
         parent.BindEvent(self, wx.grid.EVT_GRID_COL_SIZE, self._Resize)
         parent.BindEvent(self, wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
                 self.OnLabelClicked, skipEvent = False)
         super(Grid, self)._Initialize()
+
+    def _OnContextMenu(self, event):
+        x, y = self.CalcUnscrolledPosition(event.GetPosition())
+        self.contextRow = self.YToRow(y)
+        self.insertMenuItem.Enable(self.table.CanInsertRow())
+        deleteEnabled = self.contextRow != wx.NOT_FOUND \
+                and self.table.CanDeleteRow(self.contextRow)
+        self.deleteMenuItem.Enable(deleteEnabled)
+        self.OnContextMenu()
+        self.contextRow = None
 
     def _OnCreate(self):
         self.table = self._GetTable()
@@ -164,15 +174,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if dialog is None:
             self.EnableCellEditControl(True)
 
-    def OnContextMenu(self, event):
-        x, y = self.CalcUnscrolledPosition(event.GetPosition())
-        self.contextRow = self.YToRow(y)
-        self.insertMenuItem.Enable(self.table.CanInsertRow())
-        deleteEnabled = self.contextRow != wx.NOT_FOUND \
-                and self.table.CanDeleteRow(self.contextRow)
-        self.deleteMenuItem.Enable(deleteEnabled)
+    def OnContextMenu(self):
         self.PopupMenu(self.menu)
-        self.contextRow = None
 
     def OnInvalidValueEntered(self, rowIndex, colIndex, rawValue):
         self.SetGridCursor(rowIndex, colIndex)
