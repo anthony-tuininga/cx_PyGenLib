@@ -61,10 +61,12 @@ class BaseContainer(ceGUI.BaseControl):
         self.SaveSettings()
         self.settings.Flush()
 
-    def AddButton(self, label = "", method = None, size = (-1, -1)):
+    def AddButton(self, label = "", method = None, size = (-1, -1),
+            passEvent = True):
         button = wx.Button(self, -1, label, size = size)
         if method is not None:
-            self.BindEvent(button, wx.EVT_BUTTON, method)
+            self.BindEvent(button, wx.EVT_BUTTON, method,
+                    passEvent = passEvent)
         return button
 
     def AddCheckBox(self, label = ""):
