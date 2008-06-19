@@ -14,6 +14,7 @@ __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "PreviewFrame",
 class BaseContainer(ceGUI.BaseControl):
     saveSize = savePosition = bindClose = True
     instanceName = None
+    defaultSize = None
     minSize = None
     closing = False
 
@@ -43,7 +44,8 @@ class BaseContainer(ceGUI.BaseControl):
 
     def _RestoreSettings(self):
         if self.saveSize:
-            size = self.ReadSetting("Size", self.minSize, isComplex = True)
+            size = self.ReadSetting("Size", self.defaultSize or self.minSize,
+                    isComplex = True)
             if size is not None:
                 self.SetSize(size)
         if self.savePosition:
