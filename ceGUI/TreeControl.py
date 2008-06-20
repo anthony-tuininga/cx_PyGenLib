@@ -21,6 +21,14 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         self._Initialize()
         self._PopulateRootItems()
 
+    def _ExpandItem(self, item):
+        item.expanded = True
+        childItems = item.GetChildItems(self)
+        if childItems:
+            self._PopulateBranch(item.data, childItems)
+        else:
+            self.SetItemHasChildren(itemId, False)
+
     def _PopulateBranch(self, parent, items):
         itemsToSort = [(i.GetSortValue(), i) for i in items]
         itemsToSort.sort()
@@ -43,6 +51,8 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
             self.SetItemHasChildren(itemId)
 
     def DeleteItem(self, item):
+        for childItem in self.GetChildItems(item):
+            self.DeleteItem(childItem)
         itemId = self.idsByItem.pop(item)
         self.Delete(itemId)
 
@@ -112,18 +122,21 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         itemId = event.GetItem()
         item = self.GetPyData(itemId)
         if not item.expanded:
-            item.expanded = True
-            childItems = item.GetChildItems(self)
-            if childItems:
-                self._PopulateBranch(item.data, childItems)
-            else:
-                self.SetItemHasChildren(itemId, False)
+            self._ExpandItem(item)
 
     def RefreshItem(self, item):
         itemId = self.idsByItem[item]
         treeItem = self.GetPyData(itemId)
         text = treeItem.GetTextValue()
         self.SetItemText(itemId, text)
+
+    def RefreshItemChildren(self, item, forceExpansion = False):
+        itemId = self.idsByItem[item]
+        treeItem = self.GetPyData(itemId)
+        if treeItem.expanded or forceExpansion:
+            for childItem in self.GetChildItems(item):
+                self.DeleteItem(childItem)
+            self._ExpandItem(treeItem)
 
     def SelectItem(self, item):
         itemId = self.idsByItem[item]
