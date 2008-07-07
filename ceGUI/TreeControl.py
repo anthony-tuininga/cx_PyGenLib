@@ -27,6 +27,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         if childItems:
             self._PopulateBranch(item.data, childItems)
         else:
+            itemId = self.idsByItem[item.data]
             self.SetItemHasChildren(itemId, False)
 
     def _PopulateBranch(self, parent, items):
