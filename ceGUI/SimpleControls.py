@@ -95,6 +95,8 @@ class BaseControl(object):
         settingsName = self._GetSettingsName(name)
         if isComplex:
             value = repr(value)
+        elif value is None:
+            value = ""
         else:
             value = str(value)
         self.settings.Write(settingsName, value)
