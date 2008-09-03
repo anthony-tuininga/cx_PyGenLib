@@ -45,6 +45,12 @@ class BaseException(Exception):
             stringRep = self._FormatValue(value, maxLength = 500)
             self.details.append("  %s -> %s" % (name, stringRep))
 
+    def __AddLocalVariables(self, frame):
+        self.details.append("Local Variables:")
+        while frame is not None:
+            self.__AddFrame(frame)
+            frame = frame.f_back
+
     def _FormatException(self, excType, excValue, tb):
         """Format the traceback and put it in the traceback attribute."""
         self.details = []
@@ -56,27 +62,21 @@ class BaseException(Exception):
             for line in str(excValue).rstrip().splitlines():
                 self.details.append(prefix + line)
                 prefix = ""
-        self.details.append("Local Variables:")
         frame = None
         while tb is not None:
             frame = tb.tb_frame
             tb = tb.tb_next
-        while frame is not None:
-            self.__AddFrame(frame)
-            frame = frame.f_back
+        self.__AddLocalVariables(frame)
 
     def _FormatStack(self):
         """Format the traceback for the current location."""
         self.details = []
         self.traceback = []
-        self.details.append("Local Variables:")
         try:
             raise ZeroDivisionError
         except ZeroDivisionError:
             frame = sys.exc_info()[2].tb_frame.f_back.f_back
-        while frame is not None:
-            self.__AddFrame(frame)
-            frame = frame.f_back
+        self.__AddLocalVariables(frame)
 
     def _FormatValue(self, value, maxLength = None):
         """Format the value for display in the exception."""
