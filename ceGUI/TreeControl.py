@@ -91,8 +91,9 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
 
     def GetSelectedItem(self):
         itemId = self.GetSelection()
-        item = self.GetPyData(itemId)
-        return item.data
+        if itemId.IsOk():
+            item = self.GetPyData(itemId)
+            return item.data
 
     def HasItem(self, item):
         return item in self.idsByItem
