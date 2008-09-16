@@ -10,8 +10,8 @@ import wx
 import sys
 
 __all__ = [ "BusyCursorContext", "EventHandler", "EVT_THREAD_TERMINATED",
-            "GetModuleItem", "OpenWindow", "Thread", "TransactionContext",
-            "RequiredFieldHasNoValue" ]
+            "FrozenContext", "GetModuleItem", "OpenWindow",
+            "RequiredFieldHasNoValue", "Thread", "TransactionContext" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -70,6 +70,18 @@ class EventHandler(object):
             app = wx.GetApp()
             exc = cx_Exceptions.GetExceptionInfo(*sys.exc_info())
             app.OnException(exc, self.parent)
+
+
+class FrozenContext(object):
+
+    def __init__(self, window):
+        self.window = window
+
+    def __enter__(self):
+        self.window.Freeze()
+
+    def __exit__(self, excType, excValue, excTraceback):
+        self.window.Thaw()
 
 
 def GetModuleItem(moduleName, attrName = None):
