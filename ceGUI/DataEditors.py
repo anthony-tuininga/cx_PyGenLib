@@ -238,6 +238,7 @@ class EditDialogColumn(ceGUI.BaseControl):
 
 class EditDialog(ceGUI.StandardDialog):
     dataSetClassName = "DataSet"
+    updateCacheMethodName = None
 
     def __init__(self, parent, instanceName = None, parentItem = None):
         self.columns = []
@@ -283,7 +284,10 @@ class EditDialog(ceGUI.StandardDialog):
         pass
 
     def OnPostUpdate(self):
-        pass
+        if self.updateCacheMethodName is not None:
+            method = getattr(self.cache, self.updateCacheMethodName)
+            for row in self.dataSet.rows.itervalues():
+                method(row)
 
     def OnPreUpdate(self):
         pass
