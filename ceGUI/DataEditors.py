@@ -86,12 +86,16 @@ class DataList(ceGUI.List):
         parent = self.GetParent()
         return parent.editDialogName is not None
 
+    def CanRefreshItems(self):
+        return True
+
     def OnContextMenu(self):
         selectedItems = self.GetSelectedItems()
         deleteEnabled = len(selectedItems) > 0 \
                 and self.CanDeleteItems(selectedItems)
         editEnabled = len(selectedItems) == 1 \
                 and self.CanEditItem(selectedItems[0])
+        self.refreshMenuItem.Enable(self.CanRefreshItems())
         self.insertMenuItem.Enable(self.CanInsertItems())
         self.deleteMenuItem.Enable(deleteEnabled)
         self.editMenuItem.Enable(editEnabled)
