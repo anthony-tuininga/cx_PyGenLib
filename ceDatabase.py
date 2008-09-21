@@ -75,6 +75,9 @@ class Row(object):
         args = [getattr(self, n) for n in cls.attrNames]
         return cls(*args)
 
+    def GetPrimaryKeyTuple(self):
+        return tuple([getattr(self, n) for n in self.pkAttrNames])
+
     def SortValue(self):
         if len(self.sortByAttrNames) == 1:
             value = getattr(self, self.sortByAttrNames[0])
