@@ -321,9 +321,10 @@ class DataSet(object):
         itemsToSort.sort()
         return [i[1] for i in itemsToSort]
 
-    def InsertRow(self, choice = None):
+    def InsertRow(self, choice = None, row = None):
         handle = self._GetNewRowHandle()
-        row = self.rowClass.New()
+        if row is None:
+            row = self.rowClass.New()
         self._OnInsertRow(row, choice)
         self.insertedRows[handle] = self.rows[handle] = row
         return handle, row

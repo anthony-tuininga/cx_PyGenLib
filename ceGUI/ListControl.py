@@ -113,8 +113,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self._AddColumn(column)
         return column
 
-    def AppendItem(self, choice = None, refresh = True):
-        return self.InsertItem(len(self.rowHandles), choice, refresh)
+    def AppendItem(self, choice = None, refresh = True, item = None):
+        return self.InsertItem(len(self.rowHandles), choice, refresh, item)
 
     def Clear(self):
         self.rowHandles = []
@@ -177,8 +177,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def GetSelectedItemIndexes(self):
         return self._GetItemIndexesWithState(wx.LIST_STATE_SELECTED)
 
-    def InsertItem(self, pos = 0, choice = None, refresh = True):
-        handle, row = self.dataSet.InsertRow(choice)
+    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None):
+        handle, row = self.dataSet.InsertRow(choice, item)
         self.rowHandles.insert(pos, handle)
         self.SetItemCount(len(self.rowHandles))
         if refresh:
