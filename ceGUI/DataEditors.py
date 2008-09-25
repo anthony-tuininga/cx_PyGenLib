@@ -159,7 +159,7 @@ class DataListPanel(ceGUI.Panel):
 
     def InsertItems(self):
         dialog = self.GetEditWindow()
-        if dialog is None:
+        if dialog is None or dialog.IsEditingCanceled():
             return
         if dialog.ShowModal() == wx.ID_OK:
             row = dialog.dataSet.rows[0]
@@ -257,6 +257,9 @@ class EditDialog(ceGUI.StandardDialog):
     def AddColumn(self, attrName, labelText, field, required = False,
             cls = EditDialogColumn):
         return cls(self, attrName, labelText, field, required)
+
+    def IsEditingCanceled(self):
+        return False
 
     def OnLayout(self):
         fieldsSizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2,
