@@ -202,29 +202,20 @@ class Frame(BaseContainer, wx.Frame):
         super(Frame, self)._OnCreate()
 
     def AddMenu(self, label):
-        menu = wx.Menu()
-        self.menuBar.Append(menu, label)
+        menu = ceGUI.Menu()
+        menu.AddToMenuBar(self.menuBar, label)
         return menu
 
     def AddMenuItem(self, menu, label, helpString = "", method = None,
             createBusyCursor = False, passEvent = True, radio = False,
             checkable = False, windowName = None, enabled = True):
-        if radio:
-            kind = wx.ITEM_RADIO
-        elif checkable:
-            kind = wx.ITEM_CHECK
-        else:
-            kind = wx.ITEM_NORMAL
-        if windowName is not None:
-            method = functools.partial(self.SimpleOpenWindow, windowName)
-            passEvent = False
-        return self._AddMenuItem(menu, label, helpString, kind, method,
-                createBusyCursor, passEvent = passEvent, enabled = enabled)
+        return menu.AddEntry(self, label, helpString, method, createBusyCursor,
+                passEvent, radio, checkable, windowName, enabled)
 
     def AddStockMenuItem(self, menu, stockId, method = None,
             createBusyCursor = False, enabled = True):
-        return self._AddMenuItem(menu, id = stockId, method = method,
-                createBusyCursor = createBusyCursor, enabled = enabled)
+        return menu.AddStockEntry(self, stockId, method, createBusyCursor,
+                enabled)
 
     def AddToolbarItem(self, label, bitmapId, shortHelp = "", longHelp = "",
             method = None, createBusyCursor = False, passEvent = True,

@@ -14,21 +14,6 @@ class BaseControl(object):
     copyAppAttributes = True
     baseSettingsName = None
 
-    def _AddMenuItem(self, menu, label = "", helpString = "",
-            kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
-            id = None, skipEvent = True, passEvent = True, enabled = True):
-        if id is None:
-            id = wx.NewId()
-        item = wx.MenuItem(menu, id, label, helpString, kind)
-        menu.AppendItem(item)
-        if not enabled:
-            item.Enable(False)
-        if method is not None:
-            self.BindEvent(item, wx.EVT_MENU, method, passEvent = passEvent,
-                    skipEvent = skipEvent,
-                    createBusyCursor = createBusyCursor)
-        return item
-
     def _GetClass(self, name):
         pos = name.rfind(".")
         if pos < 0:

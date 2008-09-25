@@ -3,6 +3,7 @@ from Images import *
 from Application import *
 from SimpleControls import *
 from ListControl import *
+from Menus import *
 from GridControl import *
 from TreeControl import *
 from ContainerControls import *
