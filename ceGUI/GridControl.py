@@ -20,16 +20,16 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self._Initialize(parent)
 
     def _CreateContextMenu(self):
-        self.menu = wx.Menu()
-        self.refreshMenuItem = self._AddMenuItem(self.menu,
-                "Refresh\tCtrl-R", method = self.Retrieve, passEvent = False)
-        self.updateMenuItem = self._AddMenuItem(self.menu,
-                "Save\tCtrl-S", method = self.Update, passEvent = False)
-        self.menu.AppendSeparator()
-        self.insertMenuItem = self._AddMenuItem(self.menu,
-                "Insert\tCtrl-I", method = self._OnInsert, skipEvent = False)
-        self.deleteMenuItem = self._AddMenuItem(self.menu,
-                "Delete\tCtrl-D", method = self._OnDelete, skipEvent = False)
+        self.menu = ceGUI.Menu()
+        self.refreshMenuItem = self.menu.AddEntry(self, "Refresh\tCtrl-R",
+                method = self.Retrieve, passEvent = False)
+        self.updateMenuItem = self.menu.AddEntry(self, "Save\tCtrl-S",
+                method = self.Update, passEvent = False)
+        self.menu.AddSeparator()
+        self.insertMenuItem = self.menu.AddEntry(self, "Insert\tCtrl-I",
+                method = self._OnInsert, skipEvent = False)
+        self.deleteMenuItem = self.menu.AddEntry(self, "Delete\tCtrl-D",
+                method = self._OnDelete, skipEvent = False)
 
     def _GetAccelerators(self):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
@@ -175,7 +175,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self.EnableCellEditControl(True)
 
     def OnContextMenu(self):
-        self.PopupMenu(self.menu)
+        self.menu.Popup(self)
 
     def OnInvalidValueEntered(self, rowIndex, colIndex, rawValue):
         self.SetGridCursor(rowIndex, colIndex)

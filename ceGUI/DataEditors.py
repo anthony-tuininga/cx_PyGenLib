@@ -19,19 +19,16 @@ class DataList(ceGUI.List):
     singleSelection = True
 
     def _CreateContextMenu(self):
-        self.menu = wx.Menu()
-        self.refreshMenuItem = self._AddMenuItem(self.menu,
-                "Refresh\tCtrl-R", method = self._OnRefresh, passEvent = False)
-        self.menu.AppendSeparator()
-        self.insertMenuItem = self._AddMenuItem(self.menu,
-                "Insert\tCtrl-I", method = self._OnInsertItems,
-                passEvent = False)
-        self.editMenuItem = self._AddMenuItem(self.menu,
-                "Edit\tCtrl-E", method = self._OnEditItem,
-                passEvent = False)
-        self.deleteMenuItem = self._AddMenuItem(self.menu,
-                "Delete\tCtrl-D", method = self._OnDeleteItems,
-                passEvent = False)
+        self.menu = ceGUI.Menu()
+        self.refreshMenuItem = self.menu.AddEntry(self, "Refresh\tCtrl-R",
+                method = self._OnRefresh, passEvent = False)
+        self.menu.AddSeparator()
+        self.insertMenuItem = self.menu.AddEntry(self, "Insert\tCtrl-I",
+                method = self._OnInsertItems, passEvent = False)
+        self.editMenuItem = self.menu._AddEntry(self, "Edit\tCtrl-E",
+                method = self._OnEditItem, passEvent = False)
+        self.deleteMenuItem = self.menu.AddEntry(self, "Delete\tCtrl-D",
+                method = self._OnDeleteItems, passEvent = False)
 
     def _GetAccelerators(self):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
@@ -99,7 +96,7 @@ class DataList(ceGUI.List):
         self.insertMenuItem.Enable(self.CanInsertItems())
         self.deleteMenuItem.Enable(deleteEnabled)
         self.editMenuItem.Enable(editEnabled)
-        self.PopupMenu(self.menu)
+        self.menu.Popup(self)
 
     def OnDeleteItems(self, items):
         parent = self.GetParent()
