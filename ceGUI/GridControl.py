@@ -27,9 +27,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 method = self.Update, passEvent = False)
         self.menu.AddSeparator()
         self.insertMenuItem = self.menu.AddEntry(self, "Insert\tCtrl-I",
-                method = self._OnInsert, skipEvent = False)
+                method = self._OnInsert, passEvent = False)
         self.deleteMenuItem = self.menu.AddEntry(self, "Delete\tCtrl-D",
-                method = self._OnDelete, skipEvent = False)
+                method = self._OnDelete, passEvent = False)
 
     def _GetAccelerators(self):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
@@ -79,7 +79,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.contextRow = None
         super(Grid, self)._OnCreate()
 
-    def _OnDelete(self, event):
+    def _OnDelete(self):
         if self.contextRow is None:
             row = self.GetGridCursorRow()
         else:
@@ -88,7 +88,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             return
         self.DeleteRows(row)
 
-    def _OnInsert(self, event):
+    def _OnInsert(self):
         if not self.table.CanInsertRow():
             return
         if self.contextRow is None:
