@@ -63,15 +63,11 @@ class BaseControl(object):
         value = self.settings.Read(settingsName, "")
         if not value:
             return defaultValue
+        if isComplex:
+            converter = eval
         if converter is not None:
             try:
                 value = converter(value)
-            except:
-                self.settings.DeleteEntry(fullName)
-                value = defaultValue
-        if isComplex:
-            try:
-                value = eval(value)
             except:
                 self.settings.DeleteEntry(fullName)
                 value = defaultValue
@@ -83,14 +79,16 @@ class BaseControl(object):
     def SaveSettings(self):
         pass
 
-    def WriteSetting(self, name, value, isComplex = False):
+    def WriteSetting(self, name, value, isComplex = False, converter = None):
         settingsName = self._GetSettingsName(name)
-        if isComplex:
-            value = repr(value)
-        elif value is None:
+        if value is None:
             value = ""
         else:
-            value = str(value)
+            if isComplex:
+                converter = repr
+            elif converter is None:
+                converter = str
+            value = converter(value)
         self.settings.Write(settingsName, value)
 
 
