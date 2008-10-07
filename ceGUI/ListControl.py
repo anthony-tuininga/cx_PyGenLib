@@ -211,7 +211,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.Refresh()
 
     def RestoreColumnWidths(self, settingsName = "ColumnWidths"):
-        widths = self.ReadSetting(settingsName, isComplex = True)
+        widths = self.ReadSetting(settingsName, converter = eval)
         if widths is not None:
             for columnIndex, width in enumerate(widths):
                 self.SetColumnWidth(columnIndex, width)
@@ -230,7 +230,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         numColumns = self.GetColumnCount()
         if numColumns > 1:
             widths = [self.GetColumnWidth(i) for i in range(numColumns - 1)]
-            self.WriteSetting(settingsName, tuple(widths), isComplex = True)
+            self.WriteSetting(settingsName, tuple(widths))
 
     def SelectAll(self):
         for itemIndex in range(len(self.rowHandles)):
