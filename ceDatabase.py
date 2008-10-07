@@ -144,11 +144,11 @@ class DataSet(object):
     pkIsGenerated = False
     pkSequenceName = None
     useSlots = True
-    isOracle = False
 
     def __init__(self, connection, contextItem = None):
         self.connection = connection
         self.childDataSets = []
+        self.isOracle = self._IsOracle(connection.__class__)
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
         if self.updateTableName is None:
@@ -216,6 +216,14 @@ class DataSet(object):
     def _InsertRowsInDatabase(self, cursor):
         for row in self.insertedRows.itervalues():
             self.InsertRowInDatabase(cursor, row)
+
+    def _IsOracle(self, cls):
+        if cls.__module__ == "cx_Oracle":
+            return True
+        for base in cls.__bases__:
+            if self._IsOracle(base):
+                return True
+        return False
 
     def _OnDeleteRow(self, row):
         pass
