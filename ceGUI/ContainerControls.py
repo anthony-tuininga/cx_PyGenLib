@@ -45,21 +45,20 @@ class BaseContainer(ceGUI.BaseControl):
     def _RestoreSettings(self):
         if self.saveSize:
             size = self.ReadSetting("Size", self.defaultSize or self.minSize,
-                    isComplex = True)
+                    converter = eval)
             if size is not None:
                 self.SetSize(size)
         if self.savePosition:
-            position = self.ReadSetting("Position", isComplex = True)
+            position = self.ReadSetting("Position", converter = eval)
             if position is not None:
                 self.SetPosition(position)
         self.RestoreSettings()
 
     def _SaveSettings(self):
         if self.saveSize:
-            self.WriteSetting("Size", self.GetSizeTuple(), isComplex = True)
+            self.WriteSetting("Size", self.GetSizeTuple())
         if self.savePosition:
-            self.WriteSetting("Position", self.GetPositionTuple(),
-                    isComplex = True)
+            self.WriteSetting("Position", self.GetPositionTuple())
         self.SaveSettings()
         self.settings.Flush()
 
