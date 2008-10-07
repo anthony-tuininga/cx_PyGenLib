@@ -144,11 +144,10 @@ class DataSet(object):
     pkIsGenerated = False
     pkSequenceName = None
     useSlots = True
+    isOracle = False
 
     def __init__(self, connection, contextItem = None):
         self.connection = connection
-        self.isOracle = \
-                connection.__class__.__module__.startswith("cx_Oracle")
         self.childDataSets = []
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
