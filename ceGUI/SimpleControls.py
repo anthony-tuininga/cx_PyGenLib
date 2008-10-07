@@ -57,11 +57,18 @@ class BaseControl(object):
     def OnLayout(self):
         pass
 
-    def ReadSetting(self, name, defaultValue = None, isComplex = False):
+    def ReadSetting(self, name, defaultValue = None, isComplex = False,
+            converter = None):
         settingsName = self._GetSettingsName(name)
         value = self.settings.Read(settingsName, "")
         if not value:
             return defaultValue
+        if converter is not None:
+            try:
+                value = converter(value)
+            except:
+                self.settings.DeleteEntry(fullName)
+                value = defaultValue
         if isComplex:
             try:
                 value = eval(value)
