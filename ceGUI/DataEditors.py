@@ -173,7 +173,7 @@ class DataListPanel(ceGUI.Panel):
         self.list = self._GetList()
         self.BindEvent(self.list, wx.EVT_LIST_ITEM_ACTIVATED,
                 self.OnItemActivated)
-        self.Retrieve()
+        wx.CallAfter(self.Retrieve)
 
     def OnItemActivated(self, event):
         handle = self.list.rowHandles[event.GetIndex()]
