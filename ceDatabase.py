@@ -190,7 +190,7 @@ class DataSet(object):
         sql = self._GetSqlForRetrieve()
         cursor = self.connection.cursor()
         cursor.execute(sql, args)
-        cursor.rowfactory = self.rowClass
+        cursor.row_factory = self.rowClass
         self.retrievalArgs = args
         rows = cursor.fetchall()
         if self.sortByAttrNames:
