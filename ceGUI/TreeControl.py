@@ -22,13 +22,19 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         self._PopulateRootItems()
 
     def _ExpandItem(self, item):
-        item.expanded = True
-        childItems = item.GetChildItems(self)
-        if childItems:
-            self._PopulateBranch(item.data, childItems)
+        if item is None:
+            rootItemId = self.idsByItem[None]
+            self.idsByItem = {}
+            self.idsByItem[None] = rootItemId
+            self._PopulateBranch(None, self.GetRootItems())
         else:
-            itemId = self.idsByItem[item.data]
-            self.SetItemHasChildren(itemId, False)
+            item.expanded = True
+            childItems = item.GetChildItems(self)
+            if childItems:
+                self._PopulateBranch(item.data, childItems)
+            else:
+                itemId = self.idsByItem[item.data]
+                self.SetItemHasChildren(itemId, False)
 
     def _PopulateBranch(self, parent, items):
         itemsToSort = [(i.GetSortValue(), i) for i in items]
@@ -135,7 +141,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
     def RefreshItemChildren(self, item, forceExpansion = False):
         itemId = self.idsByItem[item]
         treeItem = self.GetPyData(itemId)
-        if treeItem.expanded or forceExpansion:
+        if treeItem is None or treeItem.expanded or forceExpansion:
             for childItem in self.GetChildItems(item):
                 self.DeleteItem(childItem)
             self._ExpandItem(treeItem)
