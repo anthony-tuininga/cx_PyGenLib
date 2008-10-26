@@ -408,7 +408,7 @@ class GridColumnChoice(GridColumn):
         displayValues = []
         self.dataValuesByDisplayValue = {}
         self.displayValuesByDataValue = {}
-        for choice in choices:
+        for choice in self.GetChoices():
             if isinstance(choice, tuple):
                 dataValue, displayValue = choice
             else:
