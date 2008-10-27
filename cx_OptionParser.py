@@ -162,6 +162,15 @@ class OptionParser(optparse.OptionParser):
         if value:
             setattr(values, option.dest, value)
 
+    def _ProcessArgs(self, values):
+        # display version, if not in quiet mode
+        if values.showBanner:
+            print >> sys.stderr, self.__banner
+
+        # turn off traceback if not desired
+        if not values.traceback:
+            sys.tracebacklimit = 0
+
     def AddArgument(self, nameOrArg, **attributes):
         """Add an argument to the list of supported arguments."""
         if isinstance(nameOrArg, Argument):
@@ -248,13 +257,7 @@ class OptionParser(optparse.OptionParser):
             if getattr(values, arg.dest) is None:
                 self.error("%s not supplied" % arg)
 
-        # display version, if not in quiet mode
-        if values.showBanner:
-            print >> sys.stderr, self.__banner
-
-        # turn off traceback if not desired
-        if not values.traceback:
-            sys.tracebacklimit = 0
+        self._ProcessArgs(values)
 
         return values
 
