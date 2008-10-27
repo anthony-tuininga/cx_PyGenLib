@@ -73,7 +73,11 @@ class Row(object):
     def Copy(self):
         cls = self.__class__
         args = [getattr(self, n) for n in cls.attrNames]
-        return cls(*args)
+        row = cls(*args)
+        for name in cls.extraAttrNames:
+            if hasattr(self, name):
+                setattr(row, name, getattr(self, name))
+        return row
 
     def GetPrimaryKeyTuple(self):
         return tuple([getattr(self, n) for n in self.pkAttrNames])
