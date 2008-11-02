@@ -234,7 +234,7 @@ class IntegerField(TextField):
 
     def OnChar(self, event):
         key = event.GetKeyCode()
-        if key in (wx.WXK_BACK, wx.WXK_DELETE) or key > 127:
+        if key in (wx.WXK_TAB, wx.WXK_BACK, wx.WXK_DELETE) or key > 127:
             event.Skip()
         if key >= ord('0') and key <= ord('9'):
             event.Skip()
