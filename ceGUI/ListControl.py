@@ -217,8 +217,6 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 self.SetColumnWidth(columnIndex, width)
 
     def Retrieve(self, *args):
-        if not args:
-            args = self.dataSet.retrievalArgs
         self.DeleteAllItems()
         self.dataSet.Retrieve(*args)
         self.rowHandles = self.dataSet.rows.keys()
