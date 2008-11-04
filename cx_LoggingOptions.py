@@ -87,6 +87,6 @@ def ProcessOptions(options):
         cx_Logging.StartLogging(options.logFile, logLevel, maxFiles,
                 maxFileSize, logPrefix)
         f = cx_Logging.GetLoggingFile()
-        os.dup2(f.fileno(), sys.stderr.fileno())
+        os.dup2(f.fileno(), 2)
     sys.excepthook = ExceptionHandler
 
