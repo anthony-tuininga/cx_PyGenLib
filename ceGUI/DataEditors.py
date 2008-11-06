@@ -268,9 +268,6 @@ class EditDialog(ceGUI.StandardDialog):
             cls = EditDialogColumn):
         return cls(self, attrName, labelText, field, required)
 
-    def IsEditingCanceled(self):
-        return False
-
     def OnLayout(self):
         fieldsSizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2,
                 vgap = 5, hgap = 5)

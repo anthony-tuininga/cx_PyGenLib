@@ -295,6 +295,9 @@ class StandardDialog(Dialog):
         topSizer.Add(buttonSizer, flag = wx.EXPAND)
         super(StandardDialog, self)._OnLayout(topSizer)
 
+    def IsEditingCanceled(self):
+        return False
+
 
 class TopLevelFrame(Frame):
     baseSettingsName = ""
