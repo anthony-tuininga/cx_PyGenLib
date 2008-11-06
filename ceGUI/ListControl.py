@@ -7,7 +7,8 @@ import cx_Exceptions
 import datetime
 import wx
 
-__all__ = [ "CheckList", "List", "ListColumn", "ListDateColumn" ]
+__all__ = [ "CheckList", "List", "ListColumn", "ListDateColumn",
+            "ListTimestampColumn" ]
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
@@ -375,12 +376,20 @@ class ListColumn(ceGUI.BaseControl):
 
 
 class ListDateColumn(ListColumn):
-    dateFormat = "%Y/%m/%d %H:%M"
+    dateFormatAttrName = "dateFormat"
+    dateFormat = None
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
         if value is not None:
-            return value.strftime(self.dateFormat)
+            dateFormat = self.dateFormat
+            if dateFormat is None:
+                dateFormat = getattr(self.config, self.dateFormatAttrName)
+            return value.strftime(dateFormat)
+
+
+class ListTimestampColumn(ListDateColumn):
+    dateFormatAttrName = "timestampFormat"
 
 
 class WrongNumberOfRowsSelected(cx_Exceptions.BaseException):
