@@ -186,8 +186,7 @@ class TextField(BaseControl, wx.TextCtrl):
         wx.TextCtrl.__init__(self, parent, style = style, size = size)
         self.maxLength = maxLength
         if style & wx.TE_READONLY:
-            color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
-            self.SetBackgroundColour(color)
+            self.SetReadOnly()
         if maxLength > 0:
             self.SetMaxLength(maxLength)
         self._Initialize()
@@ -196,6 +195,11 @@ class TextField(BaseControl, wx.TextCtrl):
         value = wx.TextCtrl.GetValue(self)
         if value:
             return value
+
+    def SetReadOnly(self):
+        color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.SetBackgroundColour(color)
+        self.SetEditable(False)
 
     def SetValue(self, value):
         wx.TextCtrl.SetValue(self, value or "")
