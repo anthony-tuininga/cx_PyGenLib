@@ -62,9 +62,12 @@ class DataList(ceGUI.List):
             self.OnDeleteItems(items)
 
     def _OnEditItem(self):
-        items = self.GetSelectedItems()
-        if len(items) == 1 and self.CanEditItem(items[0]):
-            self.OnEditItem(items[0])
+        itemIndexes = list(self.GetSelectedItemIndexes())
+        if len(itemIndexes) == 1:
+            itemIndex = itemIndexes[0]
+            item = self.GetItem(itemIndex)
+            if self.CanEditItem(item):
+                self.OnEditItem(item, itemIndex)
 
     def _OnInsertItems(self):
         if self.CanInsertItems():
@@ -102,9 +105,9 @@ class DataList(ceGUI.List):
         parent = self.GetParent()
         parent.DeleteItems(items)
 
-    def OnEditItem(self, item):
+    def OnEditItem(self, item, itemIndex):
         parent = self.GetParent()
-        parent.EditItem(item)
+        parent.EditItem(item, itemIndex)
 
     def OnInsertItems(self):
         parent = self.GetParent()
@@ -122,6 +125,18 @@ class DataListPanel(ceGUI.Panel):
         cls = ceGUI.GetModuleItem(self.__class__.__module__,
                 self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
+
+    def _OnEditItem(self, item, itemIndex, dialog):
+        row = dialog.dataSet.rows[0]
+        self._UpdateListItem(item, row)
+        self.list.Refresh()
+
+    def _OnInsertItems(self, dialog):
+        row = dialog.dataSet.rows[0]
+        item = self.list.AppendItem(row, refresh = False)
+        self.list.dataSet.ClearChanges()
+        self._UpdateListItem(item, row)
+        self.list.Refresh()
 
     def _UpdateListItem(self, item, row):
         for attrName in item.attrNames:
@@ -143,14 +158,12 @@ class DataListPanel(ceGUI.Panel):
         self.list.dataSet.Update()
         self.list.Refresh()
 
-    def EditItem(self, item):
+    def EditItem(self, item, itemIndex):
         dialog = self.GetEditWindow(item)
         if dialog is None:
             return
         if dialog.ShowModal() == wx.ID_OK:
-            row = dialog.dataSet.rows[0]
-            self._UpdateListItem(item, row)
-            self.list.Refresh()
+            self._OnEditItem(item, itemIndex, dialog)
         dialog.Destroy()
 
     def GetEditWindow(self, item = None):
@@ -162,11 +175,7 @@ class DataListPanel(ceGUI.Panel):
         if dialog is None or dialog.IsEditingCanceled():
             return
         if dialog.ShowModal() == wx.ID_OK:
-            row = dialog.dataSet.rows[0]
-            item = self.list.AppendItem(row, refresh = False)
-            self.list.dataSet.ClearChanges()
-            self._UpdateListItem(item, row)
-            self.list.Refresh()
+            self._OnInsertItems(dialog)
         dialog.Destroy()
 
     def OnCreate(self):
@@ -176,9 +185,10 @@ class DataListPanel(ceGUI.Panel):
         wx.CallAfter(self.Retrieve)
 
     def OnItemActivated(self, event):
-        handle = self.list.rowHandles[event.GetIndex()]
+        itemIndex = event.GetIndex()
+        handle = self.list.rowHandles[itemIndex]
         item = self.list.dataSet.rows[handle]
-        self.EditItem(item)
+        self.EditItem(item, itemIndex)
 
     def OnLayout(self):
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
