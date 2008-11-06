@@ -12,7 +12,7 @@ import os
 import wx
 import sys
 
-__all__ = ["Application"]
+__all__ = ["Application", "Config"]
 
 
 class Application(wx.App):
@@ -80,4 +80,9 @@ class Application(wx.App):
         levelName = self.settings.Read("LogLevel", "ERROR")
         level = getattr(cx_Logging, levelName)
         cx_Logging.StartLogging(fileName, level)
+
+
+class Config(object):
+    dateFormat = "%Y/%m/%d"
+    timestampFormat = "%Y/%m/%d %H:%M"
 
