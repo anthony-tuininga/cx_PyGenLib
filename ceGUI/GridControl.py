@@ -403,6 +403,7 @@ class GridColumnBool(GridColumn):
 
 
 class GridColumnChoice(GridColumn):
+    allowOthers = False
 
     def OnCreate(self):
         displayValues = []
@@ -416,19 +417,20 @@ class GridColumnChoice(GridColumn):
             displayValues.append(displayValue)
             self.dataValuesByDisplayValue[displayValue] = dataValue
             self.displayValuesByDataValue[dataValue] = displayValue
-        editor = wx.grid.GridCellChoiceEditor(displayValues)
+        editor = wx.grid.GridCellChoiceEditor(displayValues,
+                allowOthers = self.allowOthers)
         self.attr.SetEditor(editor)
 
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
-        return self.displayValuesByDataValue[value]
+        return self.displayValuesByDataValue.get(value, value)
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
-        return self.displayValuesByDataValue[value]
+        return self.displayValuesByDataValue.get(value, value)
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        value = self.dataValuesByDisplayValue[rawValue]
+        value = self.dataValuesByDisplayValue.get(rawValue, rawValue)
         dataSet.SetValue(rowHandle, self.attrName, value)
         return True
 
