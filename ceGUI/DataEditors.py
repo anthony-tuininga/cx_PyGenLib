@@ -172,9 +172,9 @@ class DataListPanel(ceGUI.Panel):
 
     def InsertItems(self):
         dialog = self.GetEditWindow()
-        if dialog is None or dialog.IsEditingCanceled():
+        if dialog is None:
             return
-        if dialog.ShowModal() == wx.ID_OK:
+        if not dialog.IsEditingCanceled() and dialog.ShowModal() == wx.ID_OK:
             self._OnInsertItems(dialog)
         dialog.Destroy()
 
