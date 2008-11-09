@@ -373,6 +373,12 @@ class DataSet(object):
             for attrIndex, value in enumerate(pkValues):
                 setattr(row, self.pkAttrNames[attrIndex], value)
 
+    def MarkAllRowsAsNew(self):
+        for handle, row in self.rows.iteritems():
+            self.insertedRows[handle] = row
+        for childDataSet in self.childDataSets:
+            childDataSet.MarkAllRowsAsNew()
+
     def PendingChanges(self):
         if self.insertedRows or self.updatedRows or self.deletedRows:
             return True
