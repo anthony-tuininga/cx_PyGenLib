@@ -8,7 +8,8 @@ import wx
 import wx.grid
 
 __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
-            "GridColumnInt", "GridColumnStr", "GridTable" ]
+            "GridColumnDecimal", "GridColumnInt", "GridColumnStr", "GridTable",
+            "InvalidValueEntered" ]
 
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
@@ -315,7 +316,16 @@ class GridTable(wx.grid.PyGridTableBase):
         handle = self.rowHandles[rowIndex]
         row = self.dataSet.rows[handle]
         grid = self.GetView()
-        if not column.SetValue(grid, self.dataSet, handle, row, rawValue):
+        try:
+            validValue = column.SetValue(grid, self.dataSet, handle, row,
+                    rawValue)
+        except InvalidValueEntered, e:
+            validValue = False
+            dialog = wx.MessageDialog(grid.GetParent(), e.message,
+                    "Invalid Value", style = wx.OK | wx.ICON_ERROR)
+            dialog.ShowModal()
+            dialog.Destroy()
+        if not validValue:
             wx.CallAfter(grid.OnInvalidValueEntered, rowIndex, colIndex,
                     rawValue)
 
@@ -443,7 +453,31 @@ class GridColumnInt(GridColumn):
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
         if rawValue:
-            value = int(rawValue)
+            try:
+                value = int(rawValue)
+            except ValueError:
+                message = "'%s' is not a valid integer." % rawValue
+                raise InvalidValueEntered(message)
+        else:
+            value = None
+        dataSet.SetValue(rowHandle, self.attrName, value)
+        return True
+
+
+class GridColumnDecimal(GridColumn):
+    defaultHorizontalAlignment = wx.ALIGN_RIGHT
+    storeAsString = False
+
+    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
+        import decimal
+        if rawValue:
+            try:
+                value = decimal.Decimal(rawValue)
+            except decimal.InvalidOperation:
+                message = "'%s' is not a valid number." % rawValue
+                raise InvalidValueEntered(message)
+            if self.storeAsString:
+                value = rawValue
         else:
             value = None
         dataSet.SetValue(rowHandle, self.attrName, value)
@@ -452,4 +486,10 @@ class GridColumnInt(GridColumn):
 
 class GridColumnStr(GridColumn):
     pass
+
+
+class InvalidValueEntered(Exception):
+
+    def __init__(self, message):
+        self.message = message
 
