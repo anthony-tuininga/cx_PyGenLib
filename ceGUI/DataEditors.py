@@ -153,7 +153,7 @@ class DataListPanel(ceGUI.Panel):
         dialog.Destroy()
         if response != wx.ID_YES:
             return
-        for itemIndex in self.list.GetSelectedItemIndexes():
+        for itemIndex in reversed(list(self.list.GetSelectedItemIndexes())):
             self.list.DeleteItem(itemIndex, refresh = False)
         self.list.dataSet.Update()
         self.list.Refresh()
