@@ -130,6 +130,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.sortByAttrNames.extend(self.__class__.sortByAttrNames.split())
 
     def DeleteItem(self, itemIndex, refresh = True):
+        self.SetItemState(itemIndex, 0, wx.LIST_STATE_SELECTED)
         handle = self.rowHandles.pop(itemIndex)
         self.dataSet.DeleteRow(handle)
         self.SetItemCount(len(self.rowHandles))
