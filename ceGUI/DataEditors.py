@@ -268,10 +268,14 @@ class EditDialog(ceGUI.StandardDialog):
             cls = EditDialogColumn):
         return cls(self, attrName, labelText, field, required)
 
+    def GetFieldsSizer(self):
+        sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
+                hgap = 5)
+        sizer.AddGrowableCol(1)
+        return sizer
+
     def OnLayout(self):
-        fieldsSizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2,
-                vgap = 5, hgap = 5)
-        fieldsSizer.AddGrowableCol(1)
+        fieldsSizer = self.GetFieldsSizer()
         for column in self.columns:
             column.Layout(fieldsSizer)
         topSizer = wx.BoxSizer(wx.VERTICAL)
