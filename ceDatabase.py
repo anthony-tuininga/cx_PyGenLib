@@ -415,8 +415,8 @@ class DataSet(object):
             if handle not in self.insertedRows \
                     and handle not in self.updatedRows:
                 self.updatedRows[handle] = row.Copy()
-            cx_Logging.Debug("setting attr %s on row %s to %r", attrName,
-                    handle, value)
+            cx_Logging.Debug("setting attr %s on row %s to %r (from %r)",
+                    attrName, handle, value, origValue)
             self._OnSetValue(row, attrName, value, origValue)
             setattr(row, attrName, value)
 
