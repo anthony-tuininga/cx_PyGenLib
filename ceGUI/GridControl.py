@@ -117,15 +117,18 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def AddColumn(self, attrName, label, defaultWidth = None,
             horizontalAlignment = None, verticalAlignment = None,
-            readOnly = False, cls = None, required = False):
+            readOnly = False, cls = None, required = False,
+            contextItem = None):
         if cls is None:
             cls = GridColumn
         if horizontalAlignment is None:
             horizontalAlignment = cls.defaultHorizontalAlignment
         if verticalAlignment is None:
             verticalAlignment = cls.defaultVerticalAlignment
+        if contextItem is None:
+            contextItem = self.table.dataSet.contextItem
         column = cls(attrName, label, horizontalAlignment, verticalAlignment,
-                readOnly, required)
+                readOnly, required, contextItem)
         columnIndex = self.table.GetNumberCols()
         self.table.AddColumn(column)
         self.SetColAttr(columnIndex, column.attr)
@@ -354,12 +357,13 @@ class GridColumn(ceGUI.BaseControl):
     defaultVerticalAlignment = wx.ALIGN_CENTRE
 
     def __init__(self, attrName, label, horizontalAlignment,
-            verticalAlignment, readOnly, required):
+            verticalAlignment, readOnly, required, contextItem):
         self.attrName = attrName
         self.label = label
         self.required = required
         self.attr = wx.grid.GridCellAttr()
         self.attr.SetAlignment(horizontalAlignment, verticalAlignment)
+        self.contextItem = contextItem
         if readOnly:
             self.attr.SetReadOnly()
         self._Initialize()
