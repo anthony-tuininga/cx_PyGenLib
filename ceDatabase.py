@@ -465,7 +465,8 @@ class DataSet(object):
         else:
             dataAttrNames = [n for n in self.attrNames \
                     if n not in self.pkAttrNames]
-        args = self._GetArgsFromNames(dataAttrNames + self.pkAttrNames, row)
+        args = self._GetArgsFromNames(dataAttrNames, row) + \
+                self._GetArgsFromNames(self.pkAttrNames, origRow)
         if self.isOracle:
             setClauses = ["%s = :%s" % (n, i + 1) \
                     for i, n in enumerate(dataAttrNames)]
