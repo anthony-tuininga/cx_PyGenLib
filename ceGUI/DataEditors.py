@@ -264,7 +264,7 @@ class FileNameEditDialogColumn(EditDialogColumn):
         sizer.Add(fileNameSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 
     def OnSelectFileName(self):
-        currentFileName = self.field.GetValue()
+        currentFileName = self.field.GetValue() or ""
         dir, fileName = os.path.split(currentFileName)
         if self.extension is not None:
             wildcard = "*" + self.extension
@@ -287,7 +287,7 @@ class DirNameEditDialogColumn(FileNameEditDialogColumn):
     message = "Choose a directory"
 
     def OnSelectFileName(self):
-        defaultPath = self.field.GetValue()
+        defaultPath = self.field.GetValue() or ""
         parent = self.field.GetParent()
         dialog = wx.DirDialog(parent, self.message, defaultPath = defaultPath,
                 style = self.style)
