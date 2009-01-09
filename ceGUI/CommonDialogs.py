@@ -65,23 +65,14 @@ class LoggingPreferencesPane(ceGUI.Panel):
 
     def OnLayout(self):
         fileNameSizer = wx.BoxSizer(wx.HORIZONTAL)
-        fileNameSizer.Add(self.fileNameLabel,
-                flag = wx.LEFT | wx.RIGHT | wx.TOP | wx.ALIGN_CENTER_VERTICAL,
+        fileNameSizer.Add(self.fileNameField, proportion = 1, flag = wx.RIGHT,
                 border = 5)
-        fileNameSizer.Add(self.fileNameField, proportion = 1,
-                flag = wx.LEFT | wx.RIGHT | wx.TOP | wx.ALIGN_CENTER_VERTICAL,
-                border = 5)
-        fileNameSizer.Add(self.selectFileNameButton,
-                flag = wx.LEFT | wx.RIGHT | wx.TOP | wx.ALIGN_CENTER_VERTICAL,
-                border = 5)
-        levelSizer = wx.BoxSizer(wx.HORIZONTAL)
-        levelSizer.Add(self.levelLabel,
-                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
-        levelSizer.Add(self.levelField,
-                flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = 5)
+        fileNameSizer.Add(self.selectFileNameButton)
+        fieldLayout = self.CreateFieldLayout(self.fileNameLabel, fileNameSizer,
+                self.levelLabel, self.levelField)
         topSizer = wx.BoxSizer(wx.VERTICAL)
-        topSizer.Add(fileNameSizer, flag = wx.EXPAND)
-        topSizer.Add(levelSizer)
+        topSizer.Add(fieldLayout, flag = wx.ALL | wx.EXPAND, border = 5,
+                proportion = 1)
         return topSizer
 
     def OnSelectFileName(self, event):
@@ -120,7 +111,7 @@ class LoggingPreferencesPane(ceGUI.Panel):
 
 class PreferencesDialog(ceGUI.StandardDialog):
     baseSettingsName = "w_Preferences"
-    minSize = (450, 145)
+    defaultSize = (450, 157)
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, -1, "Edit Preferences",
@@ -143,7 +134,8 @@ class PreferencesDialog(ceGUI.StandardDialog):
 
     def OnLayout(self):
         topSizer = wx.BoxSizer(wx.VERTICAL)
-        topSizer.Add(self.notebook, proportion = 1, flag = wx.EXPAND)
+        topSizer.Add(self.notebook, proportion = 1,
+                flag = wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, border = 5)
         return topSizer
 
 
