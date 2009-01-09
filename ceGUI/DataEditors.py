@@ -10,7 +10,8 @@ import os
 import sys
 import wx
 
-__all__ = [ "DataList", "DataListPanel", "EditDialog", "EditDialogColumn",
+__all__ = [ "DataList", "DataListPanel", "DirNameEditDialogColumn",
+            "EditDialog", "EditDialogColumn", "FileNameEditDialogColumn",
             "GridEditWindow", "SubWindow" ]
 
 
@@ -241,6 +242,57 @@ class EditDialogColumn(ceGUI.BaseControl):
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.attrName)
+
+
+class FileNameEditDialogColumn(EditDialogColumn):
+    style = wx.FD_DEFAULT_STYLE
+    message = "Choose a file"
+    extension = None
+
+    def __init__(self, parent, attrName, labelText, field, required = False):
+        super(FileNameEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field, required)
+        self.button = parent.AddButton("...", size = (25, -1),
+                method = self.OnSelectFileName, passEvent = False)
+
+    def Layout(self, sizer):
+        fileNameSizer = wx.BoxSizer(wx.HORIZONTAL)
+        fileNameSizer.Add(self.field, border = 5, proportion = 1,
+                flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.RIGHT)
+        fileNameSizer.Add(self.button, flag = wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(fileNameSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+
+    def OnSelectFileName(self):
+        currentFileName = self.field.GetValue()
+        dir, fileName = os.path.split(currentFileName)
+        if self.extension is not None:
+            wildcard = "*" + self.extension
+        else:
+            wildcard = "*.*"
+        parent = self.field.GetParent()
+        dialog = wx.FileDialog(parent, self.message, wildcard = wildcard,
+                defaultDir = dir, defaultFile = fileName, style = self.style)
+        if dialog.ShowModal() == wx.ID_OK:
+            fileName = dialog.GetPath()
+            if self.extension is not None:
+                normalizedFileName = os.path.normcase(fileName)
+                if not normalizedFileName.endswith(self.extension):
+                    fileName += self.extension
+            self.field.SetValue(fileName)
+
+
+class DirNameEditDialogColumn(FileNameEditDialogColumn):
+    style = wx.DD_DEFAULT_STYLE
+    message = "Choose a directory"
+
+    def OnSelectFileName(self):
+        defaultPath = self.field.GetValue()
+        parent = self.field.GetParent()
+        dialog = wx.DirDialog(parent, self.message, defaultPath = defaultPath,
+                style = self.style)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.field.SetValue(dialog.GetPath())
 
 
 class EditDialog(ceGUI.StandardDialog):
