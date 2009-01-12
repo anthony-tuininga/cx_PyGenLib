@@ -216,6 +216,9 @@ class EditDialogColumn(ceGUI.BaseControl):
         self._Initialize()
         parent.columns.append(self)
 
+    def GetValue(self):
+        return self.field.GetValue()
+
     def IsEditable(self):
         if isinstance(self.field, wx.TextCtrl):
             return self.field.IsEditable()
@@ -230,7 +233,7 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.field.SetValue(value)
 
     def Update(self, dataSet):
-        value = self.field.GetValue()
+        value = self.GetValue()
         dataSet.SetValue(0, self.attrName, value)
 
     def Verify(self):
@@ -255,6 +258,11 @@ class FileNameEditDialogColumn(EditDialogColumn):
         self.button = parent.AddButton("...", size = (25, -1),
                 method = self.OnSelectFileName, passEvent = False)
 
+    def GetDefaultDirAndFileName(self, currentValue):
+        if currentValue is None:
+            return "", ""
+        return os.path.split(currentValue)
+
     def Layout(self, sizer):
         fileNameSizer = wx.BoxSizer(wx.HORIZONTAL)
         fileNameSizer.Add(self.field, border = 5, proportion = 1,
@@ -264,8 +272,7 @@ class FileNameEditDialogColumn(EditDialogColumn):
         sizer.Add(fileNameSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 
     def OnSelectFileName(self):
-        currentFileName = self.field.GetValue() or ""
-        dir, fileName = os.path.split(currentFileName)
+        dir, fileName = self.GetDefaultDirAndFileName(self.field.GetValue())
         if self.extension is not None:
             wildcard = "*" + self.extension
         else:
@@ -286,8 +293,13 @@ class DirNameEditDialogColumn(FileNameEditDialogColumn):
     style = wx.DD_DEFAULT_STYLE
     message = "Choose a directory"
 
+    def GetDefaultDirName(self, currentValue):
+        if currentValue is None:
+            return ""
+        return currentValue
+
     def OnSelectFileName(self):
-        defaultPath = self.field.GetValue() or ""
+        defaultPath = self.GetDefaultDirName(self.field.GetValue())
         parent = self.field.GetParent()
         dialog = wx.DirDialog(parent, self.message, defaultPath = defaultPath,
                 style = self.style)
