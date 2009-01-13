@@ -55,10 +55,11 @@ class BaseContainer(ceGUI.BaseControl):
         self.RestoreSettings()
 
     def _SaveSettings(self):
-        if self.saveSize:
-            self.WriteSetting("Size", self.GetSizeTuple())
-        if self.savePosition:
-            self.WriteSetting("Position", self.GetPositionTuple())
+        if not hasattr(self, "IsIconized") or not self.IsIconized():
+            if self.saveSize:
+                self.WriteSetting("Size", self.GetSizeTuple())
+            if self.savePosition:
+                self.WriteSetting("Position", self.GetPositionTuple())
         self.SaveSettings()
         self.settings.Flush()
 
