@@ -331,13 +331,16 @@ class CheckList(List):
 
 
 class ListColumn(ceGUI.BaseControl):
+    defaultJustification = wx.LIST_FORMAT_LEFT
+    defaultHeading = ""
+    defaultWidth = -1
 
-    def __init__(self, attrName, heading = "", defaultWidth = -1,
-            justification = wx.LIST_FORMAT_LEFT):
-        self.heading = heading
+    def __init__(self, attrName, heading = None, defaultWidth = None,
+            justification = None):
         self.attrName = attrName
-        self.defaultWidth = defaultWidth
-        self.justification = justification
+        self.heading = heading or self.defaultHeading
+        self.defaultWidth = defaultWidth or self.defaultWidth
+        self.justification = justification or self.defaultJustification
         self._Initialize()
 
     def __repr__(self):
