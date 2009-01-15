@@ -10,9 +10,10 @@ import os
 import sys
 import wx
 
-__all__ = [ "DataList", "DataListPanel", "DirNameEditDialogColumn",
-            "EditDialog", "EditDialogColumn", "FileNameEditDialogColumn",
-            "GridEditWindow", "SubWindow" ]
+__all__ = [ "DataEditPanel", "DataList", "DataListPanel",
+            "DirNameEditDialogColumn", "EditDialog", "EditDialogChild",
+            "EditDialogColumn", "EditDialogWithPanels",
+            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow" ]
 
 
 class DataList(ceGUI.List):
@@ -36,6 +37,20 @@ class DataList(ceGUI.List):
                  ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('E'), self.editMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ) ]
+
+    def _GetDataSet(self):
+        if self._IsPartOfEditDialog():
+            parent = self.GetParent().GetParent().GetParent()
+            cls = self._GetClass(self.dataSetClassName)
+            dataSet = parent.dataSet.AddChildDataSet(cls,
+                    parent.dataSet.rows[0])
+            dataSet.Retrieve()
+            return dataSet
+        return super(DataList, self)._GetDataSet()
+
+    def _IsPartOfEditDialog(self):
+        parent = self.GetParent().GetParent().GetParent()
+        return isinstance(parent, EditDialogBase)
 
     def _OnContextMenu(self, event):
         self.OnContextMenu()
@@ -90,7 +105,7 @@ class DataList(ceGUI.List):
         return parent.editDialogName is not None
 
     def CanRefreshItems(self):
-        return True
+        return not self._IsPartOfEditDialog()
 
     def OnContextMenu(self):
         items = self.GetSelectedItems()
@@ -118,7 +133,22 @@ class DataList(ceGUI.List):
         self.Retrieve()
 
 
-class DataListPanel(ceGUI.Panel):
+class DataPanel(ceGUI.Panel):
+
+    def OnPostUpdate(self):
+        pass
+
+    def OnPreUpdate(self):
+        pass
+
+    def RestoreSettings(self):
+        pass
+
+    def SaveSettings(self):
+        pass
+
+
+class DataListPanel(DataPanel):
     listClassName = "List"
     editDialogName = None
 
@@ -127,36 +157,49 @@ class DataListPanel(ceGUI.Panel):
                 self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
 
+    def _IsPartOfEditDialog(self):
+        parent = self.GetParent().GetParent()
+        return isinstance(parent, EditDialogBase)
+
     def _OnEditItem(self, item, itemIndex, dialog):
         row = dialog.dataSet.rows[0]
-        self._UpdateListItem(item, row)
+        self._UpdateListItem(item, row, itemIndex)
+        if not self._IsPartOfEditDialog():
+            self.list.dataSet.ClearChanges()
         self.list.Refresh()
 
     def _OnInsertItems(self, dialog):
         row = dialog.dataSet.rows[0]
         item = self.list.AppendItem(row, refresh = False)
-        self.list.dataSet.ClearChanges()
         self._UpdateListItem(item, row)
+        if not self._IsPartOfEditDialog():
+            self.list.dataSet.ClearChanges()
         self.list.Refresh()
 
-    def _UpdateListItem(self, item, row):
+    def _UpdateListItem(self, item, row, itemIndex = None):
         for attrName in item.attrNames:
             if not hasattr(row, attrName):
                 continue
             value = getattr(row, attrName)
-            setattr(item, attrName, value)
+            if itemIndex is None:
+                setattr(item, attrName, value)
+            else:
+                handle = self.list.rowHandles[itemIndex]
+                self.list.dataSet.SetValue(handle, attrName, value)
 
     def DeleteItems(self, items):
-        message = "Delete selected items?"
-        flag = wx.YES_NO | wx.ICON_EXCLAMATION
-        dialog = wx.MessageDialog(self, message, "Confirm Delete", flag)
-        response = dialog.ShowModal()
-        dialog.Destroy()
-        if response != wx.ID_YES:
-            return
+        if not self._IsPartOfEditDialog():
+            message = "Delete selected items?"
+            flag = wx.YES_NO | wx.ICON_EXCLAMATION
+            dialog = wx.MessageDialog(self, message, "Confirm Delete", flag)
+            response = dialog.ShowModal()
+            dialog.Destroy()
+            if response != wx.ID_YES:
+                return
         for itemIndex in reversed(list(self.list.GetSelectedItemIndexes())):
             self.list.DeleteItem(itemIndex, refresh = False)
-        self.list.dataSet.Update()
+        if not self._IsPartOfEditDialog():
+            self.list.dataSet.Update()
         self.list.Refresh()
 
     def EditItem(self, item, itemIndex):
@@ -309,20 +352,117 @@ class DirNameEditDialogColumn(FileNameEditDialogColumn):
             self.field.SetValue(dialog.GetPath())
 
 
-class EditDialog(ceGUI.StandardDialog):
+class DataEditPanel(DataPanel):
+    dataSetClassName = None
+
+    def _GetDataSet(self):
+        parent = self.GetParent().GetParent()
+        if self.dataSetClassName is not None:
+            cls = self._GetClass(self.dataSetClassName)
+            dataSet = parent.dataSet.AddChildDataSet(cls,
+                    parent.dataSet.rows[0])
+            dataSet.Retrieve()
+            return dataSet
+        return parent.dataSet
+
+    def _Initialize(self):
+        self.columns = []
+        self.dataSet = self._GetDataSet()
+        super(DataEditPanel, self)._Initialize()
+        focusField = None
+        row = self.dataSet.rows[0]
+        for column in self.columns:
+            column.SetValue(row)
+            if focusField is None and column.IsEditable():
+                focusField = column.field
+        if focusField is not None:
+            focusField.SetFocus()
+
+    def GetFieldsSizer(self):
+        sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
+                hgap = 5)
+        sizer.AddGrowableCol(1)
+        return sizer
+
+    def OnLayout(self):
+        fieldsSizer = self.GetFieldsSizer()
+        for column in self.columns:
+            column.Layout(fieldsSizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, border = 5)
+        return sizer
+
+    def OnPreUpdate(self):
+        for column in self.columns:
+            if column.IsEditable():
+                column.Verify()
+                column.Update(self.dataSet)
+
+    def Retrieve(self):
+        focusField = None
+        row = self.dataSet.rows[0]
+        for column in self.columns:
+            column.SetValue(row)
+            if focusField is None and column.IsEditable():
+                focusField = column.field
+        if focusField is not None:
+            focusField.SetFocus()
+
+
+class EditDialogBase(ceGUI.StandardDialog):
     dataSetClassName = "DataSet"
     updateCacheMethodName = None
 
     def __init__(self, parent, instanceName = None, parentItem = None):
-        self.columns = []
         self.parentItem = parentItem
         cls = ceGUI.GetModuleItem(self.__class__.__module__,
                 self.dataSetClassName)
         self.dataSet = cls(parent.config.connection)
         self.Retrieve(parent)
-        super(EditDialog, self).__init__(parent, instanceName)
+        super(EditDialogBase, self).__init__(parent, instanceName)
+
+    def _Update(self):
+        self.dataSet.Update()
+
+    def GetRow(self):
+        return self.dataSet.rows[0]
+
+    def OnNewRow(self, parent, row):
+        pass
+
+    def OnOk(self):
+        self.OnPreUpdate()
+        self._Update()
+        self.OnPostUpdate()
+
+    def OnPostUpdate(self):
+        if self.updateCacheMethodName is not None:
+            method = getattr(self.cache, self.updateCacheMethodName)
+            for row in self.dataSet.rows.itervalues():
+                method(row)
+
+    def OnPreUpdate(self):
+        pass
+
+    def Retrieve(self, parent):
+        if self.parentItem is None:
+            handle, row = self.dataSet.InsertRow()
+            self.OnNewRow(parent, row)
+        else:
+            args = [getattr(self.parentItem, n) \
+                    for n in self.parentItem.pkAttrNames]
+            self.dataSet.Retrieve(*args)
+            if len(self.dataSet.rows) != 1:
+                raise cx_Exceptions.NoDataFound()
+
+
+class EditDialog(EditDialogBase):
+
+    def __init__(self, parent, instanceName = None, parentItem = None):
+        self.columns = []
+        super(EditDialog, self).__init__(parent, instanceName, parentItem)
         focusField = None
-        row = self.dataSet.rows[0]
+        row = self.GetRow()
         for column in self.columns:
             column.SetValue(row)
             if focusField is None and column.IsEditable():
@@ -348,37 +488,61 @@ class EditDialog(ceGUI.StandardDialog):
         topSizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, border = 5)
         return topSizer
 
-    def OnOk(self):
+    def OnPreUpdate(self):
         for column in self.columns:
             if column.IsEditable():
                 column.Verify()
                 column.Update(self.dataSet)
-        self.OnPreUpdate()
-        self.dataSet.Update()
-        self.OnPostUpdate()
 
-    def OnNewRow(self, parent, row):
-        pass
 
-    def OnPostUpdate(self):
-        if self.updateCacheMethodName is not None:
-            method = getattr(self.cache, self.updateCacheMethodName)
-            for row in self.dataSet.rows.itervalues():
-                method(row)
+class EditDialogChild(EditDialog):
 
-    def OnPreUpdate(self):
+    def _Update(self):
         pass
 
     def Retrieve(self, parent):
-        if self.parentItem is None:
-            handle, row = self.dataSet.InsertRow()
-            self.OnNewRow(parent, row)
+        if self.parentItem is not None:
+            values = [getattr(self.parentItem, n) \
+                    for n in self.dataSet.attrNames]
+            row = self.dataSet.rowClass(*values)
+            self.dataSet.rows = dict(enumerate([row]))
         else:
-            args = [getattr(self.parentItem, n) \
-                    for n in self.parentItem.pkAttrNames]
-            self.dataSet.Retrieve(*args)
-            if len(self.dataSet.rows) != 1:
-                raise cx_Exceptions.NoDataFound()
+            super(EditDialogChild, self).Retrieve(parent)
+
+
+class EditDialogWithPanels(EditDialogBase):
+    pageClassNames = ""
+
+    def OnCreate(self):
+        self.notebook = ceGUI.Notebook(self)
+        for className in self.pageClassNames.split():
+            cls = self._GetClass(className)
+            page = cls(self.notebook)
+            self.notebook.AddPage(page, page.label)
+            page.Retrieve()
+        self.notebook.SetSelection(0)
+
+    def OnLayout(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.notebook, border = 5, proportion = 1,
+                flag = wx.RIGHT | wx.LEFT | wx.TOP | wx.EXPAND)
+        return sizer
+
+    def OnPostUpdate(self):
+        for page in self.notebook.IterPages():
+            page.OnPostUpdate()
+
+    def OnPreUpdate(self):
+        for page in self.notebook.IterPages():
+            page.OnPreUpdate()
+
+    def RestoreSettings(self):
+        for page in self.notebook.IterPages():
+            page.RestoreSettings()
+
+    def SaveSettings(self):
+        for page in self.notebook.IterPages():
+            page.SaveSettings()
 
 
 class GridEditWindow(ceGUI.Frame):
