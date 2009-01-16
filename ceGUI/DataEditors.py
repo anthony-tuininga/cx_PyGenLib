@@ -134,9 +134,12 @@ class DataList(ceGUI.List):
 
 
 class DataPanel(ceGUI.Panel):
+    updateCacheMethodName = None
 
     def OnPostUpdate(self):
-        pass
+        if self.updateCacheMethodName is not None:
+            method = getattr(self.cache, self.updateCacheMethodName)
+            self._OnPostUpdate(method)
 
     def OnPreUpdate(self):
         pass
@@ -175,6 +178,13 @@ class DataListPanel(DataPanel):
         if not self._IsPartOfEditDialog():
             self.list.dataSet.ClearChanges()
         self.list.Refresh()
+
+    def _OnPostUpdate(self, method):
+        if self._IsPartOfEditDialog():
+            method(self.list.dataSet)
+        else:
+            for item in self.list.GetItems():
+                method(item)
 
     def _UpdateListItem(self, item, row, itemIndex = None):
         for attrName in item.attrNames:
@@ -378,11 +388,17 @@ class DataEditPanel(DataPanel):
         if focusField is not None:
             focusField.SetFocus()
 
+    def _OnPostUpdate(self, method):
+        method(self.GetRow())
+
     def GetFieldsSizer(self):
         sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
                 hgap = 5)
         sizer.AddGrowableCol(1)
         return sizer
+
+    def GetRow(self):
+        return self.dataSet.rows[0]
 
     def OnLayout(self):
         fieldsSizer = self.GetFieldsSizer()
