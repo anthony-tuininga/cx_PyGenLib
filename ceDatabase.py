@@ -133,6 +133,10 @@ class DataSet(object):
     """Base class for data sets which allows for retrieval, insert, update and
        deletion of rows in a database."""
     __metaclass__ = DataSetMetaClass
+    updatePackageName = None
+    insertProcedureName = "New"
+    updateProcedureName = "Modify"
+    deleteProcedureName = "Remove"
     tableName = None
     updateTableName = None
     attrNames = []
@@ -305,10 +309,15 @@ class DataSet(object):
 
     def DeleteRowInDatabase(self, cursor, row):
         args = self._GetArgsFromNames(self.pkAttrNames, row)
-        clauses = self._GetWhereClauses(self.pkAttrNames)
-        sql = "delete from %s where %s" % \
-                (self.updateTableName, " and ".join(clauses))
-        cursor.execute(sql, args)
+        if self.updatePackageName is not None:
+            fullProcedureName = "%s.%s" % \
+                    (self.updatePackageName, self.deleteProcedureName)
+            cursor.callproc(fullProcedureName, args)
+        else:
+            clauses = self._GetWhereClauses(self.pkAttrNames)
+            sql = "delete from %s where %s" % \
+                    (self.updateTableName, " and ".join(clauses))
+            cursor.execute(sql, args)
 
     def GetGeneratedPrimaryKey(self, cursor):
         if self.isOracle:
@@ -354,24 +363,34 @@ class DataSet(object):
                     [n for n in self.retrievalAttrNames \
                     if n not in self.attrNames]
         args = self._GetArgsFromNames(names, row)
-        if self.isOracle:
-            values = [":%s" % i for i in range(len(names))]
+        if self.updatePackageName is not None:
+            fullProcedureName = "%s.%s" % \
+                    (self.updatePackageName, self.insertProcedureName)
+            if self.pkIsGenerated:
+                attrName, = self.pkAttrNames
+                value = cursor.callfunc(fullProcedureName, int, args)
+                setattr(row, attrName, value)
+            else:
+                cursor.callproc(fullProcedureName, args)
         else:
-            values = ["?"] * len(names)
-        sql = "insert into %s (%s) values (%s)" % \
-                (self.updateTableName, ",".join(names), ",".join(values))
-        cursor.execute(sql, args)
-        if self.pkIsGenerated and self.pkSequenceName is None:
-            selectItems = ",".join(self.pkAttrNames)
-            whereClauses = ["%s = ?" % n for n in self.uniqueAttrNames]
-            sql = "select %s from %s where %s" % \
-                    (",".join(self.pkAttrNames), self.tableName,
-                     " and ".join(whereClauses))
-            args = self._GetArgsFromNames(self.uniqueAttrNames, row)
+            if self.isOracle:
+                values = [":%s" % i for i in range(len(names))]
+            else:
+                values = ["?"] * len(names)
+            sql = "insert into %s (%s) values (%s)" % \
+                    (self.updateTableName, ",".join(names), ",".join(values))
             cursor.execute(sql, args)
-            pkValues, = cursor.fetchall()
-            for attrIndex, value in enumerate(pkValues):
-                setattr(row, self.pkAttrNames[attrIndex], value)
+            if self.pkIsGenerated and self.pkSequenceName is None:
+                selectItems = ",".join(self.pkAttrNames)
+                whereClauses = ["%s = ?" % n for n in self.uniqueAttrNames]
+                sql = "select %s from %s where %s" % \
+                        (",".join(self.pkAttrNames), self.tableName,
+                        " and ".join(whereClauses))
+                args = self._GetArgsFromNames(self.uniqueAttrNames, row)
+                cursor.execute(sql, args)
+                pkValues, = cursor.fetchall()
+                for attrIndex, value in enumerate(pkValues):
+                    setattr(row, self.pkAttrNames[attrIndex], value)
 
     def MarkAllRowsAsNew(self):
         for handle, row in self.rows.iteritems():
@@ -467,16 +486,26 @@ class DataSet(object):
                     if n not in self.pkAttrNames]
         args = self._GetArgsFromNames(dataAttrNames, row) + \
                 self._GetArgsFromNames(self.pkAttrNames, origRow)
-        if self.isOracle:
-            setClauses = ["%s = :%s" % (n, i + 1) \
-                    for i, n in enumerate(dataAttrNames)]
+        if self.updatePackageName is not None:
+            args = self._GetArgsFromNames(self.pkAttrNames, origRow) + \
+                    self._GetArgsFromNames(dataAttrNames, row)
+            fullProcedureName = "%s.%s" % \
+                    (self.updatePackageName, self.updateProcedureName)
+            cursor.callproc(fullProcedureName, args)
         else:
-            setClauses = ["%s = ?" % n for n in dataAttrNames]
-        whereClauses = self._GetWhereClauses(self.pkAttrNames, len(setClauses))
-        sql = "update %s set %s where %s" % \
-                (self.updateTableName, ", ".join(setClauses),
-                " and ".join(whereClauses))
-        cursor.execute(sql, args)
+            args = self._GetArgsFromNames(dataAttrNames, row) + \
+                    self._GetArgsFromNames(self.pkAttrNames, origRow)
+            if self.isOracle:
+                setClauses = ["%s = :%s" % (n, i + 1) \
+                        for i, n in enumerate(dataAttrNames)]
+            else:
+                setClauses = ["%s = ?" % n for n in dataAttrNames]
+            whereClauses = self._GetWhereClauses(self.pkAttrNames,
+                    len(setClauses))
+            sql = "update %s set %s where %s" % \
+                    (self.updateTableName, ", ".join(setClauses),
+                    " and ".join(whereClauses))
+            cursor.execute(sql, args)
 
 
 class KeyedDataSet(object):
