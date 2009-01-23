@@ -11,6 +11,7 @@ from distutils.core import setup
 
 modules = [
         "ceDatabase",
+        "ceDatabaseCache",
         "cx_ClassLibrary",
         "cx_CVS",
         "cx_DatabaseTable",
@@ -36,7 +37,7 @@ modules = [
 
 setup(
         name = "cx_PyGenLib",
-        version = "2.5",
+        version = "2.6",
         description = "Set of general Python modules",
         license = "Python Software Foundation License",
         long_description = "Set of general Python modules used by a " \
