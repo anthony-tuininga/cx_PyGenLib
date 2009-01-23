@@ -31,9 +31,12 @@ class RowMetaClass(type):
                 _NormalizeValue(bases, classDict, "charBooleanAttrNames")
         pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
+        reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
         if useSlots:
             classDict["__slots__"] = attrNames + extraAttrNames
+        if "reprName" not in classDict:
+            classDict["reprName"] = name
         if attrNames:
             initLines = []
             for attrName in attrNames:
@@ -61,14 +64,16 @@ class Row(object):
     extraAttrNames = []
     charBooleanAttrNames = []
     sortByAttrNames = []
+    reprAttrNames = []
     pkAttrNames = []
     useSlots = True
 
     def __repr__(self):
-        if self.attrNames:
-            values = ["%s=%r" % (n, getattr(self, n)) for n in self.attrNames]
-            return "<%s %s>" % (self.__class__.__name__, ", ".join(values))
-        return "<%s>" % self.__class__.__name__
+        reprAttrNames = self.reprAttrNames or self.attrNames
+        if reprAttrNames:
+            values = ["%s=%r" % (n, getattr(self, n)) for n in reprAttrNames]
+            return "<%s %s>" % (self.__class__.reprName, ", ".join(values))
+        return "<%s>" % self.__class__.reprName
 
     def Copy(self):
         cls = self.__class__
@@ -101,6 +106,28 @@ class Row(object):
         return tuple(values)
 
 
+class WrappedConnection(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+        self.isOracle = self._IsOracle(type(connection))
+
+    def _GetWhereClauses(self, names, paramsUsed = 0):
+        if self.isOracle:
+            return ["%s = :%s" % (n, paramsUsed + i + 1) \
+                    for i, n in enumerate(names)]
+        else:
+            return ["%s = ?" % n for n in names]
+
+    def _IsOracle(self, cls):
+        if cls.__module__ == "cx_Oracle":
+            return True
+        for base in cls.__bases__:
+            if self._IsOracle(base):
+                return True
+        return False
+
+
 class DataSetMetaClass(type):
     """Metaclass for data sets which sets up the class used for retrieval and
        other data manipulation routines."""
@@ -129,7 +156,7 @@ class DataSetMetaClass(type):
                 dict([(n, i) for i, n in enumerate(cls.retrievalAttrNames)])
 
 
-class DataSet(object):
+class DataSet(WrappedConnection):
     """Base class for data sets which allows for retrieval, insert, update and
        deletion of rows in a database."""
     __metaclass__ = DataSetMetaClass
@@ -154,9 +181,8 @@ class DataSet(object):
     useSlots = True
 
     def __init__(self, connection, contextItem = None):
-        self.connection = connection
+        super(DataSet, self).__init__(connection)
         self.childDataSets = []
-        self.isOracle = self._IsOracle(connection.__class__)
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
         if self.updateTableName is None:
@@ -214,24 +240,9 @@ class DataSet(object):
             sql += " where %s" % " and ".join(whereClauses)
         return sql
 
-    def _GetWhereClauses(self, names, paramsUsed = 0):
-        if self.isOracle:
-            return ["%s = :%s" % (n, paramsUsed + i + 1) \
-                    for i, n in enumerate(names)]
-        else:
-            return ["%s = ?" % n for n in names]
-
     def _InsertRowsInDatabase(self, cursor):
         for row in self.insertedRows.itervalues():
             self.InsertRowInDatabase(cursor, row)
-
-    def _IsOracle(self, cls):
-        if cls.__module__ == "cx_Oracle":
-            return True
-        for base in cls.__bases__:
-            if self._IsOracle(base):
-                return True
-        return False
 
     def _OnDeleteRow(self, row):
         pass
