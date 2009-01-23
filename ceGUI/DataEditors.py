@@ -10,10 +10,11 @@ import os
 import sys
 import wx
 
-__all__ = [ "DataEditPanel", "DataList", "DataListPanel",
-            "DirNameEditDialogColumn", "EditDialog", "EditDialogChild",
-            "EditDialogColumn", "EditDialogWithPanels",
-            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow" ]
+__all__ = [ "BooleanEditDialogColumn", "DataEditPanel", "DataList",
+            "DataListPanel", "DirNameEditDialogColumn", "EditDialog",
+            "EditDialogChild", "EditDialogColumn", "EditDialogWithPanels",
+            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow",
+            "TextEditDialogColumn" ]
 
 
 class DataList(ceGUI.List):
@@ -360,6 +361,36 @@ class DirNameEditDialogColumn(FileNameEditDialogColumn):
                 style = self.style)
         if dialog.ShowModal() == wx.ID_OK:
             self.field.SetValue(dialog.GetPath())
+
+
+class BooleanEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, editable):
+        if editable:
+            field = parent.AddCheckBox()
+        else:
+            field = parent.AddTextField(editable = False)
+        self.editable = editable
+        super(BooleanEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field)
+
+    def SetValue(self, row):
+        value = getattr(row, self.attrName)
+        if self.editable:
+            self.field.SetValue(value)
+        else:
+            self.field.SetValue(value and "Yes" or "No")
+
+
+class TextEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, style = 0,
+            maxLength = 0, size = (-1, -1), required = False,
+            editable = True, cls = ceGUI.TextField):
+        field = parent.AddTextField(style, maxLength, size = size, cls = cls,
+                editable = editable)
+        super(TextEditDialogColumn, self).__init__(parent, attrName, labelText,
+                field, required = required)
 
 
 class DataEditPanel(DataPanel):
