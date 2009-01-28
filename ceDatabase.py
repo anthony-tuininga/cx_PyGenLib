@@ -494,8 +494,6 @@ class DataSet(WrappedConnection):
         else:
             dataAttrNames = [n for n in self.attrNames \
                     if n not in self.pkAttrNames]
-        args = self._GetArgsFromNames(dataAttrNames, row) + \
-                self._GetArgsFromNames(self.pkAttrNames, origRow)
         if self.updatePackageName is not None:
             args = self._GetArgsFromNames(self.pkAttrNames, origRow) + \
                     self._GetArgsFromNames(dataAttrNames, row)
