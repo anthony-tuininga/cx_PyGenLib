@@ -15,6 +15,8 @@ class PathMetaClass(type):
         if isinstance(cls.retrievalAttrCacheMethodNames, basestring):
             cls.retrievalAttrCacheMethodNames = \
                     cls.retrievalAttrCacheMethodNames.split()
+        if isinstance(cls.stringRetrievalAttrNames, basestring):
+            cls.stringRetrievalAttrNames = cls.stringRetrievalAttrNames.split()
         if "name" not in classDict:
             cls.name = cls.__name__
         if "subCacheAttrName" not in classDict:
@@ -25,8 +27,11 @@ class Path(object):
     __metaclass__ = PathMetaClass
     retrievalAttrNames = []
     retrievalAttrCacheMethodNames = []
+    stringRetrievalAttrNames = []
     loadViaPathName = None
     subCacheAttrName = None
+    cacheAttrName = None
+    ignoreRowNotCached = False
     name = None
 
     def __init__(self, cache, subCache):
@@ -83,6 +88,18 @@ class Path(object):
     def Clear(self):
         self.rows.clear()
 
+    def GetCachedValue(self, args):
+        if len(args) == 1:
+            key, = args
+        else:
+            key = args
+        try:
+            return self.rows[key]
+        except KeyError:
+            if self.ignoreRowNotCached:
+                return self.OnRowNotCached(args)
+            raise cx_Exceptions.NoDataFound()
+
 
 class SingleRowPath(Path):
 
@@ -93,11 +110,17 @@ class SingleRowPath(Path):
             raise cx_Exceptions.TooManyRows(numRows = len(rows))
         return self._CacheValue(args, rows[0])
 
+    def OnRowNotCached(self, args):
+        return None
+
 
 class MultipleRowPath(Path):
 
     def _OnLoad(self, rows, args):
         return self._CacheValue(args, rows)
+
+    def OnRowNotCached(self, args):
+        return list()
 
 
 class SubCacheMetaClass(type):
@@ -124,18 +147,16 @@ class SubCacheMetaClass(type):
                 else:
                     args = "(%s)" % ",".join(rawArgs)
                 line = "self.%s[%s] = row" % (pathClass.subCacheAttrName, args)
-                methodLines.append("    %s\n" % line)
+                methodLines.append(line)
             if methodLines:
-                codeString = "def %s(self, cache, row):\n%s" % \
-                        (loadRowMethodName, "".join(methodLines))
-                code = compile(codeString, "SubCacheGeneratedCode.py", "exec")
-                temp = {}
-                exec code in dict(), temp
-                setattr(cls, loadRowMethodName, temp[loadRowMethodName])
+                cls._GenerateMethod(cls, loadRowMethodName, methodLines,
+                        "cache", "row")
 
 
 class SubCache(object):
     __metaclass__ = SubCacheMetaClass
+    loadAllRowsOnFirstLoad = False
+    allRowsMethodCacheAttrName = None
     cacheAttrName = None
     name = None
 
@@ -154,6 +175,51 @@ class SubCache(object):
             if issubclass(cls, SingleRowPath):
                 self.singleRowPaths.append(path)
 
+    @classmethod
+    def _GenerateMethod(cls, targetClass, methodName, methodLines, *args):
+        actualArgs = ("self",) + args
+        codeString = "def %s(%s):\n    %s" % \
+                (methodName, ", ".join(actualArgs), "\n    ".join(methodLines))
+        code = compile(codeString, "SubCacheGeneratedCode.py", "exec")
+        temp = {}
+        exec code in dict(), temp
+        setattr(targetClass, methodName, temp[methodName])
+
+    @classmethod
+    def _GenerateCacheMethods(cls, cacheClass):
+        if cls.allRowsMethodCacheAttrName is not None:
+            methodLines = [
+                    "if self.%s.allRowsLoaded:" % cls.cacheAttrName,
+                    "    return self.%s.allRows" % cls.cacheAttrName,
+                    "return self.%s.LoadAllRows(self)" % cls.cacheAttrName
+            ]
+            cls._GenerateMethod(cacheClass, cls.allRowsMethodCacheAttrName,
+                    methodLines)
+        for pathClass in cls.pathClasses:
+            if pathClass.cacheAttrName is None:
+                continue
+            processedArgs = []
+            for attrName in pathClass.retrievalAttrNames:
+                if attrName in pathClass.stringRetrievalAttrNames:
+                    processedArgs.append("%s.upper()" % attrName)
+                else:
+                    processedArgs.append(attrName)
+            if len(processedArgs) == 1:
+                keyArgs = processedArgs[0]
+            else:
+                keyArgs = "(%s)" % ", ".join(processedArgs)
+            ref = "self.%s" % cls.cacheAttrName
+            methodLines = [
+                    "try:",
+                    "    return %s.%s[%s]" % \
+                            (ref, pathClass.subCacheAttrName, keyArgs),
+                    "except KeyError:",
+                    "    return %s.Load(self, %r, %s)" % \
+                            (ref, pathClass.name, ", ".join(processedArgs))
+            ]
+            cls._GenerateMethod(cacheClass, pathClass.cacheAttrName,
+                    methodLines, *pathClass.retrievalAttrNames)
+
     def Clear(self):
         self.allRows = []
         self.allRowsLoaded = False
@@ -162,17 +228,16 @@ class SubCache(object):
 
     def Load(self, cache, pathName, *args):
         path = self.pathsByName[pathName]
+        if self.loadAllRowsOnFirstLoad:
+            self.LoadAllRows(cache)
+            return path.GetCachedValue(args)
         rows = path._GetRows(self, args)
         if path.loadViaPathName is not None:
             loadViaPath = self.pathsByName[path.loadViaPathName]
             for row in rows:
                 loadViaArgs = loadViaPath._DatabaseArgsToCacheArgs(cache, row)
                 self.Load(cache, path.loadViaPathName, *loadViaArgs)
-            if len(args) == 1:
-                key, = args
-            else:
-                key = args
-            return path.rows[key]
+            return path.GetCachedValue(args)
         self.OnLoadRows(cache, rows)
         return path._OnLoad(rows, args)
 
@@ -197,6 +262,7 @@ class CacheMetaClass(type):
         for value in classDict.itervalues():
             if isinstance(value, type) and issubclass(value, SubCache):
                 cls.subCacheClasses[value.name] = value
+                value._GenerateCacheMethods(cls)
 
 
 class Cache(ceDatabase.WrappedConnection):
