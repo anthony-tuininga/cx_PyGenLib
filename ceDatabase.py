@@ -370,9 +370,8 @@ class DataSet(WrappedConnection):
         elif self.pkIsGenerated and self.pkSequenceName is None:
             names = [n for n in self.attrNames if n not in self.pkAttrNames]
         else:
-            names = self.attrNames + \
-                    [n for n in self.retrievalAttrNames \
-                    if n not in self.attrNames]
+            names = [n for n in self.retrievalAttrNames \
+                    if n not in self.attrNames] + self.attrNames
         args = self._GetArgsFromNames(names, row)
         if self.updatePackageName is not None:
             fullProcedureName = "%s.%s" % \
