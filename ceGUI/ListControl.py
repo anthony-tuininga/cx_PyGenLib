@@ -245,6 +245,19 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
                     wx.LIST_STATE_SELECTED)
 
+    def SelectItemsByValue(self, **values):
+        for itemIndex, handle in enumerate(self.rowHandles):
+            item = self.dataSet.rows[handle]
+            itemMatches = True
+            for name, value in values.iteritems():
+                itemValue = getattr(item, name)
+                if itemValue != value:
+                    itemMatches = False
+                    break
+            if itemMatches:
+                self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
+                        wx.LIST_STATE_SELECTED)
+
     def SetItemValue(self, itemIndex, attrName, value, refresh = True):
         handle = self.rowHandles[itemIndex]
         self.dataSet.SetValue(handle, attrName, value)
