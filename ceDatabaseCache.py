@@ -4,6 +4,7 @@ Define classes and methods used for caching database results.
 
 import ceDatabase
 import cx_Exceptions
+import cx_Logging
 import functools
 
 class PathMetaClass(type):
@@ -50,6 +51,18 @@ class Path(object):
             self.sql += " where %s" % " and ".join(whereClauses)
         self.Clear()
 
+    @classmethod
+    def _GetProcessedAndKeyArgs(cls, prefix = ""):
+        processedArgs = []
+        for attrName in cls.retrievalAttrNames:
+            if attrName in cls.stringRetrievalAttrNames:
+                processedArgs.append("%s%s.upper()" % (prefix, attrName))
+            else:
+                processedArgs.append(prefix + attrName)
+        if len(processedArgs) == 1:
+            return processedArgs, processedArgs[0]
+        return processedArgs, "(%s)" % ", ".join(processedArgs)
+
     def _CacheValue(self, args, value):
         if len(args) == 1:
             self.rows[args[0]] = value
@@ -66,22 +79,22 @@ class Path(object):
             cacheArgs.append(value)
         return cacheArgs
 
-    def _GetRows(self, subCache, args):
+    def _GetRows(self, cache, rowFactory, args):
         dbArgs = []
         for attrName, arg in zip(self.retrievalAttrNames, args):
             if not isinstance(arg, ceDatabase.Row):
                 dbArgs.append(arg)
             else:
                 dbArgs.append(getattr(arg, attrName))
-        cursor = subCache.connection.cursor()
+        cursor = cache.connection.cursor()
         cursor.execute(self.sql, dbArgs)
         if self.loadViaPathName is None:
             if not self.retrievalAttrCacheMethodNames:
-                method = subCache.rowClass
+                method = rowFactory
             else:
                 numArgs = len(self.retrievalAttrCacheMethodNames)
                 partialArgs = args[:numArgs]
-                method = functools.partial(subCache.rowClass, *partialArgs)
+                method = functools.partial(rowFactory, *partialArgs)
             cursor.rowfactory = method
         return cursor.fetchall()
 
@@ -99,6 +112,12 @@ class Path(object):
             if self.ignoreRowNotCached:
                 return self.OnRowNotCached(args)
             raise cx_Exceptions.NoDataFound()
+
+    def GetKeyValue(self, row):
+        args = [getattr(row, n) for n in self.retrievalAttrNames]
+        if len(args) == 1:
+            return args[0]
+        return tuple(args)
 
 
 class SingleRowPath(Path):
@@ -127,6 +146,14 @@ class SubCacheMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
         super(SubCacheMetaClass, cls).__init__(name, bases, classDict)
+        if isinstance(cls.onLoadRowExtraDirectives, basestring):
+            directives = cls.onLoadRowExtraDirectives.split()
+            cls.onLoadRowExtraDirectives = []
+            for i, directive in enumerate(directives):
+                attrName = cls.rowClass.extraAttrNames[i]
+                cacheMethodName, sourceAttrName = directive.split(":")
+                info = (attrName, cacheMethodName, sourceAttrName)
+                cls.onLoadRowExtraDirectives.append(info)
         cls.pathClasses = []
         cls.pathClassesByName = {}
         for value in classDict.itervalues():
@@ -135,33 +162,52 @@ class SubCacheMetaClass(type):
                 cls.pathClassesByName[value.name] = value
         if "name" not in classDict:
             cls.name = cls.__name__
-        loadRowMethodName = "OnLoadRow"
-        if loadRowMethodName not in classDict:
-            methodLines = []
+        if cls.onLoadRowMethodName not in classDict \
+                or cls.onRemoveRowMethodName not in classDict:
+            onLoadRowMethodLines = []
+            onRemoveRowMethodLines = []
+            for directive in cls.onLoadRowExtraDirectives:
+                line = "row.%s = cache.%s(row.%s)" % directive
+                onLoadRowMethodLines.append(line)
             for pathClass in cls.pathClasses:
-                if not issubclass(pathClass, SingleRowPath):
-                    continue
-                rawArgs = ["row.%s" % n for n in pathClass.retrievalAttrNames]
-                if len(rawArgs) == 1:
-                    args, = rawArgs
+                processedArgs, keyArgs = \
+                        pathClass._GetProcessedAndKeyArgs("row.")
+                if issubclass(pathClass, SingleRowPath):
+                    line = "self.%s[%s] = row" % \
+                            (pathClass.subCacheAttrName, keyArgs)
+                    onLoadRowMethodLines.append(line)
+                    line = "del self.%s[%s]" % \
+                            (pathClass.subCacheAttrName, keyArgs)
+                    onRemoveRowMethodLines.append(line)
                 else:
-                    args = "(%s)" % ",".join(rawArgs)
-                line = "self.%s[%s] = row" % (pathClass.subCacheAttrName, args)
-                methodLines.append(line)
-            if methodLines:
-                cls._GenerateMethod(cls, loadRowMethodName, methodLines,
-                        "cache", "row")
+                    if cls.loadAllRowsOnFirstLoad:
+                        line = "self.%s.setdefault(%s, []).append(row)" % \
+                                (pathClass.subCacheAttrName, keyArgs)
+                        onLoadRowMethodLines.append(line)
+                    line = "self.%s[%s].remove(row)" % \
+                            (pathClass.subCacheAttrName, keyArgs)
+                    onRemoveRowMethodLines.append(line)
+            if onLoadRowMethodLines \
+                    and cls.onLoadRowMethodName not in classDict:
+                cls._GenerateMethod(cls, cls.onLoadRowMethodName,
+                        onLoadRowMethodLines, "cache", "row")
+            if onRemoveRowMethodLines \
+                    and cls.onRemoveRowMethodName not in classDict:
+                cls._GenerateMethod(cls, cls.onRemoveRowMethodName,
+                        onRemoveRowMethodLines, "cache", "row")
 
 
 class SubCache(object):
     __metaclass__ = SubCacheMetaClass
+    onRemoveRowMethodName = "OnRemoveRow"
+    onLoadRowMethodName = "OnLoadRow"
+    onLoadRowExtraDirectives = []
     loadAllRowsOnFirstLoad = False
     allRowsMethodCacheAttrName = None
     cacheAttrName = None
     name = None
 
     def __init__(self, cache):
-        self.connection = cache.connection
         self.paths = []
         self.singleRowPaths = []
         self.pathsByName = {}
@@ -180,6 +226,7 @@ class SubCache(object):
         actualArgs = ("self",) + args
         codeString = "def %s(%s):\n    %s" % \
                 (methodName, ", ".join(actualArgs), "\n    ".join(methodLines))
+        cx_Logging.Debug("GENERATED CODE:\n%s" % codeString)
         code = compile(codeString, "SubCacheGeneratedCode.py", "exec")
         temp = {}
         exec code in dict(), temp
@@ -198,16 +245,7 @@ class SubCache(object):
         for pathClass in cls.pathClasses:
             if pathClass.cacheAttrName is None:
                 continue
-            processedArgs = []
-            for attrName in pathClass.retrievalAttrNames:
-                if attrName in pathClass.stringRetrievalAttrNames:
-                    processedArgs.append("%s.upper()" % attrName)
-                else:
-                    processedArgs.append(attrName)
-            if len(processedArgs) == 1:
-                keyArgs = processedArgs[0]
-            else:
-                keyArgs = "(%s)" % ", ".join(processedArgs)
+            processedArgs, keyArgs = pathClass._GetProcessedAndKeyArgs()
             ref = "self.%s" % cls.cacheAttrName
             methodLines = [
                     "try:",
@@ -220,6 +258,11 @@ class SubCache(object):
             cls._GenerateMethod(cacheClass, pathClass.cacheAttrName,
                     methodLines, *pathClass.retrievalAttrNames)
 
+    def _FindRow(self, externalRow):
+        path = self.singleRowPaths[0]
+        key = path.GetKeyValue(externalRow)
+        return path.rows.get(key)
+
     def Clear(self):
         self.allRows = []
         self.allRowsLoaded = False
@@ -231,7 +274,7 @@ class SubCache(object):
         if self.loadAllRowsOnFirstLoad:
             self.LoadAllRows(cache)
             return path.GetCachedValue(args)
-        rows = path._GetRows(self, args)
+        rows = path._GetRows(cache, self.rowClass, args)
         if path.loadViaPathName is not None:
             loadViaPath = self.pathsByName[path.loadViaPathName]
             for row in rows:
@@ -243,7 +286,7 @@ class SubCache(object):
 
     def LoadAllRows(self, cache):
         path = Path(cache, self)
-        self.allRows = path._GetRows(self, ())
+        self.allRows = path._GetRows(cache, self.rowClass, ())
         self.OnLoadRows(cache, self.allRows)
         self.allRowsLoaded = True
         return self.allRows
@@ -252,6 +295,35 @@ class SubCache(object):
         if self.singleRowPaths:
             for row in rows:
                 self.OnLoadRow(cache, row)
+
+    def RemoveRow(self, cache, externalRow):
+        row = self._FindRow(externalRow)
+        self.OnRemoveRow(cache, row)
+        if self.allRowsLoaded:
+            self.allRows.remove(row)
+
+    def UpdateRow(self, cache, externalRow):
+        row = self._FindRow(externalRow)
+        if row is None:
+            args = [getattr(externalRow, n, None) \
+                    for n in self.rowClass.attrNames]
+            row = self.rowClass(*args)
+            self.OnLoadRow(cache, row)
+            if self.allRowsLoaded:
+                self.allRows.append(row)
+        else:
+            beforeKeyValues = []
+            for path in self.singleRowPaths:
+                beforeKeyValues.append((path, path.GetKeyValue(row)))
+            for attrName in row.attrNames:
+                if not hasattr(externalRow, attrName):
+                    continue
+                setattr(row, attrName, getattr(externalRow, attrName))
+            for path, beforeKeyValue in beforeKeyValues:
+                afterKeyValue = path.GetKeyValue(row)
+                if afterKeyValue != beforeKeyValue:
+                    del path.rows[beforeKeyValue]
+                    path.rows[afterKeyValue] = row
 
 
 class CacheMetaClass(type):
