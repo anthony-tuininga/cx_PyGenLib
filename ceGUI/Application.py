@@ -29,6 +29,7 @@ class Application(wx.App):
     copyrightEndYear = None
     description = None
     vendorName = None
+    configClassName = "Config"
     version = BUILD_RELEASE_STRING
 
     def _ExceptionHandler(self, excType, excValue, excTraceback):
@@ -65,7 +66,7 @@ class Application(wx.App):
         sys.excepthook = self._ExceptionHandler
         self.copyAttributes = self.copyAttributes.split()
         self.copyAttributes.append("settings")
-        cls = ceGUI.GetModuleItem(self.__class__.__module__, "Config")
+        cls = ceGUI.GetModuleItem(self.configClassName, associatedObj = self)
         self.config = cls(self)
         self.copyAttributes.append("config")
         self.OnStartup()
