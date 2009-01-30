@@ -157,8 +157,7 @@ class DataListPanel(DataPanel):
     editDialogName = None
 
     def _GetList(self):
-        cls = ceGUI.GetModuleItem(self.__class__.__module__,
-                self.listClassName)
+        cls = self._GetClass(self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
 
     def _IsPartOfEditDialog(self):
@@ -462,8 +461,7 @@ class EditDialogBase(ceGUI.StandardDialog):
 
     def __init__(self, parent, instanceName = None, parentItem = None):
         self.parentItem = parentItem
-        cls = ceGUI.GetModuleItem(self.__class__.__module__,
-                self.dataSetClassName)
+        cls = self._GetClass(self.dataSetClassName)
         self.dataSet = cls(parent.config.connection)
         self.Retrieve(parent)
         super(EditDialogBase, self).__init__(parent, instanceName)

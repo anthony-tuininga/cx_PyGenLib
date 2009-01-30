@@ -144,8 +144,7 @@ class SelectionListDialog(ceGUI.StandardDialog):
     selectFirstItem = True
 
     def _GetList(self):
-        cls = ceGUI.GetModuleItem(self.__class__.__module__,
-                self.listClassName)
+        cls = self._GetClass(self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
 
     def GetSelectedItem(self):
@@ -214,8 +213,7 @@ class SelectionCheckListDialog(ceGUI.StandardDialog):
     checkedAttrName = "checked"
 
     def _GetList(self):
-        cls = ceGUI.GetModuleItem(self.__class__.__module__,
-                self.listClassName)
+        cls = self._GetClass(self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
 
     def CheckAllItems(self):
@@ -246,9 +244,10 @@ class SelectionCheckListDialog(ceGUI.StandardDialog):
 
 
 class SelectionTreeDialog(ceGUI.StandardDialog):
+    treeClassName = "Tree"
 
     def _GetTree(self):
-        cls = ceGUI.GetModuleItem(self.__class__.__module__, "Tree")
+        cls = self._GetClass(self.treeClassName)
         return cls(self, -1, style = wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | \
                 wx.TR_LINES_AT_ROOT)
 
