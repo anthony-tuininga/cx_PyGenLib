@@ -84,14 +84,18 @@ class FrozenContext(object):
         self.window.Thaw()
 
 
-def GetModuleItem(moduleName, attrName = None):
+def GetModuleItem(moduleName, attrName = None, associatedObj = None):
     """Return the item from the module. Note that the __import__() method has a
        quirk in that if the last parameter to the method is empty it only loads
        the top level package instead of the submodule."""
     if attrName is None:
         pos = moduleName.rfind(".")
-        attrName = moduleName[pos + 1:]
-        moduleName = moduleName[:pos]
+        if pos < 0:
+            attrName = moduleName
+            moduleName = type(associatedObj).__module__
+        else:
+            attrName = moduleName[pos + 1:]
+            moduleName = moduleName[:pos]
     module = __import__(moduleName, globals(), locals(), [""])
     return getattr(module, attrName)
 
