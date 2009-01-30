@@ -135,11 +135,11 @@ class DataList(ceGUI.List):
 
 
 class DataPanel(ceGUI.Panel):
-    updateCacheMethodName = None
+    updateSubCacheAttrName = None
 
     def OnPostUpdate(self):
-        if self.updateCacheMethodName is not None:
-            method = getattr(self.cache, self.updateCacheMethodName)
+        if self.updateSubCacheAttrName is not None:
+            method = getattr(self.cache, self.updateSubCacheAttrName)
             self._OnPostUpdate(method)
 
     def OnPreUpdate(self):
@@ -457,7 +457,7 @@ class DataEditPanel(DataPanel):
 
 class EditDialogBase(ceGUI.StandardDialog):
     dataSetClassName = "DataSet"
-    updateCacheMethodName = None
+    updateSubCacheAttrName = None
 
     def __init__(self, parent, instanceName = None, parentItem = None):
         self.parentItem = parentItem
@@ -481,10 +481,10 @@ class EditDialogBase(ceGUI.StandardDialog):
         self.OnPostUpdate()
 
     def OnPostUpdate(self):
-        if self.updateCacheMethodName is not None:
-            method = getattr(self.cache, self.updateCacheMethodName)
+        if self.updateSubCacheAttrName is not None:
+            subCache = getattr(self.cache, self.updateSubCacheAttrName)
             for row in self.dataSet.rows.itervalues():
-                method(row)
+                subCache.UpdateRow(self.cache, row)
 
     def OnPreUpdate(self):
         pass
