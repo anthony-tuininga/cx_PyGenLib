@@ -272,7 +272,8 @@ class SubCache(object):
     def Load(self, cache, pathName, *args):
         path = self.pathsByName[pathName]
         if self.loadAllRowsOnFirstLoad:
-            self.LoadAllRows(cache)
+            if not self.allRowsLoaded:
+                self.LoadAllRows(cache)
             return path.GetCachedValue(args)
         rows = path._GetRows(cache, self.rowClass, args)
         if path.loadViaPathName is not None:
