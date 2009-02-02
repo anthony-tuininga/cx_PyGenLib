@@ -226,7 +226,7 @@ class SubCache(object):
         actualArgs = ("self",) + args
         codeString = "def %s(%s):\n    %s" % \
                 (methodName, ", ".join(actualArgs), "\n    ".join(methodLines))
-        cx_Logging.Debug("GENERATED CODE:\n%s" % codeString)
+        cx_Logging.Debug("GENERATED CODE:\n%s", codeString)
         code = compile(codeString, "SubCacheGeneratedCode.py", "exec")
         temp = {}
         exec code in dict(), temp
