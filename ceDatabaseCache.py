@@ -169,6 +169,10 @@ class SubCacheMetaClass(type):
             for directive in cls.onLoadRowExtraDirectives:
                 line = "row.%s = cache.%s(row.%s)" % directive
                 onLoadRowMethodLines.append(line)
+            if len(cls.rowClass.extraAttrNames) > \
+                    len(cls.onLoadRowExtraDirectives):
+                line = "self.SetExtraAttrValues(cache, row)"
+                onLoadRowMethodLines.append(line)
             for pathClass in cls.pathClasses:
                 processedArgs, keyArgs = \
                         pathClass._GetProcessedAndKeyArgs("row.")
@@ -206,6 +210,9 @@ class SubCache(object):
     allRowsMethodCacheAttrName = None
     cacheAttrName = None
     name = None
+
+    class rowClass(ceDatabase.Row):
+        pass
 
     def __init__(self, cache):
         self.paths = []
@@ -293,7 +300,7 @@ class SubCache(object):
         return self.allRows
 
     def OnLoadRows(self, cache, rows):
-        if self.singleRowPaths:
+        if self.singleRowPaths or self.loadAllRowsOnFirstLoad:
             for row in rows:
                 self.OnLoadRow(cache, row)
 
@@ -325,6 +332,9 @@ class SubCache(object):
                 if afterKeyValue != beforeKeyValue:
                     del path.rows[beforeKeyValue]
                     path.rows[afterKeyValue] = row
+            if len(self.rowClass.extraAttrNames) > \
+                    len(self.onLoadRowExtraDirectives):
+                self.SetExtraAttrValues(cache, row)
 
 
 class CacheMetaClass(type):
