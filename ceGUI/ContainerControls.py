@@ -280,6 +280,7 @@ class ScrolledPanel(Panel, wx.ScrolledWindow):
 
 class StandardDialog(Dialog):
     style = wx.CAPTION | wx.RESIZE_BORDER
+    panelClassName = "Panel"
 
     def _GetButtons(self):
         buttons = []
@@ -300,6 +301,15 @@ class StandardDialog(Dialog):
 
     def IsEditingCanceled(self):
         return False
+
+    def OnCreate(self):
+        cls = self._GetClass(self.panelClassName)
+        self.panel = cls(self)
+
+    def OnLayout(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.panel, flag = wx.EXPAND, proportion = 1)
+        return sizer
 
 
 class TopLevelFrame(Frame):
