@@ -307,11 +307,16 @@ class SubCache(object):
         if self.allRowsLoaded:
             self.allRows.remove(row)
 
-    def UpdateRow(self, cache, externalRow):
+    def UpdateRow(self, cache, externalRow, contextItem = None):
         row = self._FindRow(externalRow)
         if row is None:
-            args = [getattr(externalRow, n, None) \
-                    for n in self.rowClass.attrNames]
+            args = []
+            for attrName in self.rowClass.attrNames:
+                if hasattr(externalRow, attrName):
+                    value = getattr(externalRow, attrName)
+                else:
+                    value = getattr(contextItem, attrName, None)
+                args.append(value)
             row = self.rowClass(*args)
             self.OnLoadRow(cache, row)
             if self.allRowsLoaded:
@@ -321,9 +326,13 @@ class SubCache(object):
             for path in self.singleRowPaths:
                 beforeKeyValues.append((path, path.GetKeyValue(row)))
             for attrName in row.attrNames:
-                if not hasattr(externalRow, attrName):
+                if hasattr(externalRow, attrName):
+                    value = getattr(externalRow, attrName)
+                elif hasattr(contextItem, attrName):
+                    value = getattr(contextItem, attrName)
+                else:
                     continue
-                setattr(row, attrName, getattr(externalRow, attrName))
+                setattr(row, attrName, value)
             for path, beforeKeyValue in beforeKeyValues:
                 afterKeyValue = path.GetKeyValue(row)
                 if afterKeyValue != beforeKeyValue:
