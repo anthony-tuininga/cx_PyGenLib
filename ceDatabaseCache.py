@@ -134,6 +134,7 @@ class SingleRowPath(Path):
 
 
 class MultipleRowPath(Path):
+    ignoreRowNotCached = True
 
     def _OnLoad(self, rows, args):
         return self._CacheValue(args, rows)
