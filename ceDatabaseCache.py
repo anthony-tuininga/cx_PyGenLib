@@ -169,9 +169,8 @@ class SubCacheMetaClass(type):
             for directive in cls.onLoadRowExtraDirectives:
                 line = "row.%s = cache.%s(row.%s)" % directive
                 onLoadRowMethodLines.append(line)
-            if len(cls.rowClass.extraAttrNames) > \
-                    len(cls.onLoadRowExtraDirectives):
-                line = "self.SetExtraAttrValues(cache, row)"
+            if cls.setExtraAttrValuesMethodName in classDict:
+                line = "self.%s(cache, row)" % cls.setExtraAttrValuesMethodName
                 onLoadRowMethodLines.append(line)
             for pathClass in cls.pathClasses:
                 processedArgs, keyArgs = \
@@ -203,6 +202,7 @@ class SubCacheMetaClass(type):
 
 class SubCache(object):
     __metaclass__ = SubCacheMetaClass
+    setExtraAttrValuesMethodName = "SetExtraAttrValues"
     onRemoveRowMethodName = "OnRemoveRow"
     onLoadRowMethodName = "OnLoadRow"
     onLoadRowExtraDirectives = []
@@ -210,9 +210,6 @@ class SubCache(object):
     allRowsMethodCacheAttrName = None
     cacheAttrName = None
     name = None
-
-    class rowClass(ceDatabase.Row):
-        pass
 
     def __init__(self, cache):
         self.paths = []
@@ -332,9 +329,9 @@ class SubCache(object):
                 if afterKeyValue != beforeKeyValue:
                     del path.rows[beforeKeyValue]
                     path.rows[afterKeyValue] = row
-            if len(self.rowClass.extraAttrNames) > \
-                    len(self.onLoadRowExtraDirectives):
-                self.SetExtraAttrValues(cache, row)
+            method = getattr(self, self.setExtraAttrValuesMethodName, None)
+            if method is not None:
+                method(cache, row)
 
 
 class CacheMetaClass(type):
