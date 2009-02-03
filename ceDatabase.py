@@ -259,6 +259,9 @@ class DataSet(WrappedConnection):
     def _PreUpdate(self):
         pass
 
+    def _SetRows(self, rows):
+        self.rows = dict(enumerate(rows))
+
     def _SortRep(self, value):
         if isinstance(value, basestring):
             return value.upper()
@@ -341,6 +344,9 @@ class DataSet(WrappedConnection):
 
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, *attrNames)
+
+    def GetRows(self):
+        return self.rows.values()
 
     def GetSortedRows(self, *attrNames):
         handles = self.GetSortedRowHandles(*attrNames)
@@ -435,7 +441,11 @@ class DataSet(WrappedConnection):
         if not args and self.retrievalAttrNames:
             args = self._GetArgsFromNames(self.retrievalAttrNames)
         self.retrievalArgs = args
-        self.rows = dict(enumerate(self._GetRows(*args)))
+        self._SetRows(self._GetRows(*args))
+
+    def SetRows(self, rows):
+        self._SetRows(rows)
+        self.ClearChanges()
 
     def SetValue(self, handle, attrName, value):
         row = self.rows[handle]
