@@ -159,12 +159,15 @@ class SubCacheMetaClass(type):
                 cacheMethodName, sourceAttrName = directive.split(":")
                 info = (attrName, cacheMethodName, sourceAttrName)
                 cls.onLoadRowExtraDirectives.append(info)
-        cls.pathClasses = []
-        cls.pathClassesByName = {}
+        cls.pathClasses = list(cls.pathClasses)
+        cls.pathClassesByName = cls.pathClassesByName.copy()
         for value in classDict.itervalues():
             if isinstance(value, type) and issubclass(value, Path):
-                cls.pathClasses.append(value)
+                origValue = cls.pathClassesByName.get(value.name)
                 cls.pathClassesByName[value.name] = value
+                if origValue is not None:
+                    cls.pathClasses.remove(origValue)
+                cls.pathClasses.append(value)
         if "name" not in classDict:
             cls.name = cls.__name__
         if cls.onLoadRowMethodName not in classDict \
@@ -213,6 +216,8 @@ class SubCache(object):
     onLoadRowExtraDirectives = []
     loadAllRowsOnFirstLoad = False
     allRowsMethodCacheAttrName = None
+    pathClasses = []
+    pathClassesByName = {}
     cacheAttrName = None
     name = None
 
