@@ -22,6 +22,10 @@ class PathMetaClass(type):
             cls.name = cls.__name__
         if "subCacheAttrName" not in classDict:
             cls.subCacheAttrName = "rowsBy%s" % cls.name
+        if "dbRetrievalAttrNames" in classDict:
+            cls.dbRetrievalAttrNames = cls.dbRetrievalAttrNames.split()
+        else:
+            cls.dbRetrievalAttrNames = cls.retrievalAttrNames
 
 
 class Path(object):
@@ -46,8 +50,8 @@ class Path(object):
             attrNames = cls.retrievalAttrNames
         self.sql = "select %s from %s" % \
                 (",".join(attrNames), rowClass.tableName)
-        if self.retrievalAttrNames:
-            whereClauses = cache._GetWhereClauses(self.retrievalAttrNames)
+        if self.dbRetrievalAttrNames:
+            whereClauses = cache._GetWhereClauses(self.dbRetrievalAttrNames)
             self.sql += " where %s" % " and ".join(whereClauses)
         self.Clear()
 
