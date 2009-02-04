@@ -240,7 +240,7 @@ class SubCache(object):
         actualArgs = ("self",) + args
         codeString = "def %s(%s):\n    %s" % \
                 (methodName, ", ".join(actualArgs), "\n    ".join(methodLines))
-        cx_Logging.Debug("GENERATED CODE:\n%s", codeString)
+        cx_Logging.Debug("%s: GENERATED CODE\n%s", cls.name, codeString)
         code = compile(codeString, "SubCacheGeneratedCode.py", "exec")
         temp = {}
         exec code in dict(), temp
@@ -284,6 +284,8 @@ class SubCache(object):
             path.Clear()
 
     def Load(self, cache, pathName, *args):
+        cx_Logging.Debug("%s: loading rows by path %s with args %s", self.name,
+                pathName, args)
         path = self.pathsByName[pathName]
         if self.loadAllRowsOnFirstLoad:
             if not self.allRowsLoaded:
@@ -300,6 +302,7 @@ class SubCache(object):
         return path._OnLoad(rows, args)
 
     def LoadAllRows(self, cache):
+        cx_Logging.Debug("%s: loading all rows", self.name)
         path = Path(cache, self)
         self.allRows = path._GetRows(cache, self.rowClass, ())
         self.OnLoadRows(cache, self.allRows)
@@ -313,6 +316,7 @@ class SubCache(object):
 
     def RemoveRow(self, cache, externalRow):
         row = self._FindRow(externalRow)
+        cx_Logging.Debug("%s: removing row %s", self.name, row)
         self.OnRemoveRow(cache, row)
         if self.allRowsLoaded:
             self.allRows.remove(row)
@@ -320,6 +324,8 @@ class SubCache(object):
     def UpdateRow(self, cache, externalRow, contextItem = None):
         row = self._FindRow(externalRow)
         if row is None:
+            cx_Logging.Debug("%s: creating new row with source as %s",
+                    self.name, externalRow)
             args = []
             for attrName in self.rowClass.attrNames:
                 if hasattr(externalRow, attrName):
@@ -332,6 +338,7 @@ class SubCache(object):
             if self.allRowsLoaded:
                 self.allRows.append(row)
         else:
+            cx_Logging.Debug("%s: modifying row %s", self.name, row)
             beforeKeyValues = []
             for path in self.singleRowPaths:
                 beforeKeyValues.append((path, path.GetKeyValue(row)))
