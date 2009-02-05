@@ -100,6 +100,8 @@ class DataPanel(ceGUI.Panel):
             item = parent
 
     def _Initialize(self):
+        parent = self.GetParent()
+        self.parentItem = parent.parentItem
         self.dataSet = self._GetDataSet()
         super(DataPanel, self)._Initialize()
 
