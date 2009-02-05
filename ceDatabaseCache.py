@@ -272,6 +272,16 @@ class SubCache(object):
             cls._GenerateMethod(cacheClass, pathClass.cacheAttrName,
                     methodLines, *pathClass.retrievalAttrNames)
 
+    def _CopyAttrs(self, row, externalRow, contextItem):
+        for attrName in row.attrNames + row.extraAttrNames:
+            if hasattr(externalRow, attrName):
+                value = getattr(externalRow, attrName)
+            elif hasattr(contextItem, attrName):
+                value = getattr(contextItem, attrName)
+            else:
+                continue
+            setattr(row, attrName, value)
+
     def _FindRow(self, externalRow):
         path = self.singleRowPaths[0]
         key = path.GetKeyValue(externalRow)
@@ -326,14 +336,8 @@ class SubCache(object):
         if row is None:
             cx_Logging.Debug("%s: creating new row with source as %s",
                     self.name, externalRow)
-            args = []
-            for attrName in self.rowClass.attrNames:
-                if hasattr(externalRow, attrName):
-                    value = getattr(externalRow, attrName)
-                else:
-                    value = getattr(contextItem, attrName, None)
-                args.append(value)
-            row = self.rowClass(*args)
+            row = self.rowClass.New()
+            self._CopyAttrs(row, externalRow, contextItem)
             self.OnLoadRow(cache, row)
             if not self.loadAllRowsOnFirstLoad:
                 for path in self.paths:
@@ -347,14 +351,7 @@ class SubCache(object):
             beforeKeyValues = []
             for path in self.singleRowPaths:
                 beforeKeyValues.append((path, path.GetKeyValue(row)))
-            for attrName in row.attrNames:
-                if hasattr(externalRow, attrName):
-                    value = getattr(externalRow, attrName)
-                elif hasattr(contextItem, attrName):
-                    value = getattr(contextItem, attrName)
-                else:
-                    continue
-                setattr(row, attrName, value)
+            self._CopyAttrs(row, externalRow, contextItem)
             for path, beforeKeyValue in beforeKeyValues:
                 afterKeyValue = path.GetKeyValue(row)
                 if afterKeyValue != beforeKeyValue:
