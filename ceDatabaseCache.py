@@ -85,7 +85,7 @@ class Path(object):
 
     def _GetRows(self, cache, rowFactory, args):
         dbArgs = []
-        for attrName, arg in zip(self.retrievalAttrNames, args):
+        for attrName, arg in zip(self.dbRetrievalAttrNames, args):
             if not isinstance(arg, ceDatabase.Row):
                 dbArgs.append(arg)
             else:
@@ -335,6 +335,11 @@ class SubCache(object):
                 args.append(value)
             row = self.rowClass(*args)
             self.OnLoadRow(cache, row)
+            if not self.loadAllRowsOnFirstLoad:
+                for path in self.paths:
+                    if isinstance(path, MultipleRowPath):
+                        key = path.GetKeyValue(row)
+                        path.rows.setdefault(key, []).append(row)
             if self.allRowsLoaded:
                 self.allRows.append(row)
         else:
