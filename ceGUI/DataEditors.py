@@ -100,8 +100,9 @@ class DataPanel(ceGUI.Panel):
             item = parent
 
     def _Initialize(self):
-        parent = self.GetParent()
-        self.parentItem = parent.parentItem
+        editDialog = self._GetEditDialog()
+        if editDialog is not None:
+            self.parentItem = editDialog.parentItem
         self.dataSet = self._GetDataSet()
         super(DataPanel, self)._Initialize()
 
