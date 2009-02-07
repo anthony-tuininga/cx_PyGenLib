@@ -221,6 +221,10 @@ class DataListPanel(DataPanel):
             self.list.DeleteItem(itemIndex, refresh = False)
         if editDialog is None:
             self.list.dataSet.Update()
+            if self.updateSubCacheAttrName is not None:
+                subCache = getattr(self.cache, self.updateSubCacheAttrName)
+                for item in items:
+                    subCache.RemoveRow(self.cache, item)
         self.list.Refresh()
 
     def EditItem(self, item, itemIndex):
@@ -254,6 +258,7 @@ class DataListPanel(DataPanel):
                 self.OnItemActivated)
         if self._GetEditDialog() is None:
             wx.CallAfter(self.Retrieve)
+            self.dataSet = self.list.dataSet
 
     def OnItemActivated(self, event):
         itemIndex = event.GetIndex()
