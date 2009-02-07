@@ -134,12 +134,13 @@ class DataSetMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
         super(DataSetMetaClass, cls).__init__(name, bases, classDict)
-        classDict = dict(attrNames = cls.attrNames,
-                extraAttrNames = cls.extraAttrNames,
-                charBooleanAttrNames = cls.charBooleanAttrNames,
-                pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
-                sortByAttrNames = cls.sortByAttrNames)
-        cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
+        if "rowClass" not in classDict:
+            classDict = dict(attrNames = cls.attrNames,
+                    extraAttrNames = cls.extraAttrNames,
+                    charBooleanAttrNames = cls.charBooleanAttrNames,
+                    pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
+                    sortByAttrNames = cls.sortByAttrNames)
+            cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         cls.pkAttrNames = cls.rowClass.pkAttrNames
         if isinstance(cls.uniqueAttrNames, basestring):
