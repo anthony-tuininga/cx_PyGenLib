@@ -314,10 +314,13 @@ class SubCache(object):
     def LoadAllRows(self, cache):
         cx_Logging.Debug("%s: loading all rows", self.name)
         path = Path(cache, self)
-        self.allRows = path._GetRows(cache, self.rowClass, ())
-        self.OnLoadRows(cache, self.allRows)
+        rows = path._GetRows(cache, self.rowClass, ())
+        self.OnLoadRows(cache, rows)
+        if self.rowClass.sortByAttrNames:
+            rows.sort(key = self.rowClass.SortValue)
+        self.allRows = rows
         self.allRowsLoaded = True
-        return self.allRows
+        return rows
 
     def OnLoadRows(self, cache, rows):
         if self.singleRowPaths or self.loadAllRowsOnFirstLoad:
