@@ -97,6 +97,8 @@ class DataPanel(ceGUI.Panel):
                 break
             if isinstance(parent, EditDialog):
                 return parent
+            if isinstance(parent, ceGUI.Dialog):
+                break
             item = parent
 
     def _Initialize(self):
@@ -191,8 +193,7 @@ class DataListPanel(DataPanel):
         self._OnListChanged()
 
     def _OnListChanged(self):
-        editDialog = self._GetEditDialog()
-        if editDialog is None:
+        if self.IsUpdatedIndependently():
             self.list.dataSet.ClearChanges()
         self.list.Refresh()
 
@@ -208,8 +209,7 @@ class DataListPanel(DataPanel):
                 self.list.dataSet.SetValue(handle, attrName, value)
 
     def DeleteItems(self, items):
-        editDialog = self._GetEditDialog()
-        if editDialog is None:
+        if self.IsUpdatedIndependently():
             message = "Delete selected items?"
             flag = wx.YES_NO | wx.ICON_EXCLAMATION
             dialog = wx.MessageDialog(self, message, "Confirm Delete", flag)
@@ -219,7 +219,7 @@ class DataListPanel(DataPanel):
                 return
         for itemIndex in reversed(list(self.list.GetSelectedItemIndexes())):
             self.list.DeleteItem(itemIndex, refresh = False)
-        if editDialog is None:
+        if self.IsUpdatedIndependently():
             self.list.dataSet.Update()
             if self.updateSubCacheAttrName is not None:
                 subCache = getattr(self.cache, self.updateSubCacheAttrName)
@@ -251,6 +251,9 @@ class DataListPanel(DataPanel):
             if dialog.ShowModal() == wx.ID_OK:
                 self._OnInsertItems(dialog)
         dialog.Destroy()
+
+    def IsUpdatedIndependently(self):
+        return self._GetEditDialog() is None
 
     def OnCreate(self):
         self.list = self._GetList()
