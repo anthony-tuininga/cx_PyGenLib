@@ -364,7 +364,9 @@ class DataList(ceGUI.List):
 
     def CanRefreshItems(self):
         parent = self.GetParent()
-        return not isinstance(parent, DataListPanel)
+        if not isinstance(parent, DataListPanel):
+            return True
+        return parent._GetEditDialog() is None
 
     def OnContextMenu(self):
         items = self.GetSelectedItems()
