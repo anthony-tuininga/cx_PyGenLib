@@ -459,7 +459,10 @@ class EditDialogColumn(ceGUI.BaseControl):
 
     def Layout(self, sizer):
         sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.field, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+        flags = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND
+        if isinstance(self.field, wx.CheckBox):
+            flags = flags | wx.TOP | wx.BOTTOM
+        sizer.Add(self.field, flag = flags, border = 4)
 
     def SetValue(self, row):
         value = getattr(row, self.attrName)
