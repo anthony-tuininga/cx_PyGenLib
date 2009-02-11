@@ -12,8 +12,9 @@ import wx
 
 __all__ = [ "BooleanEditDialogColumn", "DataEditPanel", "DataList",
             "DataListPanel", "DataNotebookPanel", "DirNameEditDialogColumn",
-            "EditDialog", "EditDialogColumn", "FileNameEditDialogColumn",
-            "GridEditWindow", "SubWindow", "TextEditDialogColumn" ]
+            "EditDialog", "EditDialogColumn", "EllipsisEditDialogColumn",
+            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow",
+            "TextEditDialogColumn" ]
 
 
 class EditDialog(ceGUI.StandardDialog):
@@ -483,31 +484,38 @@ class EditDialogColumn(ceGUI.BaseControl):
         return "<%s %s>" % (self.__class__.__name__, self.attrName)
 
 
-class FileNameEditDialogColumn(EditDialogColumn):
+
+class EllipsisEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, field, required = False):
+        super(EllipsisEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field, required)
+        self.button = parent.AddButton("...", size = (25, -1),
+                method = self.OnChooseValue, passEvent = False)
+
+    def Layout(self, sizer):
+        fieldSizer = wx.BoxSizer(wx.HORIZONTAL)
+        fieldSizer.Add(self.field, border = 5, proportion = 1,
+                flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.RIGHT)
+        fieldSizer.Add(self.button, flag = wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(fieldSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+
+    def OnChooseValue(self):
+        pass
+
+
+class FileNameEditDialogColumn(EllipsisEditDialogColumn):
     style = wx.FD_DEFAULT_STYLE
     message = "Choose a file"
     extension = None
-
-    def __init__(self, parent, attrName, labelText, field, required = False):
-        super(FileNameEditDialogColumn, self).__init__(parent, attrName,
-                labelText, field, required)
-        self.button = parent.AddButton("...", size = (25, -1),
-                method = self.OnSelectFileName, passEvent = False)
 
     def GetDefaultDirAndFileName(self, currentValue):
         if currentValue is None:
             return "", ""
         return os.path.split(currentValue)
 
-    def Layout(self, sizer):
-        fileNameSizer = wx.BoxSizer(wx.HORIZONTAL)
-        fileNameSizer.Add(self.field, border = 5, proportion = 1,
-                flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.RIGHT)
-        fileNameSizer.Add(self.button, flag = wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(fileNameSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
-
-    def OnSelectFileName(self):
+    def OnChooseValue(self):
         dir, fileName = self.GetDefaultDirAndFileName(self.field.GetValue())
         if self.extension is not None:
             wildcard = "*" + self.extension
@@ -534,7 +542,7 @@ class DirNameEditDialogColumn(FileNameEditDialogColumn):
             return ""
         return currentValue
 
-    def OnSelectFileName(self):
+    def OnChooseValue(self):
         defaultPath = self.GetDefaultDirName(self.field.GetValue())
         parent = self.field.GetParent()
         dialog = wx.DirDialog(parent, self.message, defaultPath = defaultPath,
