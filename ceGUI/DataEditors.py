@@ -22,11 +22,14 @@ class EditDialog(ceGUI.StandardDialog):
 
     def __init__(self, parent, instanceName = None, parentItem = None):
         self.parentItem = parentItem
-        cls = self._GetClass(self.dataSetClassName)
-        self.dataSet = cls(parent.config.connection)
+        self.dataSet = self._GetDataSet(parent)
         self.Retrieve(parent)
         super(EditDialog, self).__init__(parent, instanceName)
         self.OnPostCreate()
+
+    def _GetDataSet(self, parent):
+        cls = self._GetClass(self.dataSetClassName)
+        return cls(parent.config.connection)
 
     def GetRow(self):
         return self.dataSet.rows[0]
