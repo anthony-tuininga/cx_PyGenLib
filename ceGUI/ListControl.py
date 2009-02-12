@@ -12,6 +12,7 @@ __all__ = [ "CheckList", "List", "ListColumn", "ListDateColumn",
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
+    settingsName = "ColumnWidths"
     dataSetClassName = "DataSet"
     singleSelection = False
     sortByAttrNames = None
@@ -212,7 +213,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.SetItemCount(len(self.rowHandles))
         self.Refresh()
 
-    def RestoreColumnWidths(self, settingsName = "ColumnWidths"):
+    def RestoreColumnWidths(self, settingsName = None):
+        if settingsName is None:
+            settingsName = self.settingsName
         widths = self.ReadSetting(settingsName, converter = eval)
         if widths is not None:
             for columnIndex, width in enumerate(widths):
@@ -226,7 +229,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if self.sortOnRetrieve:
             self.SortItems()
 
-    def SaveColumnWidths(self, settingsName = "ColumnWidths"):
+    def SaveColumnWidths(self, settingsName = None):
+        if settingsName is None:
+            settingsName = self.settingsName
         numColumns = self.GetColumnCount()
         if numColumns > 1:
             widths = [self.GetColumnWidth(i) for i in range(numColumns - 1)]
