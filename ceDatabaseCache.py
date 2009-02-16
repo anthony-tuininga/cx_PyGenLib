@@ -323,9 +323,10 @@ class SubCache(object):
         return rows
 
     def OnLoadRows(self, cache, rows):
-        if self.singleRowPaths or self.loadAllRowsOnFirstLoad:
+        method = getattr(self, self.onLoadRowMethodName, None)
+        if method is not None:
             for row in rows:
-                self.OnLoadRow(cache, row)
+                method(cache, row)
 
     def RemoveRow(self, cache, externalRow):
         row = self._FindRow(externalRow)
