@@ -8,7 +8,7 @@ import datetime
 import wx
 
 __all__ = [ "CheckList", "List", "ListColumn", "ListDateColumn",
-            "ListTimestampColumn" ]
+            "ListTimestampColumn", "OrderedList" ]
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
@@ -346,6 +346,26 @@ class CheckList(List):
 
     def UncheckAllItems(self):
         self._SetAllChecked(value = False)
+
+
+class OrderedList(List):
+    sortOnRetrieve = False
+
+    def _OnColumnClick(self, event):
+        """prevent column clicking from sorting"""
+
+    def MoveItem(self, indexOffset):
+        itemIndex, = self.GetSelectedItemIndexes()
+        newItemIndex = itemIndex + indexOffset
+        handle = self.rowHandles.pop(itemIndex)
+        self.rowHandles.insert(newItemIndex, handle)
+        self.SetItemState(itemIndex, 0, wx.LIST_STATE_SELECTED)
+        self.SetItemState(itemIndex, 0, wx.LIST_STATE_FOCUSED)
+        self.SetItemState(newItemIndex, wx.LIST_STATE_SELECTED,
+                wx.LIST_STATE_SELECTED)
+        self.SetItemState(newItemIndex, wx.LIST_STATE_FOCUSED,
+                wx.LIST_STATE_FOCUSED)
+        self.Refresh()
 
 
 class ListColumn(ceGUI.BaseControl):
