@@ -53,10 +53,6 @@ class EditDialog(ceGUI.StandardDialog):
     def OnPreUpdate(self):
         self.panel.OnPreUpdate()
 
-    def RestoreSettings(self):
-        super(EditDialog, self).RestoreSettings()
-        self.panel.RestoreSettings()
-
     def Retrieve(self, parent):
         if self.parentItem is None:
             handle, row = self.dataSet.InsertRow()
@@ -72,10 +68,6 @@ class EditDialog(ceGUI.StandardDialog):
             self.dataSet.Retrieve(*args)
             if len(self.dataSet.rows) != 1:
                 raise cx_Exceptions.NoDataFound()
-
-    def SaveSettings(self):
-        super(EditDialog, self).SaveSettings()
-        self.panel.SaveSettings()
 
 
 class DataPanel(ceGUI.Panel):

@@ -311,6 +311,12 @@ class StandardDialog(Dialog):
         sizer.Add(self.panel, flag = wx.EXPAND, proportion = 1)
         return sizer
 
+    def RestoreSettings(self):
+        self.panel.RestoreSettings()
+
+    def SaveSettings(self):
+        self.panel.SaveSettings()
+
 
 class TopLevelFrame(Frame):
     baseSettingsName = ""
