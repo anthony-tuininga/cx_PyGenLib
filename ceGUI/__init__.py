@@ -8,4 +8,5 @@ from GridControl import *
 from TreeControl import *
 from ContainerControls import *
 from CommonDialogs import *
+from CommonPanels import *
 from DataEditors import *
