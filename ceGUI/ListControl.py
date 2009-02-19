@@ -17,6 +17,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     singleSelection = False
     sortByAttrNames = None
     sortOnRetrieve = True
+    enableColumnSorting = True
 
     def __init__(self, parent, style = 0):
         if self.singleSelection:
@@ -63,8 +64,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         return [c.GetSortValue(item) for c in sortColumns]
 
     def _OnColumnClick(self, event):
-        column = self.columns[event.GetColumn()]
-        self.SortItems(column.attrName)
+        if self.enableColumnSorting:
+            column = self.columns[event.GetColumn()]
+            self.SortItems(column.attrName)
 
     def _OnCreate(self):
         self.dataSet = self._GetDataSet()
@@ -350,9 +352,7 @@ class CheckList(List):
 
 class OrderedList(List):
     sortOnRetrieve = False
-
-    def _OnColumnClick(self, event):
-        """prevent column clicking from sorting"""
+    enableColumnSorting = False
 
     def MoveItem(self, indexOffset):
         itemIndex, = self.GetSelectedItemIndexes()
