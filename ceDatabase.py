@@ -145,8 +145,6 @@ class DataSetMetaClass(type):
         cls.pkAttrNames = cls.rowClass.pkAttrNames
         if isinstance(cls.uniqueAttrNames, basestring):
             cls.uniqueAttrNames = cls.uniqueAttrNames.split()
-        if isinstance(cls.sortByAttrNames, basestring):
-            cls.sortByAttrNames = cls.sortByAttrNames.split()
         if isinstance(cls.insertAttrNames, basestring):
             cls.insertAttrNames = cls.insertAttrNames.split()
         if isinstance(cls.updateAttrNames, basestring):
@@ -228,7 +226,7 @@ class DataSet(WrappedConnection):
         cursor.rowfactory = self.rowClass
         self.retrievalArgs = args
         rows = cursor.fetchall()
-        if self.sortByAttrNames:
+        if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
             if self.sortReversed:
                 rows.reverse()
