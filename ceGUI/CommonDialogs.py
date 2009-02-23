@@ -286,6 +286,12 @@ class SelectionTreeDialog(ceGUI.StandardDialog):
         topSizer.Add(self.selectionTree, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
+    def RestoreSettings(self):
+        pass
+
+    def SaveSettings(self):
+        pass
+
 
 class LoggingFileNameNotSpecified(cx_Exceptions.BaseException):
     message = "Logging file name must be specified."
