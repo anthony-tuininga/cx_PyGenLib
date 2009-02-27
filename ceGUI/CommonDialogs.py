@@ -138,6 +138,12 @@ class PreferencesDialog(ceGUI.StandardDialog):
                 flag = wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, border = 5)
         return topSizer
 
+    def RestoreSettings(self):
+        pass
+
+    def SaveSettings(self):
+        pass
+
 
 class SelectionListDialog(ceGUI.StandardDialog):
     listClassName = "List"
