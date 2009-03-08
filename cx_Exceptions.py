@@ -37,7 +37,7 @@ class BaseException(Exception):
                 (co.co_filename, frame.f_lineno, co.co_name)
         self.traceback.append(tbLine)
         self.details.append(tbLine)
-        localVariables = frame.f_locals.items()
+        localVariables = list(frame.f_locals.items())
         localVariables.sort()
         for name, value in localVariables:
             if name.startswith("_"):
