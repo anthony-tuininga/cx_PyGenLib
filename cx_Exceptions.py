@@ -30,11 +30,11 @@ class BaseException(Exception):
     def __str__(self):
         return self.message
 
-    def __AddFrame(self, frame):
+    def __AddFrame(self, frame, lineNo):
         """Add the frame to the traceback."""
         co = frame.f_code
         tbLine = "file %s, line %s, in %s" % \
-                (co.co_filename, frame.f_lineno, co.co_name)
+                (co.co_filename, lineNo, co.co_name)
         self.traceback.append(tbLine)
         self.details.append(tbLine)
         localVariables = list(frame.f_locals.items())
@@ -45,10 +45,18 @@ class BaseException(Exception):
             stringRep = self._FormatValue(value, maxLength = 500)
             self.details.append("  %s -> %s" % (name, stringRep))
 
-    def __AddLocalVariables(self, frame):
+    def __AddLocalVariables(self, frame, tb = None):
         self.details.append("Local Variables:")
+        if tb:
+            tbFrame = tb.tb_frame
+            tbLineNo = tb.tb_lineno
+        else:
+            tbFrame = tbLineNo = None
         while frame is not None:
-            self.__AddFrame(frame)
+            if frame is tbFrame:
+                self.__AddFrame(frame, tbLineNo)
+            else:
+                self.__AddFrame(frame, frame.f_lineno)
             frame = frame.f_back
 
     def _FormatException(self, excType, excValue, tb):
@@ -63,10 +71,11 @@ class BaseException(Exception):
                 self.details.append(prefix + line)
                 prefix = ""
         frame = None
+        initialTb = tb
         while tb is not None:
             frame = tb.tb_frame
             tb = tb.tb_next
-        self.__AddLocalVariables(frame)
+        self.__AddLocalVariables(frame, initialTb)
 
     def _FormatStack(self):
         """Format the traceback for the current location."""
