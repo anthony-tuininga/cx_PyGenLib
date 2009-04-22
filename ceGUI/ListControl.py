@@ -7,8 +7,8 @@ import cx_Exceptions
 import datetime
 import wx
 
-__all__ = [ "CheckList", "List", "ListColumn", "ListDateColumn",
-            "ListTimestampColumn", "OrderedList" ]
+__all__ = [ "CheckList", "List", "ListBooleanColumn", "ListColumn",
+            "ListDateColumn", "ListTimestampColumn", "OrderedList" ]
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
@@ -415,6 +415,16 @@ class ListColumn(ceGUI.BaseControl):
                 return str(value)
             return value
         return row
+
+
+class ListBooleanColumn(ListColumn):
+    defaultJustification = wx.LIST_FORMAT_CENTER
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value:
+            return "Yes"
+        return "No"
 
 
 class ListDateColumn(ListColumn):
