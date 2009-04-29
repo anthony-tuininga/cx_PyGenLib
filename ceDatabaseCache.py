@@ -5,7 +5,6 @@ Define classes and methods used for caching database results.
 import ceDatabase
 import cx_Exceptions
 import cx_Logging
-import functools
 
 class PathMetaClass(type):
 
@@ -43,11 +42,10 @@ class Path(object):
         self.rows = {}
         rowClass = subCache.rowClass
         if self.loadViaPathName is None:
-            pos = len(self.retrievalAttrCacheMethodNames)
-            attrNames = rowClass.attrNames[pos:]
+            attrNames = rowClass.attrNames
         else:
             cls = subCache.pathClassesByName[self.loadViaPathName]
-            attrNames = cls.retrievalAttrNames
+            attrNames = cls.dbRetrievalAttrNames
         self.sql = "select %s from %s" % \
                 (",".join(attrNames), rowClass.tableName)
         if self.dbRetrievalAttrNames:
@@ -93,13 +91,7 @@ class Path(object):
         cursor = cache.connection.cursor()
         cursor.execute(self.sql, dbArgs)
         if self.loadViaPathName is None:
-            if not self.retrievalAttrCacheMethodNames:
-                method = rowFactory
-            else:
-                numArgs = len(self.retrievalAttrCacheMethodNames)
-                partialArgs = args[:numArgs]
-                method = functools.partial(rowFactory, *partialArgs)
-            cursor.rowfactory = method
+            cursor.rowfactory = rowFactory
         return cursor.fetchall()
 
     def Clear(self):
