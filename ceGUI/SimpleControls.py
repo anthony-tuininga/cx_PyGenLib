@@ -87,8 +87,8 @@ class BaseControl(object):
 
 class Choice(BaseControl, wx.Choice):
 
-    def __init__(self, parent, choices):
-        wx.Choice.__init__(self, parent)
+    def __init__(self, parent, choices, size = (-1, -1)):
+        wx.Choice.__init__(self, parent, size = size)
         self.SetChoices(choices)
         self._Initialize()
 
