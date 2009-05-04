@@ -13,8 +13,10 @@ __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "PreviewFrame",
 
 class BaseContainer(ceGUI.BaseControl):
     saveSize = savePosition = bindClose = True
+    saveWidthOnly = False
     instanceName = None
     defaultSize = None
+    defaultWidth = None
     minSize = None
     closing = False
 
@@ -43,7 +45,13 @@ class BaseContainer(ceGUI.BaseControl):
             topSizer.Fit(self)
 
     def _RestoreSettings(self):
-        if self.saveSize:
+        if self.saveWidthOnly:
+            width = self.ReadSetting("Width", self.defaultWidth,
+                    converter = int)
+            if width is not None:
+                origWidth, height = self.GetSizeTuple()
+                self.SetSize((width, height))
+        elif self.saveSize:
             size = self.ReadSetting("Size", self.defaultSize or self.minSize,
                     converter = eval)
             if size is not None:
@@ -56,7 +64,10 @@ class BaseContainer(ceGUI.BaseControl):
 
     def _SaveSettings(self):
         if not hasattr(self, "IsIconized") or not self.IsIconized():
-            if self.saveSize:
+            if self.saveWidthOnly:
+                width, height = self.GetSizeTuple()
+                self.WriteSetting("Width", width)
+            elif self.saveSize:
                 self.WriteSetting("Size", self.GetSizeTuple())
             if self.savePosition:
                 self.WriteSetting("Position", self.GetPositionTuple())
