@@ -76,7 +76,9 @@ class BaseContainer(ceGUI.BaseControl):
     def AddCheckBox(self, label = ""):
         return wx.CheckBox(self, -1, label)
 
-    def AddChoiceField(self, choices, size = (-1, -1)):
+    def AddChoiceField(self, choices = None, size = (-1, -1)):
+        if choices is None:
+            choices = []
         return ceGUI.Choice(self, choices, size)
 
     def AddDateField(self):
