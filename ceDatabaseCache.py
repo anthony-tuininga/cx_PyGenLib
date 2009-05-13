@@ -162,14 +162,14 @@ class SubCacheMetaClass(type):
                 cls.pathClasses.append(value)
         if "name" not in classDict:
             cls.name = cls.__name__
-        if cls.onLoadRowMethodName not in classDict \
-                or cls.onRemoveRowMethodName not in classDict:
+        if not hasattr(cls, cls.onLoadRowMethodName) \
+                or not hasattr(cls, cls.onRemoveRowMethodName):
             onLoadRowMethodLines = []
             onRemoveRowMethodLines = []
             for directive in cls.onLoadRowExtraDirectives:
                 line = "row.%s = cache.%s(row.%s)" % directive
                 onLoadRowMethodLines.append(line)
-            if cls.setExtraAttrValuesMethodName in classDict:
+            if hasattr(cls, cls.setExtraAttrValuesMethodName):
                 line = "self.%s(cache, row)" % cls.setExtraAttrValuesMethodName
                 onLoadRowMethodLines.append(line)
             for pathClass in cls.pathClasses:
@@ -191,11 +191,11 @@ class SubCacheMetaClass(type):
                             (pathClass.subCacheAttrName, keyArgs)
                     onRemoveRowMethodLines.append(line)
             if onLoadRowMethodLines \
-                    and cls.onLoadRowMethodName not in classDict:
+                    and not hasattr(cls, cls.onLoadRowMethodName):
                 cls._GenerateMethod(cls, cls.onLoadRowMethodName,
                         onLoadRowMethodLines, "cache", "row")
             if onRemoveRowMethodLines \
-                    and cls.onRemoveRowMethodName not in classDict:
+                    and not hasattr(cls, cls.onRemoveRowMethodName):
                 cls._GenerateMethod(cls, cls.onRemoveRowMethodName,
                         onRemoveRowMethodLines, "cache", "row")
 
