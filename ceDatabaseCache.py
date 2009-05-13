@@ -211,6 +211,7 @@ class SubCache(object):
     pathClasses = []
     pathClassesByName = {}
     cacheAttrName = None
+    tracePathLoads = True
     name = None
 
     def __init__(self, cache):
@@ -286,8 +287,9 @@ class SubCache(object):
             path.Clear()
 
     def Load(self, cache, pathName, *args):
-        cx_Logging.Debug("%s: loading rows by path %s with args %s", self.name,
-                pathName, args)
+        if self.tracePathLoads:
+            cx_Logging.Debug("%s: loading rows by path %s with args %s",
+                    self.name, pathName, args)
         path = self.pathsByName[pathName]
         if self.loadAllRowsOnFirstLoad:
             if not self.allRowsLoaded:
