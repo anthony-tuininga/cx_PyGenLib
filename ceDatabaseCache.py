@@ -10,6 +10,8 @@ class PathMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
         super(PathMetaClass, cls).__init__(name, bases, classDict)
+        if isinstance(cls.attrNames, basestring):
+            cls.attrNames = cls.attrNames.split()
         if isinstance(cls.retrievalAttrNames, basestring):
             cls.retrievalAttrNames = cls.retrievalAttrNames.split()
         if isinstance(cls.retrievalAttrCacheMethodNames, basestring):
@@ -29,12 +31,14 @@ class PathMetaClass(type):
 
 class Path(object):
     __metaclass__ = PathMetaClass
+    attrNames = []
     retrievalAttrNames = []
     retrievalAttrCacheMethodNames = []
     stringRetrievalAttrNames = []
     loadViaPathName = None
     subCacheAttrName = None
     cacheAttrName = None
+    rowFactoryCacheMethodName = None
     ignoreRowNotCached = False
     name = None
 
@@ -42,7 +46,7 @@ class Path(object):
         self.rows = {}
         rowClass = subCache.rowClass
         if self.loadViaPathName is None:
-            attrNames = rowClass.attrNames
+            attrNames = self.attrNames or rowClass.attrNames
         else:
             cls = subCache.pathClassesByName[self.loadViaPathName]
             attrNames = cls.dbRetrievalAttrNames
@@ -90,7 +94,9 @@ class Path(object):
                 dbArgs.append(getattr(arg, attrName))
         cursor = cache.connection.cursor()
         cursor.execute(self.sql, dbArgs)
-        if self.loadViaPathName is None:
+        if self.rowFactoryCacheMethodName is not None:
+            cursor.rowfactory = getattr(cache, self.rowFactoryCacheMethodName)
+        elif self.loadViaPathName is None:
             cursor.rowfactory = rowFactory
         return cursor.fetchall()
 
@@ -358,6 +364,27 @@ class SubCache(object):
             method = getattr(self, self.setExtraAttrValuesMethodName, None)
             if method is not None:
                 method(cache, row)
+
+
+class XrefSubCache(SubCache):
+
+    def AddRow(self, cache, key1, key2):
+        cx_Logging.Debug("%s: adding xref between %s and %s", self.name, key1,
+                key2)
+        path1, path2 = self.paths
+        if key1 in path1.rows:
+            path1.rows[key1].append(key2)
+        if key2 in path2.rows:
+            path2.rows[key2].append(key1)
+
+    def RemoveRow(self, cache, key1, key2):
+        cx_Logging.Debug("%s: removing xref between %s and %s", self.name,
+                key1, key2)
+        path1, path2 = self.paths
+        if key1 in path1.rows:
+            path1.rows[key1].remove(key2)
+        if key2 in path2.rows:
+            path2.rows[key2].remove(key1)
 
 
 class CacheMetaClass(type):
