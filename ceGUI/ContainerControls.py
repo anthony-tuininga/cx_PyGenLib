@@ -4,8 +4,9 @@ functionality.
 """
 
 import ceGUI
-import functools
+import os
 import wx
+import sys
 
 __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "PreviewFrame",
            "ScrolledPanel", "StandardDialog", "TopLevelFrame"]
@@ -197,6 +198,7 @@ class Dialog(BaseContainer, wx.Dialog):
 class Frame(BaseContainer, wx.Frame):
     style = wx.DEFAULT_FRAME_STYLE
     hasToolbar = hasMenus = True
+    hasIcon = False
     title = ""
 
     def __init__(self, parent = None, instanceName = None):
@@ -215,6 +217,8 @@ class Frame(BaseContainer, wx.Frame):
             self.SetMenuBar(self.menuBar)
             self.OnCreateMenus()
         super(Frame, self)._OnCreate()
+        if self.hasIcon:
+            self.OnSetIcon()
 
     def AddMenu(self, label):
         menu = ceGUI.Menu()
@@ -248,6 +252,14 @@ class Frame(BaseContainer, wx.Frame):
 
     def OnCreateToolbar(self):
         pass
+
+    def OnSetIcon(self):
+        iconFile = sys.executable
+        name, ext = os.path.splitext(iconFile)
+        if ext == ".py":
+            iconFile = name + ".ico"
+        icon = wx.Icon(iconFile, wx.BITMAP_TYPE_ICO, 16, 16)
+        self.SetIcon(icon)
 
     def SimpleOpenWindow(self, windowName):
         window = self.OpenWindow(windowName)
