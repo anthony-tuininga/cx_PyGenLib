@@ -93,8 +93,8 @@ class BaseContainer(ceGUI.BaseControl):
             choices = []
         return ceGUI.Choice(self, choices, size)
 
-    def AddDateField(self):
-        return ceGUI.DateField(self)
+    def AddDateField(self, allowNone = False):
+        return ceGUI.DateField(self, allowNone)
 
     def AddIntegerField(self, style = 0):
         return ceGUI.IntegerField(self, style)

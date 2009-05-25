@@ -11,10 +11,10 @@ import sys
 import wx
 
 __all__ = [ "BooleanEditDialogColumn", "DataEditPanel", "DataList",
-            "DataListPanel", "DataNotebookPanel", "DirNameEditDialogColumn",
-            "EditDialog", "EditDialogColumn", "EllipsisEditDialogColumn",
-            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow",
-            "TextEditDialogColumn" ]
+            "DataListPanel", "DataNotebookPanel", "DateEditDialogColumn",
+            "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
+            "EllipsisEditDialogColumn", "FileNameEditDialogColumn",
+            "GridEditWindow", "SubWindow", "TextEditDialogColumn" ]
 
 
 class EditDialog(ceGUI.StandardDialog):
@@ -563,6 +563,29 @@ class BooleanEditDialogColumn(EditDialogColumn):
             self.field.SetValue(value)
         else:
             self.field.SetValue(value and "Yes" or "No")
+
+
+class DateEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, allowNone = False,
+            editable = True):
+        if editable:
+            field = parent.AddDateField(allowNone)
+        else:
+            field = parent.AddTextField(editable = False)
+        self.editable = editable
+        super(DateEditDialogColumn, self).__init__(parent, attrName, labelText,
+                field)
+
+    def SetValue(self, row):
+        value = getattr(row, self.attrName)
+        if self.editable:
+            self.field.SetValue(value)
+        elif value is None:
+            self.field.SetValue("")
+        else:
+            wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
+            self.field.SetValue(wxDate.FormatDate())
 
 
 class TextEditDialogColumn(EditDialogColumn):
