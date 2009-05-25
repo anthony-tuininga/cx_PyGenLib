@@ -148,8 +148,9 @@ class DateField(BaseControl, wx.DatePickerCtrl):
 
     def GetValue(self):
         wxDate = wx.DatePickerCtrl.GetValue(self)
-        return datetime.date(wxDate.GetYear(), wxDate.GetMonth() + 1,
-                wxDate.GetDay())
+        if wxDate.IsValid():
+            return datetime.date(wxDate.GetYear(), wxDate.GetMonth() + 1,
+                    wxDate.GetDay())
 
     def SetValue(self, value):
         if value is not None:
