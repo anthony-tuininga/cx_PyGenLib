@@ -1,3 +1,30 @@
+Changes from 2.5 to 2.6
+ 1) Substantial changes and enhancements to ceGUI to handle additional
+    controls and support better integration with databases.
+ 2) Added new module ceDatabaseCache which enables simple caching of data in
+    a database without having to write a lot of repetitive code.
+ 3) In cx_Exceptions, ensured compatibility with Python 3.x.
+ 4) In cx_Exceptions, used the traceback line number rather than the current
+    line number in the frame so that the error message is a little more
+    helpful. Thanks to Robert Ritchie for pointing out the solution to this.
+ 5) In ceDatabase, improved support for inserting, updating and deleting rows
+    directly or through stored procedures.
+ 6) In ceDatabase, boolean column values in the database can be "0" or "1" in
+    addition to "Y" and "N".
+ 7) In cx_IniFile, a comment is only relevant if there is a space character
+    before the comment character.
+ 8) In cx_Handles, added support for associating a descriptor with an object
+    to aid in debugging the use of the handle manager as requested by Micah
+    Friesen.
+ 9) In cx_OptionParser, allow for subclassing the parser as requested by Micah
+    Friesen.
+10) In cx_LoggingOptions, use the file number 2 rather than
+    sys.stderr.fileno() since that file number is well known and on Windows
+    the stderr file descriptor may be closed so sys.stderr.fileno() returns a
+    negative value.
+11) In cx_LoggingOptions, set the exception information in cx_Logging so that
+    LogException() works as expected.
+
 Changes from 2.4 to 2.5
  1) Added new package ceGUI that extends the wxPython framework by adding such
     things as logging and saving/restoring settings automatically
