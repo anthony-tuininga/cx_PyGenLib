@@ -155,6 +155,11 @@ class BaseContainer(ceGUI.BaseControl):
     def PendingChanges(self):
         return False
 
+    def RunReport(self, className, *args):
+        cls = self._GetClass(className)
+        report = cls()
+        report.Preview(args, parent = self)
+
     def UpdateChanges(self):
         pass
 
