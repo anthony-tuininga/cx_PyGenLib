@@ -13,10 +13,12 @@ class Printout(wx.Printout):
         self.body = body
 
     def GetPageInfo(self):
-        return (1, self.body.maxPage, 1, self.body.maxPage)
+        dc = self.GetDC()
+        self.maxPage = self.body.GetNumberOfPages(dc)
+        return (1, self.maxPage, 1, self.maxPage)
 
     def HasPage(self, pageNum):
-        return (pageNum <= self.body.maxPage)
+        return (pageNum <= self.maxPage)
 
     def OnBeginPrinting(self):
         self.FitThisSizeToPage((self.body.pageWidth, self.body.pageHeight))
@@ -56,7 +58,6 @@ class Report(object):
 class ReportBody(object):
     pageWidth = 2160
     pageHeight = 2795
-    maxPage = 1
 
     def DrawTextCentered(self, dc, text, x, y):
         width, height = dc.GetTextExtent(text)
@@ -70,4 +71,7 @@ class ReportBody(object):
     def DrawTextRightJustified(self, dc, text, x, y):
         width, height = dc.GetTextExtent(text)
         dc.DrawText(text, x - width, y)
+
+    def GetNumberOfPages(self, dc):
+        return 1
 
