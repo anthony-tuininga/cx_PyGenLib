@@ -54,6 +54,8 @@ class Report(object):
 
 
 class ReportBody(object):
+    pageWidth = 2160
+    pageHeight = 2795
     maxPage = 1
 
     def DrawTextCentered(self, dc, text, x, y):
