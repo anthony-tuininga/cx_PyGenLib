@@ -1,7 +1,9 @@
 """Provides routines for standardized command line argument and option
-   parsing.  It is based on Gred Ward's Optik with some extensions."""
+   parsing.  It is based on the standard library optparse with some
+   extensions."""
 
 import optparse
+import os
 import sys
 import warnings
 
@@ -107,10 +109,12 @@ class OptionParser(optparse.OptionParser):
     standard_option_list = optparse.OptionParser.standard_option_list + \
             [TRACEBACK_OPTION, SHOW_BANNER_OPTION]
 
-    def __init__(self, name, version = None, docString = None,
+    def __init__(self, name = None, version = None, docString = None,
             copyright = None, extendedVersion = None):
         self.__args = []
         self.__varArg = None
+        if name is None:
+            name, ext = os.path.splitext(os.path.basename(sys.argv[0]))
         if docString is None:
             docString = sys.modules["__main__"].__doc__
         self.__docString = docString
