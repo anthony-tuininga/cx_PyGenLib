@@ -270,11 +270,15 @@ class DataListPanel(DataPanel):
         topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
+    def OnRetrieve(self):
+        pass
+
     def RestoreSettings(self):
         self.list.RestoreColumnWidths()
 
     def Retrieve(self):
         self.list.Retrieve()
+        self.OnRetrieve()
 
     def SaveSettings(self):
         self.list.SaveColumnWidths()
