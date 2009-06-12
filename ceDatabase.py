@@ -203,7 +203,7 @@ class DataSet(WrappedConnection):
             else:
                 argIndex = self.retrievalAttrIndexes[name]
                 value = self.retrievalArgs[argIndex]
-            if name in self.charBooleanAttrNames:
+            if name in self.rowClass.charBooleanAttrNames:
                 value = value and "Y" or "N"
             args.append(value)
         return args
