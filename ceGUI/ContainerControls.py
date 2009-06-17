@@ -103,9 +103,11 @@ class BaseContainer(ceGUI.BaseControl):
         return wx.StaticText(self, -1, label, size = size)
 
     def AddTextField(self, style = 0, maxLength = 0, cls = ceGUI.TextField,
-            size = (-1, -1), editable = True):
+            size = (-1, -1), editable = True, multiLine = False):
         if not editable:
             style |= wx.TE_READONLY
+        if multiLine:
+            style |= wx.TE_MULTILINE
         return cls(self, style, maxLength, size)
 
     def ContinueQuery(self, allowCancel = True):
