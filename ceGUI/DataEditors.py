@@ -596,9 +596,9 @@ class TextEditDialogColumn(EditDialogColumn):
 
     def __init__(self, parent, attrName, labelText, style = 0,
             maxLength = 0, size = (-1, -1), required = False,
-            editable = True, cls = ceGUI.TextField):
+            editable = True, cls = ceGUI.TextField, multiLine = False):
         field = parent.AddTextField(style, maxLength, size = size, cls = cls,
-                editable = editable)
+                editable = editable, multiLine = multiLine)
         super(TextEditDialogColumn, self).__init__(parent, attrName, labelText,
                 field, required = required)
 
