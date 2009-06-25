@@ -168,7 +168,8 @@ class SubCacheMetaClass(type):
                 cls.pathClasses.append(value)
         if "name" not in classDict:
             cls.name = cls.__name__
-        if not hasattr(cls, cls.onLoadRowMethodName) \
+        if cls.regenerateMethods \
+                or not hasattr(cls, cls.onLoadRowMethodName) \
                 or not hasattr(cls, cls.onRemoveRowMethodName):
             onLoadRowMethodLines = []
             onRemoveRowMethodLines = []
@@ -196,14 +197,16 @@ class SubCacheMetaClass(type):
                     line = "self.%s[%s].remove(row)" % \
                             (pathClass.subCacheAttrName, keyArgs)
                     onRemoveRowMethodLines.append(line)
-            if onLoadRowMethodLines \
-                    and not hasattr(cls, cls.onLoadRowMethodName):
-                cls._GenerateMethod(cls, cls.onLoadRowMethodName,
-                        onLoadRowMethodLines, "cache", "row")
-            if onRemoveRowMethodLines \
-                    and not hasattr(cls, cls.onRemoveRowMethodName):
-                cls._GenerateMethod(cls, cls.onRemoveRowMethodName,
-                        onRemoveRowMethodLines, "cache", "row")
+            if onLoadRowMethodLines:
+                if cls.regenerateMethods \
+                        or not hasattr(cls, cls.onLoadRowMethodName):
+                    cls._GenerateMethod(cls, cls.onLoadRowMethodName,
+                            onLoadRowMethodLines, "cache", "row")
+            if onRemoveRowMethodLines:
+                if cls.regenerateMethods \
+                        or not hasattr(cls, cls.onRemoveRowMethodName):
+                    cls._GenerateMethod(cls, cls.onRemoveRowMethodName,
+                            onRemoveRowMethodLines, "cache", "row")
 
 
 class SubCache(object):
@@ -211,6 +214,7 @@ class SubCache(object):
     setExtraAttrValuesMethodName = "SetExtraAttrValues"
     onRemoveRowMethodName = "OnRemoveRow"
     onLoadRowMethodName = "OnLoadRow"
+    regenerateMethods = False
     onLoadRowExtraDirectives = []
     loadAllRowsOnFirstLoad = False
     allRowsMethodCacheAttrName = None
