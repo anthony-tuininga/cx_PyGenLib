@@ -8,9 +8,10 @@ import os
 import stat
 import sys
 
-def CopyFile(source, target, bufferSize = 16 * 1024):
+def CopyFile(source, target, bufferSize = 16 * 1024, log = True):
     """Copy the source to the target."""
-    cx_Logging.Info("copying %s to %s...", source, target)
+    if log:
+        cx_Logging.Info("copying %s to %s...", source, target)
     sourceFile = file(source, "rb")
     if os.path.exists(target):
         Remove(target)
@@ -50,17 +51,18 @@ def CopyTree(source, target, includeTimes = False):
             CopyFile(sourceName, targetName)
             CopyStat(sourceName, targetName, includeTimes)
 
-def Remove(path):
+def Remove(path, log = True):
     """Remove a file or a directory tree recursively."""
     if os.path.isdir(path):
         RemoveTree(path)
     else:
-        cx_Logging.Info("removing file %s...", path)
+        if log:
+            cx_Logging.Info("removing file %s...", path)
         if sys.platform == "win32":
             os.chmod(path, 0777)
         os.remove(path)
 
-def RemoveTree(path):
+def RemoveTree(path, log = True):
     """Recursively remove a directory tree."""
     try:
         currentDir = os.getcwd()
@@ -68,7 +70,8 @@ def RemoveTree(path):
         currentDir = None
     if currentDir is None or currentDir.startswith(path):
         os.chdir("/")
-    cx_Logging.Info("removing directory %s...", path)
+    if log:
+        cx_Logging.Info("removing directory %s...", path)
     for name in os.listdir(path):
         fullName = os.path.join(path, name)
         Remove(fullName)
