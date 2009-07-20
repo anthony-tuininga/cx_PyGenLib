@@ -164,6 +164,20 @@ class Notebook(BaseControl, wx.Notebook):
         wx.Notebook.__init__(self, *args, **kwargs)
         self._Initialize()
 
+    def AddPageWithCheck(self, name, text):
+        currentPage = self.GetCurrentPage()
+        newPage = ceGUI.OpenWindow(name, self, instanceName = text)
+        if newPage is currentPage:
+            return newPage
+        for pageIndex in range(self.GetPageCount()):
+            page = self.GetPage(pageIndex)
+            if newPage is page:
+                self.SetSelection(pageIndex)
+                return newPage
+        self.AddPage(newPage, text)
+        newPage.RestoreSettings()
+        return newPage
+
     def IterPages(self):
         for pageIndex in range(self.GetPageCount()):
             yield self.GetPage(pageIndex)
