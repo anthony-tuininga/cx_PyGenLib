@@ -394,7 +394,8 @@ class DataList(ceGUI.List):
         parent.InsertItems()
 
     def OnRefresh(self):
-        self.Retrieve()
+        parent = self.GetParent()
+        parent.Retrieve()
 
 
 class DataNotebookPanel(DataPanel):
