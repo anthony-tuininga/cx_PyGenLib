@@ -10,11 +10,12 @@ import os
 import sys
 import wx
 
-__all__ = [ "BooleanEditDialogColumn", "DataEditPanel", "DataList",
-            "DataListPanel", "DataNotebookPanel", "DateEditDialogColumn",
-            "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
-            "EllipsisEditDialogColumn", "FileNameEditDialogColumn",
-            "GridEditWindow", "SubWindow", "TextEditDialogColumn" ]
+__all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn",
+            "DataEditPanel", "DataList", "DataListPanel", "DataNotebookPanel",
+            "DateEditDialogColumn", "DirNameEditDialogColumn", "EditDialog",
+            "EditDialogColumn", "EllipsisEditDialogColumn",
+            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow",
+            "TextEditDialogColumn" ]
 
 
 class EditDialog(ceGUI.StandardDialog):
@@ -568,6 +569,28 @@ class BooleanEditDialogColumn(EditDialogColumn):
             self.field.SetValue(value)
         else:
             self.field.SetValue(value and "Yes" or "No")
+
+
+class ChoiceEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, choices, required = False,
+            editable = True):
+        self.choices = dict(choices)
+        if editable:
+            field = parent.AddChoiceField(choices)
+        else:
+            field = parent.AddTextField(editable = False)
+        self.editable = editable
+        super(ChoiceEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field, required = required)
+
+    def SetValue(self, row):
+        value = getattr(row, self.attrName)
+        if self.editable:
+            self.field.SetValue(value)
+        else:
+            displayValue = self.choices[value]
+            self.field.SetValue(displayValue)
 
 
 class DateEditDialogColumn(EditDialogColumn):
