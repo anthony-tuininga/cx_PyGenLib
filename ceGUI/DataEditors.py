@@ -553,7 +553,7 @@ class DirNameEditDialogColumn(FileNameEditDialogColumn):
 
 class BooleanEditDialogColumn(EditDialogColumn):
 
-    def __init__(self, parent, attrName, labelText, editable):
+    def __init__(self, parent, attrName, labelText, editable = True):
         if editable:
             field = parent.AddCheckBox()
         else:
