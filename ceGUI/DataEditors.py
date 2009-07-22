@@ -370,6 +370,8 @@ class DataList(ceGUI.List):
         parent = self.GetParent()
         if not isinstance(parent, DataListPanel):
             return True
+        if parent.updateSubCacheAttrName is not None:
+            return False
         return parent._GetEditDialog() is None
 
     def OnContextMenu(self):
