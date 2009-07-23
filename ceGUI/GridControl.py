@@ -324,7 +324,7 @@ class GridTable(wx.grid.PyGridTableBase):
                     rawValue)
         except InvalidValueEntered, e:
             validValue = False
-            dialog = wx.MessageDialog(grid.GetParent(), e.message,
+            dialog = wx.MessageDialog(grid.GetParent(), e.messageToDisplay,
                     "Invalid Value", style = wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()
             dialog.Destroy()
@@ -494,6 +494,6 @@ class GridColumnStr(GridColumn):
 
 class InvalidValueEntered(Exception):
 
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, messageToDisplay):
+        self.messageToDisplay = messageToDisplay
 
