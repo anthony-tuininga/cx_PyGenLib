@@ -468,6 +468,9 @@ class EditDialogColumn(ceGUI.BaseControl):
             flags = flags | wx.TOP | wx.BOTTOM
         sizer.Add(self.field, flag = flags, border = 4)
 
+    def OnRequiredFieldHasNoValue(self):
+        self.field.SetFocus()
+
     def SetValue(self, row):
         value = getattr(row, self.attrName)
         self.field.SetValue(value)
@@ -480,7 +483,7 @@ class EditDialogColumn(ceGUI.BaseControl):
         if self.required:
             value = self.field.GetValue()
             if value is None:
-                self.field.SetFocus()
+                self.OnRequiredFieldHasNoValue()
                 raise ceGUI.RequiredFieldHasNoValue()
 
     def __repr__(self):
@@ -496,6 +499,9 @@ class EllipsisEditDialogColumn(EditDialogColumn):
         self.button = parent.AddButton("...", size = (25, -1),
                 method = self.OnChooseValue, passEvent = False)
 
+    def IsEditable(self):
+        return self.button.IsEnabled()
+
     def Layout(self, sizer):
         fieldSizer = wx.BoxSizer(wx.HORIZONTAL)
         fieldSizer.Add(self.field, border = 5, proportion = 1,
@@ -506,6 +512,9 @@ class EllipsisEditDialogColumn(EditDialogColumn):
 
     def OnChooseValue(self):
         pass
+
+    def OnRequiredFieldHasNoValue(self):
+        self.button.SetFocus()
 
 
 class FileNameEditDialogColumn(EllipsisEditDialogColumn):
