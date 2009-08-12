@@ -20,6 +20,7 @@ __all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn",
 
 class EditDialog(ceGUI.StandardDialog):
     dataSetClassName = "DataSet"
+    saveWidthOnly = True
 
     def __init__(self, parent, instanceName = None, parentItem = None):
         self.parentItem = parentItem
