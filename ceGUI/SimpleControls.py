@@ -20,7 +20,7 @@ class BaseControl(object):
     def _GetSettingsName(self, name):
         baseSettingsName = self.baseSettingsName
         if baseSettingsName is None:
-            baseSettingsName = self.__class__.__module__
+            baseSettingsName = "/".join(self.__class__.__module__.split("."))
         return "%s/%s" % (baseSettingsName, name)
 
     def _Initialize(self):
