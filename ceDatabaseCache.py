@@ -285,10 +285,13 @@ class SubCache(object):
                 continue
             setattr(row, attrName, value)
 
-    def _FindRow(self, externalRow):
+    def _FindRow(self, externalRow, errorIfMissing = False):
         path = self.singleRowPaths[0]
         key = path.GetKeyValue(externalRow)
-        return path.rows.get(key)
+        row = path.rows.get(key)
+        if errorIfMissing and row is None:
+            raise cx_Exceptions.NoDataFound()
+        return row
 
     def Clear(self):
         self.allRows = []
@@ -333,7 +336,7 @@ class SubCache(object):
                 method(cache, row)
 
     def RemoveRow(self, cache, externalRow):
-        row = self._FindRow(externalRow)
+        row = self._FindRow(externalRow, errorIfMissing = True)
         cx_Logging.Debug("%s: removing row %s", self.name, row)
         self.OnRemoveRow(cache, row)
         if self.allRowsLoaded:
