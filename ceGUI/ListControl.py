@@ -219,7 +219,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if settingsName is None:
             settingsName = self.settingsName
         widths = self.ReadSetting(settingsName, converter = eval)
-        if widths is not None:
+        if widths is not None and len(widths) == len(self.columns) - 1:
             for columnIndex, width in enumerate(widths):
                 self.SetColumnWidth(columnIndex, width)
 
