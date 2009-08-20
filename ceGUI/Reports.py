@@ -59,6 +59,12 @@ class ReportBody(object):
     pageWidth = 2160
     pageHeight = 2795
 
+    def __init__(self):
+        app = wx.GetApp()
+        for name in app.copyAttributes:
+            value = getattr(app, name)
+            setattr(self, name, value)
+
     def DrawTextCentered(self, dc, text, x, y):
         width, height = dc.GetTextExtent(text)
         dc.DrawText(text, x - width / 2, y)
