@@ -380,6 +380,8 @@ class GridColumn(ceGUI.BaseControl):
         value = getattr(row, self.attrName)
         if value is None:
             return ""
+        elif isinstance(value, basestring):
+            return value
         return str(value)
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
