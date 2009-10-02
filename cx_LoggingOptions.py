@@ -3,6 +3,7 @@
 import cx_Exceptions
 import cx_Logging
 import cx_OptionParser
+import locale
 import os
 import sys
 
@@ -77,15 +78,16 @@ def ProcessOptions(options):
     if logLevel is None:
         logLevel = int(options.logLevel)
     logPrefix = options.logPrefix
+    encoding = locale.getpreferredencoding()
     if options.logFile.lower() == "stderr":
-        cx_Logging.StartLoggingStderr(logLevel, logPrefix)
+        cx_Logging.StartLoggingStderr(logLevel, logPrefix, encoding)
     elif options.logFile.lower() == "stdout":
-        cx_Logging.StartLoggingStdout(logLevel, logPrefix)
+        cx_Logging.StartLoggingStdout(logLevel, logPrefix, encoding)
     else:
         maxFiles = getattr(options, "maxFiles", 1)
         maxFileSize = getattr(options, "maxFileSize", 0)
         cx_Logging.StartLogging(options.logFile, logLevel, maxFiles,
-                maxFileSize, logPrefix)
+                maxFileSize, logPrefix, encoding)
         f = cx_Logging.GetLoggingFile()
         os.dup2(f.fileno(), 2)
     cx_Logging.SetExceptionInfo(cx_Exceptions.BaseException,
