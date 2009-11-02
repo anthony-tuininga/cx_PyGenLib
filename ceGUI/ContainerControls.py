@@ -96,7 +96,9 @@ class BaseContainer(ceGUI.BaseControl):
     def AddDateField(self, allowNone = False):
         return ceGUI.DateField(self, allowNone)
 
-    def AddIntegerField(self, style = 0):
+    def AddIntegerField(self, style = 0, editable = True):
+        if not editable:
+            style |= wx.TE_READONLY
         return ceGUI.IntegerField(self, style)
 
     def AddLabel(self, label = "", size = (-1, -1)):

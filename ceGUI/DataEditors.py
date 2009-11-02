@@ -131,11 +131,13 @@ class DataEditPanel(DataPanel):
         self.columns = []
         super(DataEditPanel, self)._Initialize()
 
-    def AddColumn(self, attrName, labelText, field, required = False,
-            cls = None):
+    def AddColumn(self, attrName, labelText, field = None, required = False,
+            cls = None, constantValue = None):
         if cls is None:
             cls = EditDialogColumn
-        return cls(self, attrName, labelText, field, required)
+        if field is None and constantValue is not None:
+            field = self.AddTextField(editable = False)
+        return cls(self, attrName, labelText, field, required, constantValue)
 
     def GetFieldsSizer(self):
         sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
@@ -446,11 +448,13 @@ class DataNotebookPanel(DataPanel):
 
 class EditDialogColumn(ceGUI.BaseControl):
 
-    def __init__(self, parent, attrName, labelText, field, required = False):
+    def __init__(self, parent, attrName, labelText, field,
+            required = False, constantValue = None):
         self.attrName = attrName
         self.label = parent.AddLabel(labelText)
         self.field = field
         self.required = required
+        self.constantValue = constantValue
         self._Initialize()
         parent.columns.append(self)
 
@@ -458,6 +462,8 @@ class EditDialogColumn(ceGUI.BaseControl):
         return self.field.GetValue()
 
     def IsEditable(self):
+        if self.constantValue is not None:
+            return False
         if isinstance(self.field, wx.TextCtrl):
             return self.field.IsEditable()
         return True
@@ -473,7 +479,10 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.field.SetFocus()
 
     def SetValue(self, row):
-        value = getattr(row, self.attrName)
+        if self.constantValue is not None:
+            value = self.constantValue
+        else:
+            value = getattr(row, self.attrName)
         self.field.SetValue(value)
 
     def Update(self, dataSet):
