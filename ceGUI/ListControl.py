@@ -121,6 +121,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         return self.InsertItem(len(self.rowHandles), choice, refresh, item)
 
     def Clear(self):
+        self.DeleteAllItems()
         self.rowHandles = []
 
     def ClearAll(self):
