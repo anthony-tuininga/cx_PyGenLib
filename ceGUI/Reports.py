@@ -81,3 +81,30 @@ class ReportBody(object):
     def GetNumberOfPages(self, dc):
         return 1
 
+    def WrapText(self, dc, text, width):
+        if text is None or not text.rstrip():
+            return []
+        lines = []
+        for line in text.splitlines():
+            line = line.rstrip()
+            if not line:
+                lines.append(line)
+                continue
+            while line:
+                extents = dc.GetPartialTextExtents(line)
+                if extents[-1] < width:
+                    lines.append(line)
+                    break
+                lastWordPos = -1
+                for charIndex, char in enumerate(line):
+                    charWidth = extents[charIndex]
+                    if charWidth > width:
+                        if lastWordPos < 0:
+                            lastWordPos = charIndex - 1
+                        lines.append(line[:lastWordPos].rstrip())
+                        line = line[lastWordPos:].strip()
+                        break
+                    if char.isspace():
+                        lastWordPos = charIndex
+        return lines
+
