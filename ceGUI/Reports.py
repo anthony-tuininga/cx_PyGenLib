@@ -55,15 +55,79 @@ class Report(object):
         frame.Show(True)
 
 
+class ReportColumn(ceGUI.BaseControl):
+    defaultWidth = 200
+
+    def __init__(self, attrName, heading, startX = None, width = None,
+            centered = False, rightJustified = False):
+        self.attrName = attrName
+        self.heading = heading
+        self.startX = startX
+        self.width = width or self.defaultWidth
+        self.centered = centered
+        self.rightJustified = rightJustified
+        self._Initialize()
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is not None:
+            return str(value)
+
+    def PrintValue(self, dc, value, y):
+        if self.centered:
+            textWidth, textHeight = dc.GetTextExtent(value)
+            dc.DrawText(value, self.startX + self.width / 2 - textWidth / 2, y)
+        elif self.rightJustified:
+            textWidth, textHeight = dc.GetTextExtent(value)
+            dc.DrawText(value, self.startX + self.width - textWidth, y)
+        else:
+            dc.DrawText(value, self.startX, y)
+
+
+class ReportDateColumn(ReportColumn):
+    dateFormatAttrName = "dateFormat"
+    dateFormat = None
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is not None:
+            dateFormat = self.dateFormat
+            if dateFormat is None:
+                dateFormat = getattr(self.config, self.dateFormatAttrName)
+            return value.strftime(dateFormat)
+        
+
+class ReportTimestampColumn(ReportDateColumn):
+    dateFormatAttrName = "timestampFormat"
+
+
 class ReportBody(object):
+    columnSeparation = 20
     pageWidth = 2160
     pageHeight = 2795
+    topMargin = 87
+    leftMargin = 87
 
     def __init__(self):
         app = wx.GetApp()
         for name in app.copyAttributes:
             value = getattr(app, name)
             setattr(self, name, value)
+        self.columns = []
+        self.OnCreate()
+
+    def AddColumn(self, attrName, heading, startX = None, width = None,
+            centered = False, rightJustified = False, cls = ReportColumn):
+        if startX is None:
+            if not self.columns:
+                startX = self.leftMargin
+            else:
+                lastColumn = self.columns[-1]
+                startX = lastColumn.startX + lastColumn.width + \
+                        self.columnSeparation
+        column = cls(attrName, heading, startX, width, centered,
+                rightJustified)
+        self.columns.append(column)
 
     def DrawTextCentered(self, dc, text, x, y):
         width, height = dc.GetTextExtent(text)
@@ -80,6 +144,19 @@ class ReportBody(object):
 
     def GetNumberOfPages(self, dc):
         return 1
+
+    def OnCreate(self):
+        pass
+
+    def PrintColumns(self, dc, row, y):
+        for column in self.columns:
+            value = column.GetValue(row)
+            if value:
+                column.PrintValue(dc, value, y)
+
+    def PrintColumnHeadings(self, dc, y):
+        for column in self.columns:
+            column.PrintValue(dc, column.heading, y)
 
     def WrapText(self, dc, text, width):
         if text is None or not text.rstrip():
