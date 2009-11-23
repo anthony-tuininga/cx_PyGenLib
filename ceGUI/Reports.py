@@ -71,6 +71,8 @@ class ReportColumn(ceGUI.BaseControl):
     def GetValue(self, row):
         value = getattr(row, self.attrName)
         if value is not None:
+            if isinstance(value, basestring):
+                return value
             return str(value)
 
     def PrintValue(self, dc, value, y):
