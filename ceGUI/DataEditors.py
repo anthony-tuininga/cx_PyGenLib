@@ -176,6 +176,7 @@ class DataEditPanel(DataPanel):
 class DataListPanel(DataPanel):
     listClassName = "List"
     editDialogName = None
+    updateLabelWithCount = False
 
     def _GetList(self):
         cls = self._GetClass(self.listClassName)
@@ -191,11 +192,18 @@ class DataListPanel(DataPanel):
         item = self.list.AppendItem(row, refresh = False)
         self._UpdateListItem(item, row)
         self._OnListChanged()
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
 
     def _OnListChanged(self):
         if self.IsUpdatedIndependently():
             self.list.dataSet.ClearChanges()
         self.list.Refresh()
+
+    def _UpdateLabelWithCount(self):
+        numRows = len(self.list.dataSet.rows)
+        parent = self.GetParent().GetParent()
+        parent.SetPageText(self, "%s (%s)" % (self.label, numRows))
 
     def _UpdateListItem(self, item, row, itemIndex = None):
         for attrName in item.attrNames:
@@ -226,6 +234,8 @@ class DataListPanel(DataPanel):
                 for item in items:
                     subCache.RemoveRow(self.cache, item)
         self.list.Refresh()
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
 
     def EditItem(self, item, itemIndex):
         dialog = self.GetEditWindow(item)
@@ -274,8 +284,9 @@ class DataListPanel(DataPanel):
         topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
-    def OnRetrieve(self):
-        pass
+    def OnPostCreate(self):
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
 
     def RestoreSettings(self):
         self.list.RestoreColumnWidths()
@@ -444,6 +455,11 @@ class DataNotebookPanel(DataPanel):
     def SaveSettings(self):
         for page in self.notebook.IterPages():
             page.SaveSettings()
+
+    def SetPageText(self, page, text):
+        pageClassNames = self.pageClassNames.split()
+        pageNum = pageClassNames.index(type(page).__name__)
+        self.notebook.SetPageText(pageNum, text)
 
 
 class EditDialogColumn(ceGUI.BaseControl):
