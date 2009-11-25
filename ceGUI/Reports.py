@@ -134,6 +134,14 @@ class ReportBody(object):
                 rightJustified)
         self.columns.append(column)
 
+    def CenterColumnsOnPage(self):
+        minX = self.columns[0].startX
+        maxX = self.columns[-1].startX + self.columns[-1].width
+        newMinX = (self.pageWidth - (maxX - minX)) / 2
+        delta = newMinX - minX
+        for column in self.columns:
+            column.startX += delta
+
     def DrawTextCentered(self, dc, text, x, y):
         width, height = dc.GetTextExtent(text)
         dc.DrawText(text, x - width / 2, y)
