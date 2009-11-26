@@ -12,10 +12,10 @@ import wx
 
 __all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn",
             "DataEditPanel", "DataList", "DataListPanel", "DataNotebookPanel",
-            "DateEditDialogColumn", "DirNameEditDialogColumn", "EditDialog",
-            "EditDialogColumn", "EllipsisEditDialogColumn",
-            "FileNameEditDialogColumn", "GridEditWindow", "SubWindow",
-            "TextEditDialogColumn" ]
+            "DateEditDialogColumn", "DecimalEditDialogColumn",
+            "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
+            "EllipsisEditDialogColumn", "FileNameEditDialogColumn",
+            "GridEditWindow", "SubWindow", "TextEditDialogColumn" ]
 
 
 class EditDialog(ceGUI.StandardDialog):
@@ -502,7 +502,11 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.field.SetValue(value)
 
     def Update(self, dataSet):
-        value = self.GetValue()
+        try:
+            value = self.GetValue()
+        except:
+            self.field.SetFocus()
+            raise
         dataSet.SetValue(0, self.attrName, value)
 
     def Verify(self):
@@ -651,6 +655,18 @@ class DateEditDialogColumn(EditDialogColumn):
         else:
             wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
             self.field.SetValue(wxDate.FormatDate())
+
+
+class DecimalEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, style = 0,
+            digitsBeforeDecimal = 3, digitsAfterDecimal = 3,
+            editable = True, required = False):
+        field = parent.AddDecimalField(style = style, editable = editable,
+                digitsBeforeDecimal = digitsBeforeDecimal,
+                digitsAfterDecimal = digitsAfterDecimal)
+        super(DecimalEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field, required = required)
 
 
 class TextEditDialogColumn(EditDialogColumn):
