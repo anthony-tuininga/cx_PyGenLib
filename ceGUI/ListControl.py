@@ -8,7 +8,8 @@ import datetime
 import wx
 
 __all__ = [ "CheckList", "List", "ListBooleanColumn", "ListColumn",
-            "ListDateColumn", "ListTimestampColumn", "OrderedList" ]
+            "ListDateColumn", "ListDecimalColumn", "ListTimestampColumn",
+            "OrderedList" ]
 
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
@@ -439,6 +440,17 @@ class ListDateColumn(ListColumn):
             if dateFormat is None:
                 dateFormat = getattr(self.config, self.dateFormatAttrName)
             return value.strftime(dateFormat)
+
+
+class ListDecimalColumn(ListColumn):
+    defaultJustification = wx.LIST_FORMAT_RIGHT
+    digitsAfterDecimal = 2
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is not None:
+            format = "%%.%df" % self.digitsAfterDecimal
+            return format % value
 
 
 class ListTimestampColumn(ListDateColumn):

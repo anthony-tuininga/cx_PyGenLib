@@ -5,10 +5,11 @@ Defines simple controls with extensions to wx functionality.
 import ceGUI
 import cx_Exceptions
 import datetime
+import decimal
 import wx
 
-__all__ = ["BaseControl", "Choice", "DateField", "IntegerField", "Notebook",
-           "TextField", "UpperCaseTextField"]
+__all__ = ["BaseControl", "Choice", "DateField", "DecimalField",
+           "IntegerField", "Notebook", "TextField", "UpperCaseTextField"]
 
 class BaseControl(object):
     copyAppAttributes = True
@@ -259,4 +260,57 @@ class IntegerField(TextField):
         if value is not None:
             value = str(value)
         super(IntegerField, self).SetValue(value)
+
+
+class DecimalField(IntegerField):
+
+    def __init__(self, parent, style = 0, digitsBeforeDecimal = 3,
+            digitsAfterDecimal = 2):
+        self.digitsBeforeDecimal = digitsBeforeDecimal
+        self.digitsAfterDecimal = digitsAfterDecimal
+        self.format = "%%.%df" % digitsAfterDecimal
+        super(DecimalField, self).__init__(parent, style = style)
+
+    def GetValue(self):
+        textValue = wx.TextCtrl.GetValue(self)
+        if textValue:
+            pos = textValue.find(".")
+            if pos < 0:
+                digitsBeforeDecimal = len(textValue)
+                digitsAfterDecimal = 0
+            else:
+                digitsBeforeDecimal = pos
+                digitsAfterDecimal = len(textValue) - pos - 1
+            if digitsBeforeDecimal > self.digitsBeforeDecimal:
+                raise TooManyDigitsBeforeDecimal(digitsAllowed = \
+                        self.digitsBeforeDecimal)
+            if digitsAfterDecimal > self.digitsAfterDecimal:
+                raise TooManyDigitsAfterDecimal(digitsAllowed = \
+                        self.digitsAfterDecimal)
+            return decimal.Decimal(textValue)
+
+    def OnChar(self, event):
+        super(DecimalField, self).OnChar(event)
+        key = event.GetKeyCode()
+        if key == ord("."):
+            event.Skip()
+
+    def SetValue(self, value):
+        if value is None:
+            textValue = ""
+        else:
+            print "Value:", repr(value)
+            print "Format:", repr(self.format)
+            textValue = self.format % value
+        wx.TextCtrl.SetValue(self, textValue)
+
+
+class TooManyDigitsAfterDecimal(cx_Exceptions.BaseException):
+    message = "Value has too many digits after the decimal point " \
+              "(%(digitsAllowed)s allowed)."
+
+
+class TooManyDigitsBeforeDecimal(cx_Exceptions.BaseException):
+    message = "Value has too many digits before the decimal point " \
+              "(%(digitsAllowed)s allowed)."
 

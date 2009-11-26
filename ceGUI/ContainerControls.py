@@ -96,6 +96,14 @@ class BaseContainer(ceGUI.BaseControl):
     def AddDateField(self, allowNone = False):
         return ceGUI.DateField(self, allowNone)
 
+    def AddDecimalField(self, style = 0, digitsBeforeDecimal = 3,
+            digitsAfterDecimal = 3, editable = True):
+        if not editable:
+            style |= wx.TE_READONLY
+        return ceGUI.DecimalField(self, style = style,
+                digitsBeforeDecimal = digitsBeforeDecimal,
+                digitsAfterDecimal = digitsAfterDecimal)
+
     def AddIntegerField(self, style = 0, editable = True):
         if not editable:
             style |= wx.TE_READONLY
