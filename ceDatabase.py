@@ -37,16 +37,17 @@ class RowMetaClass(type):
             classDict["__slots__"] = attrNames + extraAttrNames
         if "reprName" not in classDict:
             classDict["reprName"] = name
-        if attrNames:
-            initLines = []
-            for attrName in attrNames:
-                if attrName in charBooleanAttrNames:
-                    value = '%s in ("Y", "1", True)' % attrName
-                else:
-                    value = "%s" % attrName
-                initLines.append("    self.%s = %s\n" % (attrName, value))
+        initLines = []
+        for attrName in attrNames + extraAttrNames:
+            if attrName in charBooleanAttrNames:
+                value = '%s in ("Y", "1", True)' % attrName
+            else:
+                value = "%s" % attrName
+            initLines.append("    self.%s = %s\n" % (attrName, value))
+        initArgs = attrNames + ["%s = None" % n for n in extraAttrNames]
+        if initArgs:
             codeString = "def __init__(self, %s):\n%s" % \
-                    (", ".join(attrNames), "".join(initLines))
+                    (", ".join(initArgs), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
             exec code in dict(), classDict
         return type.__new__(cls, name, bases, classDict)
