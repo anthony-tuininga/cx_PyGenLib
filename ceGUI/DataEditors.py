@@ -523,9 +523,12 @@ class EditDialogColumn(ceGUI.BaseControl):
 
 class EllipsisEditDialogColumn(EditDialogColumn):
 
-    def __init__(self, parent, attrName, labelText, field, required = False):
+    def __init__(self, parent, attrName, labelText, field = None,
+            required = False, constantValue = None):
+        if field is None:
+            field = parent.AddTextField(editable = False)
         super(EllipsisEditDialogColumn, self).__init__(parent, attrName,
-                labelText, field, required)
+                labelText, field, required, constantValue)
         self.button = parent.AddButton("...", size = (25, -1),
                 method = self.OnChooseValue, passEvent = False)
 
