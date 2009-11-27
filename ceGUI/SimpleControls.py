@@ -299,8 +299,6 @@ class DecimalField(IntegerField):
         if value is None:
             textValue = ""
         else:
-            print "Value:", repr(value)
-            print "Format:", repr(self.format)
             textValue = self.format % value
         wx.TextCtrl.SetValue(self, textValue)
 
