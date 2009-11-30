@@ -233,7 +233,7 @@ class DataListPanel(DataPanel):
                 subCache = getattr(self.cache, self.updateSubCacheAttrName)
                 for item in items:
                     subCache.RemoveRow(self.cache, item)
-        self.list.Refresh()
+        self._OnListChanged()
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
 
