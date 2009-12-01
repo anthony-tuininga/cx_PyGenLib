@@ -39,7 +39,7 @@ class Report(object):
         if title is not None:
             self.title = title
         cls = ceGUI.GetModuleItem(self.reportBodyName, associatedObj = self)
-        self.body = cls(title)
+        self.body = cls(self.title)
         self.printout = Printout(self.body, self.title)
         self.printoutForPrinting = Printout(self.body, self.title)
         self.printData = wx.PrintData()
