@@ -153,7 +153,8 @@ class DataEditPanel(DataPanel):
         for column in self.columns:
             column.Layout(fieldsSizer)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, border = 5)
+        sizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, proportion = 1,
+                border = 5)
         return sizer
 
     def OnPostCreate(self):
@@ -285,6 +286,10 @@ class DataListPanel(DataPanel):
         return topSizer
 
     def OnPostCreate(self):
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
+
+    def OnRetrieve(self):
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
 
