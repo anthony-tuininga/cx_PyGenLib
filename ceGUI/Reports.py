@@ -35,11 +35,11 @@ class Report(object):
     defaultSize = (700, 1000)
     title = ""
 
-    def __init__(self, title = None):
+    def __init__(self, title = None, **bodyArgs):
         if title is not None:
             self.title = title
         cls = ceGUI.GetModuleItem(self.reportBodyName, associatedObj = self)
-        self.body = cls(self.title)
+        self.body = cls(self.title, **bodyArgs)
         self.printout = Printout(self.body, self.title)
         self.printoutForPrinting = Printout(self.body, self.title)
         self.printData = wx.PrintData()
