@@ -422,6 +422,11 @@ class DataList(ceGUI.List):
 
 class DataNotebookPanel(DataPanel):
 
+    def _GetPageIndex(self, pageToFind):
+        for pageIndex, page in enumerate(self.notebook.IterPages()):
+            if page is pageToFind:
+                return pageIndex
+
     def GetPageByName(self, name):
         for page in self.notebook.IterPages():
             if page.__class__.__name__ == name:
@@ -462,9 +467,8 @@ class DataNotebookPanel(DataPanel):
             page.SaveSettings()
 
     def SetPageText(self, page, text):
-        pageClassNames = self.pageClassNames.split()
-        pageNum = pageClassNames.index(type(page).__name__)
-        self.notebook.SetPageText(pageNum, text)
+        pageIndex = self._GetPageIndex(page)
+        self.notebook.SetPageText(pageIndex, text)
 
 
 class EditDialogColumn(ceGUI.BaseControl):
