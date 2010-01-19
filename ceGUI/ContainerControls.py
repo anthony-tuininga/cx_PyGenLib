@@ -211,6 +211,9 @@ class Dialog(BaseContainer, wx.Dialog):
     def OnOk(self):
         pass
 
+    def ShowModalOk(self):
+        return self.ShowModal() == wx.ID_OK
+
 
 class Frame(BaseContainer, wx.Frame):
     style = wx.DEFAULT_FRAME_STYLE
