@@ -414,6 +414,11 @@ class DataSet(WrappedConnection):
         for childDataSet in self.childDataSets:
             childDataSet.MarkAllRowsAsNew()
 
+    def MarkAsChanged(self, handle):
+        row = self.rows[handle]
+        if handle not in self.insertedRows and handle not in self.updatedRows:
+            self.updatedRows[handle] = row.Copy()
+
     def PendingChanges(self):
         if self.insertedRows or self.updatedRows or self.deletedRows:
             return True
@@ -451,9 +456,7 @@ class DataSet(WrappedConnection):
         row = self.rows[handle]
         origValue = getattr(row, attrName)
         if value != origValue:
-            if handle not in self.insertedRows \
-                    and handle not in self.updatedRows:
-                self.updatedRows[handle] = row.Copy()
+            self.MarkAsChanged(handle)
             cx_Logging.Debug("setting attr %s on row %s to %r (from %r)",
                     attrName, handle, value, origValue)
             self._OnSetValue(row, attrName, value, origValue)
