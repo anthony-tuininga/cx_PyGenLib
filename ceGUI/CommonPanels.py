@@ -5,10 +5,28 @@ Define commonly used panels.
 import ceGUI
 import wx
 
-__all__ = [ "OrderedListPanel" ]
+__all__ = [ "ListPanel", "OrderedListPanel" ]
 
-class OrderedListPanel(ceGUI.Panel):
+class ListPanel(ceGUI.Panel):
     listClassName = "List"
+
+    def OnCreate(self):
+        cls = self._GetClass(self.listClassName)
+        self.list = cls(self)
+
+    def OnLayout(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
+        return sizer
+
+    def RestoreSettings(self):
+        self.list.RestoreColumnWidths()
+
+    def SaveSettings(self):
+        self.list.SaveColumnWidths()
+
+
+class OrderedListPanel(ListPanel):
 
     def _CanMoveDown(self, itemIndex):
         return itemIndex < len(self.list.rowHandles) - 1
@@ -27,8 +45,7 @@ class OrderedListPanel(ceGUI.Panel):
         self.moveDownButton.Enable(canMoveDown)
 
     def OnCreate(self):
-        cls = self._GetClass(self.listClassName)
-        self.list = cls(self)
+        super(OrderedListPanel, self).OnCreate()
         self.BindEvent(self.list, wx.EVT_LIST_ITEM_SELECTED,
                 self.OnItemSelected, passEvent = False)
         self.BindEvent(self.list, wx.EVT_LIST_ITEM_DESELECTED,
@@ -65,10 +82,4 @@ class OrderedListPanel(ceGUI.Panel):
         
     def OnMoveUp(self):
         self.list.MoveItem(-1)
-
-    def RestoreSettings(self):
-        self.list.RestoreColumnWidths()
-        
-    def SaveSettings(self):
-        self.list.SaveColumnWidths()
 
