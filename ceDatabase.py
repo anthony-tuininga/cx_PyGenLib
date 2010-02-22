@@ -107,6 +107,10 @@ class Row(object):
         return tuple(values)
 
 
+def NewRowClass(name, attrNames):
+    return type(name, (Row,), dict(attrNames = attrNames, reprName = name))
+
+
 class WrappedConnection(object):
 
     def __init__(self, connection):
