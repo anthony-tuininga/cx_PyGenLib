@@ -74,6 +74,6 @@ def RemoveTree(path, log = True):
         cx_Logging.Info("removing directory %s...", path)
     for name in os.listdir(path):
         fullName = os.path.join(path, name)
-        Remove(fullName)
+        Remove(fullName, log = log)
     os.rmdir(path)
 
