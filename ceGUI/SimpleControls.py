@@ -7,9 +7,11 @@ import cx_Exceptions
 import datetime
 import decimal
 import wx
+import wx.calendar
 
-__all__ = ["BaseControl", "Choice", "DateField", "DecimalField",
-           "IntegerField", "Notebook", "TextField", "UpperCaseTextField"]
+__all__ = ["BaseControl", "CalendarField", "Choice", "DateField",
+           "DecimalField", "IntegerField", "Notebook", "TextField",
+           "UpperCaseTextField"]
 
 class BaseControl(object):
     copyAppAttributes = True
@@ -84,6 +86,24 @@ class BaseControl(object):
                 converter = str
             value = converter(value)
         self.settings.Write(settingsName, value)
+
+
+class CalendarField(BaseControl, wx.calendar.CalendarCtrl):
+    style = wx.calendar.CAL_SHOW_HOLIDAYS | \
+            wx.calendar.CAL_SUNDAY_FIRST | \
+            wx.calendar.CAL_SEQUENTIAL_MONTH_SELECTION
+
+    def __init__(self, parent):
+        wx.calendar.CalendarCtrl.__init__(self, parent, -1, style = self.style)
+
+    def GetValue(self):
+        wxDate = self.GetDate()
+        return datetime.date(wxDate.GetYear(), wxDate.GetMonth() + 1,
+                wxDate.GetDay())
+
+    def SetValue(self, value):
+        wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
+        self.SetDate(wxDate)
 
 
 class Choice(BaseControl, wx.Choice):
