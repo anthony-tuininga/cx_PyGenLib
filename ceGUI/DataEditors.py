@@ -649,9 +649,9 @@ class ChoiceEditDialogColumn(EditDialogColumn):
 class DateEditDialogColumn(EditDialogColumn):
 
     def __init__(self, parent, attrName, labelText, allowNone = False,
-            editable = True):
+            editable = True, showDropDown = False):
         if editable:
-            field = parent.AddDateField(allowNone)
+            field = parent.AddDateField(allowNone, showDropDown)
         else:
             field = parent.AddTextField(editable = False)
         self.editable = editable
