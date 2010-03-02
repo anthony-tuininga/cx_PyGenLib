@@ -161,10 +161,12 @@ class Choice(BaseControl, wx.Choice):
 class DateField(BaseControl, wx.DatePickerCtrl):
     copyAppAttributes = False
 
-    def __init__(self, parent, allowNone = False):
+    def __init__(self, parent, allowNone = False, showDropDown = False):
         style = wx.DP_DEFAULT | wx.DP_SHOWCENTURY
         if allowNone:
             style |= wx.DP_ALLOWNONE
+        if showDropDown:
+            style |= wx.DP_DROPDOWN
         wx.DatePickerCtrl.__init__(self, parent, style = style)
 
     def GetValue(self):

@@ -96,8 +96,8 @@ class BaseContainer(ceGUI.BaseControl):
             choices = []
         return ceGUI.Choice(self, choices, size)
 
-    def AddDateField(self, allowNone = False):
-        return ceGUI.DateField(self, allowNone)
+    def AddDateField(self, allowNone = False, showDropDown = False):
+        return ceGUI.DateField(self, allowNone, showDropDown)
 
     def AddDecimalField(self, style = 0, digitsBeforeDecimal = 3,
             digitsAfterDecimal = 3, editable = True):
