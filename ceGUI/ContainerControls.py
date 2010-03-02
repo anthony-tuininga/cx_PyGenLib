@@ -85,6 +85,9 @@ class BaseContainer(ceGUI.BaseControl):
                     passEvent = passEvent)
         return button
 
+    def AddCalendarField(self):
+        return ceGUI.CalendarField(self)
+
     def AddCheckBox(self, label = ""):
         return wx.CheckBox(self, -1, label)
 
