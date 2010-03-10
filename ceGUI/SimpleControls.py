@@ -167,7 +167,8 @@ class DateField(BaseControl, wx.DatePickerCtrl):
             style |= wx.DP_ALLOWNONE
         if showDropDown:
             style |= wx.DP_DROPDOWN
-        wx.DatePickerCtrl.__init__(self, parent, style = style)
+        wx.DatePickerCtrl.__init__(self, parent, style = style,
+                size = (100, -1))
 
     def GetValue(self):
         wxDate = wx.DatePickerCtrl.GetValue(self)
