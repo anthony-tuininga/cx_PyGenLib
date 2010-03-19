@@ -51,7 +51,6 @@ class TraceManager(object):
             self.AddModule(module)
 
     def StartTracing(self, domains, maxLength = 1000, traceLines = False):
-        """Start tracing."""
         tracer = Tracer(self, domains, maxLength, traceLines)
         cx_Logging.Trace("starting tracing (traceLines=%r) of domains %r",
                 traceLines, domains)
@@ -61,7 +60,6 @@ class TraceManager(object):
             sys.setprofile(tracer)
 
     def StopTracing(self):
-        """Stop tracing."""
         cx_Logging.Trace("stopping tracing")
         sys.setprofile(None)
         sys.settrace(None)
@@ -88,7 +86,7 @@ class Tracer(object):
             trace = self.files[fileName] = self.__ShouldTrace(fileName)
         if trace:
             self.dispatch[event](self, frame, arg)
-        return self
+            return self
 
     def __FormatValue(self, frame, name, prefix = ""):
         """Return the formatted value of the value. Names starting with an
@@ -101,7 +99,6 @@ class Tracer(object):
         return "%s%s = %s" % (prefix, name, value)
 
     def __ShouldTrace(self, fileName):
-        """Determine whether or not the code in this file should be traced."""
         cx_Logging.Debug("should trace code from file %s?", fileName)
         fileName, ext = os.path.splitext(fileName)
         if os.path.isabs(fileName):
@@ -115,7 +112,6 @@ class Tracer(object):
         return trace
 
     def __TraceCall(self, frame, unusedArg):
-        """Trace the entry into a function."""
         code = frame.f_code
         cx_Logging.Trace('%sFile "%s", line %d', self.prefix, code.co_filename,
                 frame.f_lineno)
@@ -132,19 +128,19 @@ class Tracer(object):
         self.traceTimeStack.append(time.time())
         self.prefix = "    " * len(self.traceTimeStack)
 
+    def __TraceCException(self, frame, exceptionInfo):
+        self.__TraceReturn(frame, "exception")
+
     def __TraceException(self, frame, exceptionInfo):
-        """Trace the raising of an exception."""
         returnValue = "exception %s: %r" % (exceptionInfo[:2])
         self.__TraceReturn(frame, returnValue)
 
     def __TraceLine(self, frame, unusedArg):
-        """Trace the execution of a single line."""
         code = frame.f_code
         cx_Logging.Trace('%sFile "%s", line %d', self.prefix, code.co_filename,
                 frame.f_lineno)
 
     def __TraceReturn(self, frame, returnValue):
-        """Trace the return from a function."""
         if self.traceTimeStack:
             elapsedTime = time.time() - self.traceTimeStack.pop()
         else:
@@ -158,7 +154,6 @@ class Tracer(object):
                 code.co_name, returnValue, elapsedTime)
 
     def __ValueForOutput(self, value):
-        """Return the value for output, limited as required."""
         try:
             value = repr(value)
         except:
@@ -168,9 +163,12 @@ class Tracer(object):
         return value
 
     dispatch = {
+            "c_call" : __TraceCall,
             "call" : __TraceCall,
+            "c_exception" : __TraceCException,
             "exception" : __TraceException,
             "line" : __TraceLine,
+            "c_return" : __TraceReturn,
             "return" : __TraceReturn
     }
 
