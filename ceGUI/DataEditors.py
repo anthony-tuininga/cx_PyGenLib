@@ -149,11 +149,11 @@ class DataEditPanel(DataPanel):
         return self.dataSet.rows[0]
 
     def OnLayout(self):
-        fieldsSizer = self.GetFieldsSizer()
+        self.fieldsSizer = self.GetFieldsSizer()
         for column in self.columns:
-            column.Layout(fieldsSizer)
+            column.Layout(self.fieldsSizer)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(fieldsSizer, flag = wx.ALL | wx.EXPAND, proportion = 1,
+        sizer.Add(self.fieldsSizer, flag = wx.ALL | wx.EXPAND, proportion = 1,
                 border = 5)
         return sizer
 
@@ -172,6 +172,16 @@ class DataEditPanel(DataPanel):
             if column.IsEditable():
                 column.Verify()
                 column.Update(self.dataSet)
+
+    def ReplaceColumn(self, origColumn, newColumn, sizer = None):
+        if sizer is None:
+            sizer = self.fieldsSizer
+        origIndex = self.columns.index(origColumn)
+        self.columns.remove(newColumn)
+        newColumn.ReplaceColumn(origColumn, sizer)
+        origColumn.Destroy()
+        self.columns[origIndex] = newColumn
+        sizer.Layout()
 
 
 class DataListPanel(DataPanel):
@@ -493,6 +503,10 @@ class EditDialogColumn(ceGUI.BaseControl):
             return self.field.IsEditable()
         return True
 
+    def Destroy(self):
+        self.label.Destroy()
+        self.field.Destroy()
+
     def Layout(self, sizer):
         sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
         flags = wx.ALIGN_CENTER_VERTICAL
@@ -504,6 +518,10 @@ class EditDialogColumn(ceGUI.BaseControl):
 
     def OnRequiredFieldHasNoValue(self):
         self.field.SetFocus()
+
+    def ReplaceColumn(self, origColumn, sizer):
+        sizer.Replace(origColumn.label, self.label)
+        sizer.Replace(origColumn.field, self.field)
 
     def SetValue(self, row):
         if self.constantValue is not None:
