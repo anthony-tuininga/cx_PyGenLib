@@ -372,7 +372,7 @@ class DataSet(WrappedConnection):
 
     def InsertRowInDatabase(self, cursor, row):
         if self.pkIsGenerated and self.pkSequenceName is not None:
-            attrName, = self.pkAttrNames
+            attrName = self.pkAttrNames[0]
             value = self.GetGeneratedPrimaryKey(cursor)
             setattr(row, attrName, value)
         if self.insertAttrNames:
@@ -387,7 +387,7 @@ class DataSet(WrappedConnection):
             fullProcedureName = "%s.%s" % \
                     (self.updatePackageName, self.insertProcedureName)
             if self.pkIsGenerated:
-                attrName, = self.pkAttrNames
+                attrName = self.pkAttrNames[0]
                 value = cursor.callfunc(fullProcedureName, int, args)
                 setattr(row, attrName, value)
             else:
@@ -401,7 +401,6 @@ class DataSet(WrappedConnection):
                     (self.updateTableName, ",".join(names), ",".join(values))
             cursor.execute(sql, args)
             if self.pkIsGenerated and self.pkSequenceName is None:
-                selectItems = ",".join(self.pkAttrNames)
                 whereClauses = ["%s = ?" % n for n in self.uniqueAttrNames]
                 sql = "select %s from %s where %s" % \
                         (",".join(self.pkAttrNames), self.tableName,
