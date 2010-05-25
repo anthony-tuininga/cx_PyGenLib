@@ -316,15 +316,21 @@ class SubCache(object):
                 self.Load(cache, path.loadViaPathName, *loadViaArgs)
             return path.GetCachedValue(args)
         self.OnLoadRows(cache, rows)
-        return path._OnLoad(rows, args)
+        loadedRows = path._OnLoad(rows, args)
+        if self.rowClass.sortByAttrNames \
+                and isinstance(path, MultipleRowPath):
+            cx_Logging.Debug("%s: sorting rows for path %s", self.name,
+                    pathName)
+            loadedRows.sort(key = self.rowClass.SortValue)
+        return loadedRows
 
     def LoadAllRows(self, cache):
         cx_Logging.Debug("%s: loading all rows", self.name)
         path = Path(cache, self)
         rows = path._GetRows(cache, self.rowClass, ())
-        self.OnLoadRows(cache, rows)
         if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
+        self.OnLoadRows(cache, rows)
         self.allRows = rows
         self.allRowsLoaded = True
         return rows
