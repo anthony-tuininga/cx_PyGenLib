@@ -5,10 +5,10 @@
 import optparse
 import os
 import sys
+import textwrap
 import warnings
 
 import cx_Exceptions
-import cx_PrettyPrinter
 import cx_ReadLine
 
 # commonly used attributes
@@ -29,7 +29,7 @@ except ImportError:
     BUILD_RELEASE_STRING = None
     BUILD_COPYRIGHT = None
     BUILD_HOST = None
-    if cx_PrettyPrinter.__file__ == "<frozen>":
+    if cx_Exceptions.__file__ == "<frozen>":
         SOURCE_TIMESTAMP = "Frozen"
     else:
         SOURCE_TIMESTAMP = "Source"
@@ -140,22 +140,23 @@ class OptionParser(optparse.OptionParser):
         warnings.filterwarnings("ignore", category = DeprecationWarning)
 
     def __PrintHelpSection(self, heading, helpTuples):
-        """Print a section of the help message."""
         if not helpTuples:
             return
         maxLength = 20
-        printer = cx_PrettyPrinter.PrettyPrinter(sys.stderr)
-        print >> printer, heading + ":"
+        indentString = " " * (maxLength + 4)
+        sys.stderr.write("%s:\n" % heading)
         for name, helpString in helpTuples:
-            printer.SetIndentLevels(0, maxLength + 4)
             if len(name) > maxLength:
-                print >> printer, "  " + name
-                printer.SetIndentLevels(maxLength + 4, 0)
-                print >> printer, helpString
+                sys.stderr.write("  %s\n" % name)
+                output = textwrap.fill(helpString, width = 79,
+                        initial_indent = indentString,
+                        subsequent_indent = indentString)
             else:
-                line = "  %s  %s" % (name.ljust(maxLength), helpString)
-                print >> printer, line
-        print >> printer
+                text = "  %s  %s" % (name.ljust(maxLength), helpString)
+                output = textwrap.fill(text, width = 79,
+                        subsequent_indent = indentString)
+            sys.stderr.write(output + "\n")
+        sys.stderr.write("\n")
 
     def __PromptForValue(self, option, values):
         """Prompt for the value of an option."""
@@ -169,7 +170,7 @@ class OptionParser(optparse.OptionParser):
     def _ProcessArgs(self, values):
         # display version, if not in quiet mode
         if values.showBanner:
-            print >> sys.stderr, self.__banner
+            sys.stderr.write(self.__banner + "\n")
 
         # turn off traceback if not desired
         if not values.traceback:
@@ -276,15 +277,12 @@ class OptionParser(optparse.OptionParser):
         """
 
         # print the main usage message
-        print >> sys.stderr, self.usage
-        print >> sys.stderr
+        sys.stderr.write(self.usage + "\n\n")
 
         # print the doc string for the program
-        printer = cx_PrettyPrinter.PrettyPrinter(sys.stderr)
-        printer.SetIndentLevels(0, 0)
         if self.__docString:
-            print >> printer, self.__docString
-            print >> printer
+            sys.stderr.write(textwrap.fill(self.__docString, width = 79))
+            sys.stderr.write("\n\n")
 
         # print the usage message for the arguments
         helpStrings = []

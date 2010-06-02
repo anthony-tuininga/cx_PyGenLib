@@ -22,7 +22,6 @@ modules = [
         "cx_LoggingOptions",
         "cx_OptionParser",
         "cx_Parser",
-        "cx_PrettyPrinter",
         "cx_ReadLine",
         "cx_ServerFramework",
         "cx_Settings",
