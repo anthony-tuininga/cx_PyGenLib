@@ -10,15 +10,18 @@ if sys.platform == "win32":
     import _winreg
 
 class CommandExecutionFailed(cx_Exceptions.BaseException):
-    message = "Execution of command %(command)s failed."
+    message = "Execution of command %(command)s failed with exit code " \
+              "%(exitCode)s."
 
 
 def ExecuteOSCommands(*commands):
     """Execute OS commands, raising an error if any return errors."""
     for command in commands:
         cx_Logging.Debug("executing command %s", command)
-        if os.system(command) != 0:
-            raise CommandExecutionFailed(command = command)
+        exitCode = os.system(command)
+        if exitCode != 0:
+            raise CommandExecutionFailed(command = command,
+                    exitCode = exitCode)
 
 
 def FilesInDirectory(*entries):
