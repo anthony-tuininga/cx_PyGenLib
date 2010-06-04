@@ -1,5 +1,6 @@
 """Defines a number of utility functions."""
 
+import cx_Exceptions
 import cx_Logging
 import glob
 import os
@@ -8,12 +9,17 @@ import sys
 if sys.platform == "win32":
     import _winreg
 
+class CommandExecutionFailed(cx_Exceptions.BaseException):
+    message = "Execution of command %(command)s failed."
+
+
 def ExecuteOSCommands(*commands):
     """Execute OS commands, raising an error if any return errors."""
     for command in commands:
         cx_Logging.Debug("executing command %s", command)
         if os.system(command) != 0:
-            raise "Execution of command %s failed." % command
+            raise CommandExecutionFailed(command = command)
+
 
 def FilesInDirectory(*entries):
     """Return a list of all of the files found in the directory. If the entry
@@ -29,6 +35,7 @@ def FilesInDirectory(*entries):
                 files.append(entry)
         entries = newEntries
     return files
+
 
 def FilesHierarchy(rootDir, namesToIgnore=[]):
     """Return a list of relative file names starting at rootDir.
@@ -61,55 +68,6 @@ def FilesHierarchy(rootDir, namesToIgnore=[]):
 
     return files
 
-def GetRegistryAppPath(key):
-    """Return the given key's app path, or None.
-
-    Scan the registry to figure out exactly where on the hard drive the given
-    executable is located, and return the fully qualified path to that file.
-
-    By default the executable's "Default" key value is returned, but it is
-    possible to get a value other than the default one by appending it to the
-    end of key separated by a backslash character.  For example:
-      GetRegistryAppPath("MyApp.exe") returns the default value
-      GetRegistryAppPath(r"MyApp.exe\Path") returns the value for subkey Path
-
-    Note that the registry is not case sensitive; the following two examples
-    return the same result:
-        GetRegistryAppPath("MyApp.EXE")
-        GetRegistryAppPath("myapp.exe")
-
-    Note also that although registry entries are stored in Unicode form, this
-    function returns a standard Python string.
-
-    """
-
-    result = None
-    valueName = None
-
-    if not key: return result
-
-    tuple = key.split("\\", 1)
-    exeName = tuple[0]
-    if len(tuple) > 1:
-        valueName = tuple[1]
-
-    subKey = r"Software\Microsoft\Windows\CurrentVersion\App Paths\%s" % \
-            exeName
-
-    try:
-        hkey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subKey)
-    except WindowsError, (errno, strerr):
-        if errno == 2:    # Unable to find file
-            print r"Registry key not found: HKLM\%s" % subKey
-            result = ""
-        else:
-            raise
-    else:
-        # Note: Registry strings are stored in Unicode format, so they must be
-        # converted to regular strings for use in Python.
-        result = str(_winreg.QueryValueEx(hkey, valueName)[0])
-
-    return result
 
 def InlineIf(expr, trueValue, falseValue = None):
     """Method used for performing a simple if clause in an expression."""
@@ -117,6 +75,7 @@ def InlineIf(expr, trueValue, falseValue = None):
         return trueValue
     else:
         return falseValue
+
 
 def PathRemainder(path1, path2, caseSensitive=False, ignoreDriveLetters=True):
     """Return the right-hand part of path2 that is not in path1.
@@ -148,6 +107,7 @@ def PathRemainder(path1, path2, caseSensitive=False, ignoreDriveLetters=True):
             break
     return p2
 
+
 def PerformDiff(sourceDir, targetDir):
     """Perform a diff between two directories and return the results as a set
        of three lists: new, modified and removed."""
@@ -171,6 +131,7 @@ def PerformDiff(sourceDir, targetDir):
             raise "Command %s failed." % command
     return (newFiles, modifiedFiles, removedFiles)
 
+
 def SplitFirst(path):
     """Return a tuple containing the first directory and the rest of path.
 
@@ -190,12 +151,14 @@ def SplitFirst(path):
         tail = path[pos + len(os.sep):]
     return (head, tail)
 
+
 def Touch(fileName):
     """Update the modification date of the file, or create it if necessary."""
     if os.path.exists(fileName):
         os.utime(fileName, None)
     else:
         file(fileName, "w")
+
 
 def TransformText(text, method, openDelim = "{", closeDelim = "}"):
     """Transform the text containing the given delimiters and return the
@@ -223,6 +186,7 @@ def TransformText(text, method, openDelim = "{", closeDelim = "}"):
         lastPos = endPos + 1
     results.append(text[lastPos:])
     return "".join(results)
+
 
 def WriteFile(fileName, contents=""):
     """Create or replace a file with the given contents.
