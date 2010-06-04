@@ -281,7 +281,8 @@ class OptionParser(optparse.OptionParser):
 
         # print the doc string for the program
         if self.__docString:
-            sys.stderr.write(textwrap.fill(self.__docString, width = 79))
+            sys.stderr.write(textwrap.fill(self.__docString.strip(),
+                    width = 79))
             sys.stderr.write("\n\n")
 
         # print the usage message for the arguments
