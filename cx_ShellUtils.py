@@ -59,7 +59,7 @@ def Remove(path, log = True):
         if log:
             cx_Logging.Info("removing file %s...", path)
         if sys.platform == "win32":
-            os.chmod(path, 0777)
+            os.chmod(path, 0x1ff)
         os.remove(path)
 
 def RemoveTree(path, log = True):
