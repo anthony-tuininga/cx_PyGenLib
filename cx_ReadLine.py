@@ -20,7 +20,7 @@ def AskQuestion(label, values):
         value = ReadLine(label, defaultValue).upper()
         if value in validValues:
             break
-        print errorMessage
+        sys.stderr.write(errorMessage)
     return value
 
 def GetChoices(header, label, valueTuples):
@@ -37,15 +37,16 @@ def GetChoices(header, label, valueTuples):
             "(for example, 1-4,5,7-8)")
     options = "\n".join(optionStrings)
     while True:
-        print
-        print header
-        print
-        print options
-        print
+        print("")
+        print(header)
+        print("")
+        print(options)
+        print("")
         result = ParseChoices(ReadLine(label), len(valueTuples))
         if isinstance(result, list):
             return [values[i] for i in result]
-        print "***", result
+        result = "*** " + result
+        print(result)
 
 def ParseChoices(string, numValid):
     """Parse the choices selected and return a list of numbers if valid or a
@@ -56,7 +57,7 @@ def ParseChoices(string, numValid):
     for part in string.split(","):
         try:
             rangeParts = [int(s) for s in part.split("-")]
-        except ValueError, error:
+        except ValueError as error:
             badValue = str(error).split(":", 2)[1].strip()
             if badValue:
                 return "invalid number: %s" % badValue
