@@ -20,7 +20,7 @@ class ServiceManager(object):
     def GetService(self, serviceName, ignoreError = False):
         try:
             return Service(self, serviceName)
-        except pywintypes.error, e:
+        except pywintypes.error as e:
             if ignoreError and e[0] == winerror.ERROR_SERVICE_DOES_NOT_EXIST:
                 return None
             raise
