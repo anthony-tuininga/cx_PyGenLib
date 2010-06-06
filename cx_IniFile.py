@@ -214,7 +214,8 @@ class IniFile(object):
         if sectionList != self.__sections:
             for section in sectionList:
                 if not isinstance(section, Section):
-                    raise ValueError, "%s must be a Section object." % section
+                    message = "%s must be a Section object." % section
+                    raise ValueError(message)
             self.__sections = sectionList
             self.__SetIsModified(True)
 
@@ -251,7 +252,7 @@ class IniFile(object):
                 found = True
                 break
         if not found:
-            raise ValueError, "Unknown section: %s" % name
+            raise ValueError("Unknown section: %s" % name)
         return section
 
     def GetValue(self, section, key):
@@ -296,9 +297,9 @@ class IniFile(object):
         that the file must actually exist, or an error is raised.
         """
         if fileName is None:
-            raise ValueError, "No file name specified, try Read(<FILENAME>)"
+            raise ValueError("No file name specified, try Read(<FILENAME>)")
         if not os.path.isfile(fileName):
-            raise ValueError, "Invalid file name: %s" % fileName
+            raise ValueError("Invalid file name: %s" % fileName)
         self.fileName = fileName
 
     def SetSection(self, section, comment=None):
@@ -333,7 +334,7 @@ class IniFile(object):
         """Overwrite the file with the current data structures."""
         f = fileName or self.fileName
         if f is None:
-            raise ValueError, "No file name specified, try Write(<FILENAME>)"
+            raise ValueError("No file name specified, try Write(<FILENAME>)")
         cx_Utils.WriteFile(f, str(self))
         if fileName:
             self.fileName = fileName
@@ -456,7 +457,7 @@ class Section(object):
         if self.__allkeys != keyList:
             for key in keyList:
                 if not isinstance(key, Key):
-                    raise ValueError, "%s must be a Key object." % key
+                    raise ValueError("%s must be a Key object." % key)
             self.__allkeys = keyList
             self.isModified = True
 
@@ -508,7 +509,8 @@ class Section(object):
                 found = True
                 break
         if not found:
-            raise ValueError, "Key %s not found in section %s" % (name, self.name)
+            message = "Key %s not found in section %s" % (name, self.name)
+            raise ValueError(message)
         return key
 
     def _GetValue(self, name):
@@ -544,6 +546,3 @@ class Section(object):
             self._AddKey("", "", comment)
             self.isModified = True
 
-
-if __name__ == "__main__":
-    print __doc__
