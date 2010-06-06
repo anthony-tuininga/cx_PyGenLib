@@ -49,7 +49,6 @@ LOG_LEVEL_NAMES = {
 
 
 def AddOptions(parser, includeServerOptions = False):
-    """Add the options to the parser."""
     parser.AddOption(LOG_FILE)
     parser.AddOption(LOG_LEVEL)
     parser.AddOption(LOG_PREFIX)
@@ -67,9 +66,9 @@ def ExceptionHandler(excType, excValue, traceback):
     else:
         cx_Logging.Error("%s", error.message)
     if sys.stdout.isatty() and not sys.stderr.isatty():
-        print error.message
+        print(error.message)
         if fullTraceback:
-            print "See log file for more details."
+            print("See log file for more details.")
 
 
 def ProcessOptions(options):
