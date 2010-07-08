@@ -276,12 +276,13 @@ class DataListPanel(DataPanel):
     def IsUpdatedIndependently(self):
         return self._GetEditDialog() is None
 
-    def OnCreate(self):
+    def OnCreate(self, postRetrieve = True):
         self.list = self._GetList()
         self.BindEvent(self.list, wx.EVT_LIST_ITEM_ACTIVATED,
                 self.OnItemActivated)
         if self._GetEditDialog() is None:
-            wx.CallAfter(self.Retrieve)
+            if postRetrieve:
+                wx.CallAfter(self.Retrieve)
             self.dataSet = self.list.dataSet
 
     def OnItemActivated(self, event):
