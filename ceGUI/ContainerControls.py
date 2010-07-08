@@ -184,6 +184,7 @@ class BaseContainer(ceGUI.BaseControl):
 
 class Dialog(BaseContainer, wx.Dialog):
     createOkButton = createCancelButton = True
+    createCloseButton = False
     style = wx.DEFAULT_DIALOG_STYLE
     title = ""
 
@@ -194,13 +195,18 @@ class Dialog(BaseContainer, wx.Dialog):
         self._Initialize()
 
     def _OnCreate(self):
-        if self.createOkButton:
-            self.okButton = wx.Button(self, wx.ID_OK)
-            self.BindEvent(self.okButton, wx.EVT_BUTTON, self._OnOk,
-                    createBusyCursor = True)
-        if self.createCancelButton:
-            self.cancelButton = wx.Button(self, wx.ID_CANCEL)
-            self.BindEvent(self.cancelButton, wx.EVT_BUTTON, self._OnCancel)
+        if self.createCloseButton:
+            self.closeButton = wx.Button(self, wx.ID_CANCEL, "Close")
+            self.BindEvent(self.closeButton, wx.EVT_BUTTON, self._OnCancel)
+        else:
+            if self.createOkButton:
+                self.okButton = wx.Button(self, wx.ID_OK)
+                self.BindEvent(self.okButton, wx.EVT_BUTTON, self._OnOk,
+                        createBusyCursor = True)
+            if self.createCancelButton:
+                self.cancelButton = wx.Button(self, wx.ID_CANCEL)
+                self.BindEvent(self.cancelButton, wx.EVT_BUTTON,
+                        self._OnCancel)
         super(Dialog, self)._OnCreate()
 
     def _OnOk(self, event):
@@ -335,10 +341,13 @@ class StandardDialog(Dialog):
 
     def _GetButtons(self):
         buttons = []
-        if self.createOkButton:
-            buttons.append(self.okButton)
-        if self.createCancelButton:
-            buttons.append(self.cancelButton)
+        if self.createCloseButton:
+            buttons.append(self.closeButton)
+        else:
+            if self.createOkButton:
+                buttons.append(self.okButton)
+            if self.createCancelButton:
+                buttons.append(self.cancelButton)
         return buttons
 
     def _OnLayout(self, topSizer):
