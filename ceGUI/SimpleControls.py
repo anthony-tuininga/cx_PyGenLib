@@ -238,7 +238,11 @@ class TextField(BaseControl, wx.TextCtrl):
         self.SetEditable(False)
 
     def SetValue(self, value):
-        wx.TextCtrl.SetValue(self, value or "")
+        if value is None:
+            value = ""
+        elif not isinstance(value, basestring):
+            value = str(value)
+        wx.TextCtrl.SetValue(self, value)
 
 
 class UpperCaseTextField(TextField):
