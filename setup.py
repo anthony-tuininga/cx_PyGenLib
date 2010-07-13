@@ -36,7 +36,7 @@ modules = [
 
 setup(
         name = "cx_PyGenLib",
-        version = "2.6",
+        version = "3.0",
         description = "Set of general Python modules",
         license = "Python Software Foundation License",
         long_description = "Set of general Python modules used by a " \

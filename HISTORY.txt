@@ -1,9 +1,10 @@
-Changes from 2.5 to 2.6
+Changes from 2.5 to 3.0
  1) Substantial changes and enhancements to ceGUI to handle additional
     controls and support better integration with databases.
  2) Added new module ceDatabaseCache which enables simple caching of data in
     a database without having to write a lot of repetitive code.
- 3) In cx_Exceptions, ensured compatibility with Python 3.x.
+ 3) Added support for Python 3.x in most modules while retaining support for
+    Python 2.x; many modules now require Python 2.6 or higher.
  4) In cx_Exceptions, used the traceback line number rather than the current
     line number in the frame so that the error message is a little more
     helpful. Thanks to Robert Ritchie for pointing out the solution to this.
@@ -18,12 +19,18 @@ Changes from 2.5 to 2.6
     Friesen.
  9) In cx_OptionParser, allow for subclassing the parser as requested by Micah
     Friesen.
-10) In cx_LoggingOptions, use the file number 2 rather than
+10) In cx_OptionParser, calculate the name based on the script that is being
+    executed, which is most often what is desired anyway.
+11) In cx_LoggingOptions, use the file number 2 rather than
     sys.stderr.fileno() since that file number is well known and on Windows
     the stderr file descriptor may be closed so sys.stderr.fileno() returns a
     negative value.
-11) In cx_LoggingOptions, set the exception information in cx_Logging so that
+12) In cx_LoggingOptions, set the exception information in cx_Logging so that
     LogException() works as expected.
+13) In cx_LoggingOptions, use the default preferred locale in order to avoid
+    encoding errors.
+14) Removed module cx_PrettyPrinter which is easily replaced by the builtin
+    module textwrap which has similar functionality.
 
 Changes from 2.4 to 2.5
  1) Added new package ceGUI that extends the wxPython framework by adding such
