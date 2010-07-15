@@ -322,6 +322,8 @@ class SubCache(object):
             cx_Logging.Debug("%s: sorting rows for path %s", self.name,
                     pathName)
             loadedRows.sort(key = self.rowClass.SortValue)
+            if self.rowClass.sortReversed:
+                loadedRows.reverse()
         return loadedRows
 
     def LoadAllRows(self, cache):
@@ -330,6 +332,8 @@ class SubCache(object):
         rows = path._GetRows(cache, self.rowClass, ())
         if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
+            if self.rowClass.sortReversed:
+                rows.reverse()
         self.OnLoadRows(cache, rows)
         self.allRows = rows
         self.allRowsLoaded = True
