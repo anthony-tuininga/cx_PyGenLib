@@ -68,6 +68,7 @@ class Row(object):
     reprAttrNames = []
     pkAttrNames = []
     useSlots = True
+    sortReversed = False
 
     def __repr__(self):
         reprAttrNames = self.reprAttrNames or self.attrNames
@@ -144,7 +145,8 @@ class DataSetMetaClass(type):
                     extraAttrNames = cls.extraAttrNames,
                     charBooleanAttrNames = cls.charBooleanAttrNames,
                     pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
-                    sortByAttrNames = cls.sortByAttrNames)
+                    sortByAttrNames = cls.sortByAttrNames,
+                    sortReversed = cls.sortReversed)
             cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         cls.pkAttrNames = cls.rowClass.pkAttrNames
@@ -233,7 +235,7 @@ class DataSet(WrappedConnection):
         rows = cursor.fetchall()
         if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
-            if self.sortReversed:
+            if self.rowClass.sortReversed:
                 rows.reverse()
         return rows
 
