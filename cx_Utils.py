@@ -6,9 +6,6 @@ import glob
 import os
 import sys
 
-if sys.platform == "win32":
-    import _winreg
-
 class CommandExecutionFailed(cx_Exceptions.BaseException):
     message = "Execution of command %(command)s failed with exit code " \
               "%(exitCode)s."
