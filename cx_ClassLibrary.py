@@ -13,8 +13,9 @@ class CaselessDict(dict):
             for key in other:
                 x[key] = other[key]
             return x
-        raise TypeError, "unsupported operand type(s) for +: '%s' and '%s'" % \
+        message = "unsupported operand type(s) for +: '%s' and '%s'" % \
                 (type(self).__name__, type(other).__name__)
+        raise TypeError(message)
 
     def __contains__(self, key):
         return dict.__contains__(self, key.lower())
@@ -31,13 +32,14 @@ class CaselessDict(dict):
             for key in other:
                 self[key] = other[key]
             return self
-        raise TypeError, "unsupported operand type(s) for +=: '%s' and '%s'" % \
+        message = "unsupported operand type(s) for +=: '%s' and '%s'" % \
                 (type(self).__name__, type(other).__name__)
+        raise TypeError(message)
 
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         for key in self:
-            if key <> key.lower():
+            if key != key.lower():
                dict.__setitem__(self, key.lower(), dict.__getitem__(self, key))
                dict.__delitem__(self, key)
 
@@ -62,7 +64,8 @@ class DictArray:
     def __GetSubDict(self, args):
         """Return dictionary for a particular level in the array."""
         if len(args) >= self.numLevels:
-            raise "Expecting less than %d arguments" % self.numLevels
+            message = "Expecting less than %d arguments" % self.numLevels
+            raise TypeError(message)
         mapping = self.topLevel
         for arg in args:
             if arg not in mapping:
@@ -73,7 +76,7 @@ class DictArray:
     def __SetValue(self, keys, value):
         """Set a value in the array."""
         if len(keys) != self.numLevels:
-            raise "Can only set a value at the leaf level directly."
+            raise TypeError("Can only set a value at the leaf level directly.")
         mapping = self.topLevel
         for key in keys[:-1]:
             if key not in mapping:
@@ -93,7 +96,7 @@ class DictArray:
     def Exists(self, *args):
         """Return a boolean indicating if the item exists in the array."""
         if len(args) != self.numLevels:
-            raise "Expecting %d arguments" % self.numLevels
+            raise TypeError("Expecting %d arguments" % self.numLevels)
         mapping = self.topLevel
         for arg in args:
             if arg not in mapping:
@@ -104,7 +107,7 @@ class DictArray:
     def GetValue(self, *args):
         """Return the value at the given level of the tree."""
         if len(args) != self.numLevels:
-            raise "Expecting %d arguments" % self.numLevels
+            raise TypeError("Expecting %d arguments" % self.numLevels)
         value = self.topLevel
         for arg in args:
             if arg not in value:
@@ -144,7 +147,8 @@ class PythonConfigFile(object):
            the framework specified by the subclass."""
         if not os.path.exists(fileName):
             raise cx_Exceptions.MissingConfigurationFile(fileName = fileName)
-        print "Reading configuration from", fileName + "..."
+        message = "Reading configuration from %s..." % fileName
+        print(message)
         self.__scriptGlobals = self.ScriptGlobals()
         execfile(fileName, self.__scriptGlobals)
 
