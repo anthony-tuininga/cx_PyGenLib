@@ -350,12 +350,16 @@ class StandardDialog(Dialog):
                 buttons.append(self.cancelButton)
         return buttons
 
+    def _LayoutButtons(self, sizer):
+        sizer.AddStretchSpacer()
+        for button in self._GetButtons():
+            sizer.Add(button, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+                    border = 5)
+        return sizer
+
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        buttonSizer.AddStretchSpacer()
-        for button in self._GetButtons():
-            buttonSizer.Add(button, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL,
-                    border = 5)
+        self._LayoutButtons(buttonSizer)
         topSizer.Add(buttonSizer, flag = wx.EXPAND)
         super(StandardDialog, self)._OnLayout(topSizer)
 
