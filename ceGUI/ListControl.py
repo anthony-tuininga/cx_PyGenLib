@@ -111,9 +111,14 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         return rowHandles
 
     def AddColumn(self, attrName, heading = "", defaultWidth = -1,
-            justification = wx.LIST_FORMAT_LEFT, cls = None):
+            justification = wx.LIST_FORMAT_LEFT, cls = None,
+            rightJustified = False, centered = False):
         if cls is None:
             cls = ListColumn
+        if rightJustified:
+            justification = wx.LIST_FORMAT_RIGHT
+        elif centered:
+            justification = wx.LIST_FORMAT_CENTRE
         column = cls(attrName, heading, defaultWidth, justification)
         self._AddColumn(column)
         return column
