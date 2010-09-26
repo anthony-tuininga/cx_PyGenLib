@@ -75,5 +75,7 @@ def RemoveTree(path, log = True):
     for name in os.listdir(path):
         fullName = os.path.join(path, name)
         Remove(fullName, log = log)
+    if sys.platform == "win32":
+        os.chmod(path, 0x1ff)
     os.rmdir(path)
 
