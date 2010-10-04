@@ -173,7 +173,8 @@ def GetExceptionInfo(excType, excValue, tb):
             errorObj.arguments["ColumnNumber"] = offset
         if line is not None:
             errorObj.arguments["ErrorLine"] = line.rstrip()
-            errorObj.arguments["ErrorPos"] = " " * offset + "^"
+            if offset is not None:
+                errorObj.arguments["ErrorPos"] = " " * offset + "^"
     return errorObj
 
 
