@@ -360,6 +360,7 @@ class CheckList(List):
 class OrderedList(List):
     sortOnRetrieve = False
     enableColumnSorting = False
+    seqNumAttrName = "seqNum"
 
     def MoveItem(self, indexOffset):
         itemIndex, = self.GetSelectedItemIndexes()
@@ -373,6 +374,11 @@ class OrderedList(List):
         self.SetItemState(newItemIndex, wx.LIST_STATE_FOCUSED,
                 wx.LIST_STATE_FOCUSED)
         self.Refresh()
+
+    def Update(self):
+        for seqNum, handle in enumerate(self.rowHandles):
+            self.dataSet.SetValue(handle, self.seqNumAttrName, seqNum + 1)
+        super(OrderedList, self).Update()
 
 
 class ListColumn(ceGUI.BaseControl):
