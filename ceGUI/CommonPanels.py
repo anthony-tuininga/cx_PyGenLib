@@ -87,7 +87,16 @@ class OrderedListPanel(ListPanel):
 class SelectListPanel(ceGUI.Panel):
     availableListClassName = "AvailableList"
     selectedListClassName = "SelectedList"
+    selectedListIsOrdered = True
     layoutHorizontally = True
+
+    def __MoveItems(self, fromList, itemIndexes, toList, button):
+        for itemIndex in itemIndexes:
+            item = fromList.GetItem(itemIndex)
+            fromList.DeleteItem(itemIndex)
+            toList.AppendItem(item = item)
+        if fromList.GetSelectedItemCount() == 0:
+            button.Enable(False)
 
     def _GetAvailableList(self):
         cls = self._GetClass(self.availableListClassName)
@@ -98,13 +107,13 @@ class SelectListPanel(ceGUI.Panel):
         return cls(self)
 
     def _MoveItems(self, fromList, toList, button):
-        selectedIndexes = list(fromList.GetSelectedItemIndexes())
-        for itemIndex in reversed(selectedIndexes):
-            item = fromList.GetItem(itemIndex)
-            fromList.DeleteItem(itemIndex)
-            toList.AppendItem(item = item)
-        if not fromList.GetSelectedItems():
-            button.Enable(False)
+        itemIndexes = list(fromList.GetSelectedItemIndexes())
+        self.__MoveItems(fromList, reversed(itemIndexes), toList, button)
+
+    def _OnListItemDoubleClicked(self, event, fromList, toList, button):
+        itemIndex, flags = fromList.HitTest(event.GetPosition())
+        if flags & wx.LIST_HITTEST_ONITEM:
+            self.__MoveItems(fromList, [itemIndex], toList, button)
 
     def _SetMoveButtonStatus(self):
         enabled = (self.selectedList.GetSelectedItemCount() == 1)
@@ -120,19 +129,24 @@ class SelectListPanel(ceGUI.Panel):
                 self.OnAvailableListItemSelected, passEvent = False)
         self.BindEvent(self.availableList, wx.EVT_LIST_ITEM_DESELECTED,
                 self.OnAvailableListItemDeselected, passEvent = False)
+        self.BindEvent(self.availableList, wx.EVT_LEFT_DCLICK,
+                self.OnAvailableListItemDoubleClicked)
         self.selectedList = self._GetSelectedList()
         self.BindEvent(self.selectedList, wx.EVT_LIST_ITEM_SELECTED,
                 self.OnSelectedListItemSelected, passEvent = False)
         self.BindEvent(self.selectedList, wx.EVT_LIST_ITEM_DESELECTED,
                 self.OnSelectedListItemDeselected, passEvent = False)
+        self.BindEvent(self.selectedList, wx.EVT_LEFT_DCLICK,
+                self.OnSelectedListItemDoubleClicked)
         self.addToSelectedButton = self.AddButton(">>", enabled = False,
                 method = self.OnAddToSelected, passEvent = False)
         self.removeFromSelectedButton = self.AddButton("<<", enabled = False,
                 method = self.OnRemoveFromSelected, passEvent = False)
-        self.moveUpButton = self.AddButton("Move Up", enabled = False,
-                method = self.OnMoveUp, passEvent = False)
-        self.moveDownButton = self.AddButton("Move Down", enabled = False,
-                method = self.OnMoveDown, passEvent = False)
+        if self.selectedListIsOrdered:
+            self.moveUpButton = self.AddButton("Move Up", enabled = False,
+                    method = self.OnMoveUp, passEvent = False)
+            self.moveDownButton = self.AddButton("Move Down", enabled = False,
+                    method = self.OnMoveDown, passEvent = False)
 
     def OnAddToSelected(self):
         self._MoveItems(self.availableList, self.selectedList,
@@ -141,6 +155,10 @@ class SelectListPanel(ceGUI.Panel):
     def OnAvailableListItemDeselected(self):
         if self.availableList.GetSelectedItemCount() == 0:
             self.addToSelectedButton.Enable(False)
+
+    def OnAvailableListItemDoubleClicked(self, event):
+        self._OnListItemDoubleClicked(event, self.availableList,
+                self.selectedList, self.addToSelectedButton)
 
     def OnAvailableListItemSelected(self):
         self.addToSelectedButton.Enable(True)
@@ -153,13 +171,14 @@ class SelectListPanel(ceGUI.Panel):
         selectButtonSizer.Add(self.removeFromSelectedButton,
                 flag = wx.ALIGN_CENTER_VERTICAL)
         selectButtonSizer.AddStretchSpacer()
-        moveButtonSizer = wx.BoxSizer(wx.VERTICAL)
-        moveButtonSizer.AddStretchSpacer()
-        moveButtonSizer.Add(self.moveUpButton,
-                flag = wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border = 5)
-        moveButtonSizer.Add(self.moveDownButton,
-                flag = wx.ALIGN_CENTER_VERTICAL)
-        moveButtonSizer.AddStretchSpacer()
+        if self.selectedListIsOrdered:
+            moveButtonSizer = wx.BoxSizer(wx.VERTICAL)
+            moveButtonSizer.AddStretchSpacer()
+            moveButtonSizer.Add(self.moveUpButton,
+                    flag = wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border = 5)
+            moveButtonSizer.Add(self.moveDownButton,
+                    flag = wx.ALIGN_CENTER_VERTICAL)
+            moveButtonSizer.AddStretchSpacer()
         if self.layoutHorizontally:
             orientation = wx.HORIZONTAL
         else:
@@ -169,7 +188,9 @@ class SelectListPanel(ceGUI.Panel):
         mainSizer.Add(selectButtonSizer, flag = wx.ALL | wx.EXPAND,
                 border = 5)
         mainSizer.Add(self.selectedList, flag = wx.EXPAND, proportion = 1)
-        mainSizer.Add(moveButtonSizer, flag = wx.LEFT | wx.EXPAND, border = 5)
+        if self.selectedListIsOrdered:
+            mainSizer.Add(moveButtonSizer,
+                    flag = wx.LEFT | wx.EXPAND, border = 5)
         topSizer = wx.BoxSizer(wx.VERTICAL)
         topSizer.Add(mainSizer, flag = wx.ALL | wx.EXPAND, border = 5,
                 proportion = 1)
@@ -190,10 +211,17 @@ class SelectListPanel(ceGUI.Panel):
         numSelected = self.selectedList.GetSelectedItemCount()
         if self.selectedList.GetSelectedItemCount() == 0:
             self.removeFromSelectedButton.Enable(False)
-        self._SetMoveButtonStatus()
+        if self.selectedListIsOrdered:
+            self._SetMoveButtonStatus()
+
+    def OnSelectedListItemDoubleClicked(self, event):
+        self._OnListItemDoubleClicked(event, self.selectedList,
+                self.availableList, self.removeFromSelectedButton)
+        self.availableList.SortItems()
 
     def OnSelectedListItemSelected(self):
-        self._SetMoveButtonStatus()
+        if self.selectedListIsOrdered:
+            self._SetMoveButtonStatus()
         self.removeFromSelectedButton.Enable(True)
 
     def RestoreSettings(self):
