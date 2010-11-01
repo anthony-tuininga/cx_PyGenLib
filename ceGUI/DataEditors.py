@@ -148,13 +148,13 @@ class DataEditPanel(DataPanel):
     def GetRow(self):
         return self.dataSet.rows[0]
 
-    def OnLayout(self):
+    def OnLayout(self, proportion = 1):
         self.fieldsSizer = self.GetFieldsSizer()
         for column in self.columns:
             column.Layout(self.fieldsSizer)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.fieldsSizer, flag = wx.ALL | wx.EXPAND, proportion = 1,
-                border = 5)
+        sizer.Add(self.fieldsSizer, flag = wx.ALL | wx.EXPAND,
+                proportion = proportion, border = 5)
         return sizer
 
     def OnPostCreate(self):
