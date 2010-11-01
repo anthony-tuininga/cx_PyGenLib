@@ -375,9 +375,12 @@ class OrderedList(List):
                 wx.LIST_STATE_FOCUSED)
         self.Refresh()
 
-    def Update(self):
+    def SetSeqNumValues(self):
         for seqNum, handle in enumerate(self.rowHandles):
             self.dataSet.SetValue(handle, self.seqNumAttrName, seqNum + 1)
+
+    def Update(self):
+        self.SetSeqNumValues()
         super(OrderedList, self).Update()
 
 
