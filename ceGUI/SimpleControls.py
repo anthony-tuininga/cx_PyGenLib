@@ -319,7 +319,7 @@ class DecimalField(IntegerField):
     def OnChar(self, event):
         super(DecimalField, self).OnChar(event)
         key = event.GetKeyCode()
-        if key == ord("."):
+        if key in (ord("."), ord("-")):
             event.Skip()
 
     def SetValue(self, value):
