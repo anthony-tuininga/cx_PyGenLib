@@ -15,7 +15,8 @@ __all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn",
             "DateEditDialogColumn", "DecimalEditDialogColumn",
             "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
             "EllipsisEditDialogColumn", "FileNameEditDialogColumn",
-            "GridEditWindow", "SubWindow", "TextEditDialogColumn" ]
+            "GridEditWindow", "RadioButtonEditDialogColumn", "SubWindow",
+            "TextEditDialogColumn" ]
 
 
 class EditDialog(ceGUI.StandardDialog):
@@ -663,6 +664,63 @@ class ChoiceEditDialogColumn(EditDialogColumn):
         value = getattr(row, self.attrName)
         if self.editable:
             self.field.SetValue(value)
+        else:
+            displayValue = self.choices[value]
+            self.field.SetValue(displayValue)
+
+
+class RadioButtonEditDialogColumn(EditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, choices, editable = True,
+            horizontal = True):
+        self.choices = dict(choices)
+        self.editable = editable
+        self.horizontal = horizontal
+        if editable:
+            self.radioButtons = []
+            self.radioButtonsByValue = {}
+            style = wx.RB_GROUP
+            for value, description in choices:
+                button = wx.RadioButton(parent, label = description,
+                        style = style)
+                self.radioButtons.append(button)
+                self.radioButtonsByValue[value] = button
+                style = 0
+            field = self.radioButtons[0]
+            field.SetValue(True)
+        else:
+            field = parent.AddTextField(editable = False)
+        super(RadioButtonEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field)
+
+    def GetValue(self):
+        if not self.editable:
+            return self.field.GetValue()
+        for value in self.radioButtonsByValue:
+            button = self.radioButtonsByValue[value]
+            if button.GetValue():
+                return value
+
+    def Layout(self, sizer):
+        if not self.editable:
+            return super(RadioButtonEditDialogColumn, self).Layout(sizer)
+        sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
+        if self.horizontal:
+            orientation = wx.HORIZONTAL
+        else:
+            orientation = wx.VERTICAL
+        buttonSizer = wx.BoxSizer(orientation)
+        flags = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT
+        for button in self.radioButtons:
+            buttonSizer.Add(button, flag = flags, border = 5)
+        flags = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.TOP | wx.BOTTOM
+        sizer.Add(buttonSizer, flag = flags, border = 4)
+
+    def SetValue(self, row):
+        value = getattr(row, self.attrName)
+        if self.editable:
+            button = self.radioButtonsByValue[value]
+            button.SetValue(True)
         else:
             displayValue = self.choices[value]
             self.field.SetValue(displayValue)
