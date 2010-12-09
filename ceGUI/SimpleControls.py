@@ -137,6 +137,7 @@ class Choice(BaseControl, wx.Choice):
         return choiceIndex
 
     def SetChoices(self, choices):
+        origValue = self.GetValue()
         self.Clear()
         displayValues = []
         self.indexesByDataValue = {}
@@ -152,6 +153,7 @@ class Choice(BaseControl, wx.Choice):
             displayValues.append(displayValue)
             self.__AddChoice(dataValue, choiceIndex)
         self.AppendItems(displayValues)
+        self.SetValue(origValue)
 
     def SetValue(self, value):
         choiceIndex = self.indexesByDataValue.get(value, wx.NOT_FOUND)
