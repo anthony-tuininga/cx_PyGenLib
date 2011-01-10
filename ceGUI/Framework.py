@@ -9,9 +9,10 @@ import cx_Threads
 import wx
 import sys
 
-__all__ = [ "BusyCursorContext", "EventHandler", "EVT_THREAD_TERMINATED",
-            "FrozenContext", "GetModuleItem", "OpenWindow",
-            "RequiredFieldHasNoValue", "Thread", "TransactionContext" ]
+__all__ = [ "AppTopWindow", "BusyCursorContext", "EventHandler",
+            "EVT_THREAD_TERMINATED", "FrozenContext", "GetModuleItem",
+            "OpenWindow", "RequiredFieldHasNoValue", "Thread",
+            "TransactionContext" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -82,6 +83,12 @@ class FrozenContext(object):
 
     def __exit__(self, excType, excValue, excTraceback):
         self.window.Thaw()
+
+
+def AppTopWindow():
+    """Return the application top window."""
+    app = wx.GetApp()
+    return app.topWindow
 
 
 def GetModuleItem(moduleName, attrName = None, associatedObj = None):
