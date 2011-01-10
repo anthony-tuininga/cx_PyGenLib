@@ -30,6 +30,7 @@ class Application(wx.App):
     description = None
     vendorName = None
     configClassName = "Config"
+    topLevelClassName = "w_TopLevelFrame.Frame"
     version = BUILD_RELEASE_STRING
 
     def _ExceptionHandler(self, excType, excValue, excTraceback):
@@ -42,7 +43,7 @@ class Application(wx.App):
         return os.path.join(standardPaths.GetUserDataDir(), baseName)
 
     def GetTopWindow(self):
-        return ceGUI.OpenWindow("w_TopLevelFrame.Frame")
+        return ceGUI.OpenWindow(self.topLevelClassName)
 
     def OnException(self, exc, parent = None, logException = True):
         if logException:
