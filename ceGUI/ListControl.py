@@ -195,6 +195,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.SetItemCount(len(self.rowHandles))
         if refresh:
             self.Refresh()
+        self.SetItemState(handle, wx.LIST_STATE_SELECTED,
+                wx.LIST_STATE_SELECTED)
+        self.EnsureVisible(handle)
         return row
 
     def OnDeleteItems(self):
