@@ -221,6 +221,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.rowHandles = self.dataSet.rows.keys()
         self.SetItemCount(len(self.rowHandles))
         self.Refresh()
+        if self.sortOnRetrieve:
+            self.SortItems()
 
     def RestoreColumnWidths(self, settingsName = None):
         if settingsName is None:
