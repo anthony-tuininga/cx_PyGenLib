@@ -283,6 +283,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         if refresh:
             self.Refresh()
 
+    def SetSingleSelection(self, singleSelection = True):
+        self.SetSingleStyle(wx.LC_SINGLE_SEL, add = singleSelection)
+
     def SortItems(self, attrName = None, refresh = True):
         if attrName is not None:
             if attrName in self.sortByAttrNames:
