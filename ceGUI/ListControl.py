@@ -263,8 +263,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             itemIndex = itemDict[item]
             self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
                     wx.LIST_STATE_SELECTED)
-            if ensureVisible:
-                self.EnsureVisible(self.rowHandles[itemIndex])
+        if ensureVisible and items:
+            itemIndex = itemDict[items[-1]]
+            self.EnsureVisible(self.rowHandles[itemIndex])
 
     def SelectItemsByValue(self, **values):
         for itemIndex, handle in enumerate(self.rowHandles):
