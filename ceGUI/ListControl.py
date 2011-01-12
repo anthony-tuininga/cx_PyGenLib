@@ -123,8 +123,10 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self._AddColumn(column)
         return column
 
-    def AppendItem(self, choice = None, refresh = True, item = None):
-        return self.InsertItem(len(self.rowHandles), choice, refresh, item)
+    def AppendItem(self, choice = None, refresh = True, item = None,
+            selectItem = False):
+        return self.InsertItem(len(self.rowHandles), choice, refresh, item,
+                selectItem = selectItem)
 
     def Clear(self):
         self.DeleteAllItems()
@@ -189,15 +191,17 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def GetSelectedItemIndexes(self):
         return self._GetItemIndexesWithState(wx.LIST_STATE_SELECTED)
 
-    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None):
+    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None,
+            selectItem = False):
         handle, row = self.dataSet.InsertRow(choice, item)
         self.rowHandles.insert(pos, handle)
         self.SetItemCount(len(self.rowHandles))
         if refresh:
             self.Refresh()
-        self.SetItemState(handle, wx.LIST_STATE_SELECTED,
-                wx.LIST_STATE_SELECTED)
-        self.EnsureVisible(handle)
+        if selectItem:
+            self.SetItemState(handle, wx.LIST_STATE_SELECTED,
+                    wx.LIST_STATE_SELECTED)
+            self.EnsureVisible(handle)
         return row
 
     def OnDeleteItems(self):

@@ -201,7 +201,7 @@ class DataListPanel(DataPanel):
 
     def _OnInsertItems(self, dialog):
         row = dialog.dataSet.rows[0]
-        item = self.list.AppendItem(row, refresh = False)
+        item = self.list.AppendItem(row, refresh = False, selectItem = True)
         self._UpdateListItem(item, row)
         self._OnListChanged()
         if self.updateLabelWithCount:
