@@ -123,10 +123,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self._AddColumn(column)
         return column
 
-    def AppendItem(self, choice = None, refresh = True, item = None,
-            selectItem = False):
-        return self.InsertItem(len(self.rowHandles), choice, refresh, item,
-                selectItem = selectItem)
+    def AppendItem(self, choice = None, refresh = True, item = None):
+        return self.InsertItem(len(self.rowHandles), choice, refresh, item)
 
     def Clear(self):
         self.DeleteAllItems()
@@ -191,17 +189,12 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def GetSelectedItemIndexes(self):
         return self._GetItemIndexesWithState(wx.LIST_STATE_SELECTED)
 
-    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None,
-            selectItem = False):
+    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None):
         handle, row = self.dataSet.InsertRow(choice, item)
         self.rowHandles.insert(pos, handle)
         self.SetItemCount(len(self.rowHandles))
         if refresh:
             self.Refresh()
-        if selectItem:
-            self.SetItemState(handle, wx.LIST_STATE_SELECTED,
-                    wx.LIST_STATE_SELECTED)
-            self.EnsureVisible(handle)
         return row
 
     def OnDeleteItems(self):
@@ -260,13 +253,18 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
                     wx.LIST_STATE_SELECTED)
 
-    def SelectItems(self, items):
+    def SelectItem(self, item, ensureVisible = False):
+        self.SelectItems([item], ensureVisible = ensureVisible)
+
+    def SelectItems(self, items, ensureVisible = False):
         itemDict = dict([(self.dataSet.rows[h], ix) \
                 for ix, h in enumerate(self.rowHandles)])
         for item in items:
             itemIndex = itemDict[item]
             self.SetItemState(itemIndex, wx.LIST_STATE_SELECTED,
                     wx.LIST_STATE_SELECTED)
+            if ensureVisible:
+                self.EnsureVisible(self.rowHandles[itemIndex])
 
     def SelectItemsByValue(self, **values):
         for itemIndex, handle in enumerate(self.rowHandles):
