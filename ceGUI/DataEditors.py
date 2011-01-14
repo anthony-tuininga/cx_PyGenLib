@@ -174,7 +174,8 @@ class DataEditPanel(DataPanel):
                 column.Verify()
                 column.Update(self.dataSet)
 
-    def ReplaceColumn(self, origColumn, newColumn, sizer = None):
+    def ReplaceColumn(self, origColumn, newColumn, sizer = None,
+            layout = True):
         if sizer is None:
             sizer = self.fieldsSizer
         origIndex = self.columns.index(origColumn)
@@ -182,7 +183,8 @@ class DataEditPanel(DataPanel):
         newColumn.ReplaceColumn(origColumn, sizer)
         origColumn.Destroy()
         self.columns[origIndex] = newColumn
-        sizer.Layout()
+        if layout:
+            sizer.Layout()
 
 
 class DataListPanel(DataPanel):
@@ -523,8 +525,8 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.field.SetFocus()
 
     def ReplaceColumn(self, origColumn, sizer):
-        sizer.Replace(origColumn.label, self.label)
-        sizer.Replace(origColumn.field, self.field)
+        sizer.Replace(origColumn.label, self.label, recursive = True)
+        sizer.Replace(origColumn.field, self.field, recursive = True)
 
     def SetValue(self, row):
         if self.constantValue is not None:
