@@ -487,6 +487,7 @@ class DataNotebookPanel(DataPanel):
 
 
 class EditDialogColumn(ceGUI.BaseControl):
+    expandField = True
 
     def __init__(self, parent, attrName, labelText, field,
             required = False, constantValue = None):
@@ -517,7 +518,7 @@ class EditDialogColumn(ceGUI.BaseControl):
         flags = wx.ALIGN_CENTER_VERTICAL
         if isinstance(self.field, wx.CheckBox):
             flags |= wx.TOP | wx.BOTTOM
-        elif not isinstance(self.field, wx.DatePickerCtrl):
+        elif self.expandField:
             flags |= wx.EXPAND
         sizer.Add(self.field, flag = flags, border = 4)
 
@@ -730,6 +731,7 @@ class RadioButtonEditDialogColumn(EditDialogColumn):
 
 
 class DateEditDialogColumn(EditDialogColumn):
+    expandField = False
 
     def __init__(self, parent, attrName, labelText, allowNone = False,
             editable = True, showDropDown = False):
