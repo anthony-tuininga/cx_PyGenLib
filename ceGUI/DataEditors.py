@@ -498,6 +498,10 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.constantValue = constantValue
         self._Initialize()
         parent.columns.append(self)
+        if required:
+            font = self.label.GetFont()
+            font.SetWeight(wx.BOLD)
+            self.label.SetFont(font)
 
     def GetValue(self):
         return self.field.GetValue()
