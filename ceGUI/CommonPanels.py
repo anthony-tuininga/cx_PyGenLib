@@ -106,6 +106,12 @@ class SelectListPanel(ceGUI.Panel):
         cls = self._GetClass(self.selectedListClassName)
         return cls(self)
 
+    def _LayoutAvailableList(self, mainSizer):
+        mainSizer.Add(self.availableList, flag = wx.EXPAND, proportion = 1)
+
+    def _LayoutSelectedList(self, mainSizer):
+        mainSizer.Add(self.selectedList, flag = wx.EXPAND, proportion = 1)
+
     def _MoveItems(self, fromList, toList, button):
         itemIndexes = list(fromList.GetSelectedItemIndexes())
         self.__MoveItems(fromList, reversed(itemIndexes), toList, button)
@@ -184,10 +190,10 @@ class SelectListPanel(ceGUI.Panel):
         else:
             orientation = wx.VERTICAL
         mainSizer = wx.BoxSizer(orientation)
-        mainSizer.Add(self.availableList, flag = wx.EXPAND, proportion = 1)
+        self._LayoutAvailableList(mainSizer)
         mainSizer.Add(selectButtonSizer, flag = wx.ALL | wx.EXPAND,
                 border = 5)
-        mainSizer.Add(self.selectedList, flag = wx.EXPAND, proportion = 1)
+        self._LayoutSelectedList(mainSizer)
         if self.selectedListIsOrdered:
             mainSizer.Add(moveButtonSizer,
                     flag = wx.LEFT | wx.EXPAND, border = 5)
