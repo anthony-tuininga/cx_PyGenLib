@@ -64,6 +64,16 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def _GetSortKey(self, item, sortColumns):
         return [c.GetSortValue(item) for c in sortColumns]
 
+    def _InsertItem(self, pos, choice, item, refresh, ensureVisible):
+        handle, row = self.dataSet.InsertRow(choice, item)
+        self.rowHandles.insert(pos, handle)
+        self.SetItemCount(len(self.rowHandles))
+        if ensureVisible:
+            self.EnsureVisible(handle)
+        if refresh:
+            self.Refresh()
+        return row
+
     def _OnColumnClick(self, event):
         if self.enableColumnSorting:
             column = self.columns[event.GetColumn()]
@@ -123,8 +133,10 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self._AddColumn(column)
         return column
 
-    def AppendItem(self, choice = None, refresh = True, item = None):
-        return self.InsertItem(len(self.rowHandles), choice, refresh, item)
+    def AppendItem(self, choice = None, refresh = True, item = None,
+            ensureVisible = False):
+        return self._InsertItem(len(self.rowHandles), choice, item, refresh,
+                ensureVisible)
 
     def Clear(self):
         self.DeleteAllItems()
@@ -189,13 +201,9 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def GetSelectedItemIndexes(self):
         return self._GetItemIndexesWithState(wx.LIST_STATE_SELECTED)
 
-    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None):
-        handle, row = self.dataSet.InsertRow(choice, item)
-        self.rowHandles.insert(pos, handle)
-        self.SetItemCount(len(self.rowHandles))
-        if refresh:
-            self.Refresh()
-        return row
+    def InsertItem(self, pos = 0, choice = None, refresh = True, item = None,
+            ensureVisible = False):
+        return self._InsertItem(pos, choice, item, refresh, ensureVisible)
 
     def OnDeleteItems(self):
         for pos, itemIndex in enumerate(self.GetSelectedItemIndexes()):
