@@ -680,7 +680,7 @@ class ChoiceEditDialogColumn(EditDialogColumn):
 class RadioButtonEditDialogColumn(EditDialogColumn):
 
     def __init__(self, parent, attrName, labelText, choices, editable = True,
-            horizontal = True):
+            horizontal = True, method = None, passEvent = True):
         self.choices = dict(choices)
         self.editable = editable
         self.horizontal = horizontal
@@ -696,6 +696,10 @@ class RadioButtonEditDialogColumn(EditDialogColumn):
                 style = 0
             field = self.radioButtons[0]
             field.SetValue(True)
+            if method is not None:
+                for button in self.radioButtons:
+                    parent.BindEvent(button, wx.EVT_RADIOBUTTON, method,
+                            passEvent = passEvent)
         else:
             field = parent.AddTextField(editable = False)
         super(RadioButtonEditDialogColumn, self).__init__(parent, attrName,
