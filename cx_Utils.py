@@ -127,8 +127,11 @@ def PerformDiff(sourceDir, targetDir):
             modifiedFiles.append(line[line.find(" and "):][5:-8])
     status = pipe.close()
     if status is not None:
-        if not newFiles and not removedFiles and not modifiedFiles:
-            raise "Command %s failed." % command
+        if os.WIFEXITED(status):
+            exitCode = os.WEXITSTATUS(status)
+        else:
+            exitCode = status
+        raise CommandExecutionFailed(command = command, exitCode = exitCode)
     return (newFiles, modifiedFiles, removedFiles)
 
 
