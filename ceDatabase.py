@@ -448,9 +448,10 @@ class DataSet(WrappedConnection):
 
     def Retrieve(self, *args):
         self.Clear()
-        self.retrievalArgs = args
         if self.retrievalAttrNames:
+            self.retrievalArgs = args
             args = self._GetArgsFromNames(self.retrievalAttrNames)
+        self.retrievalArgs = args
         self._SetRows(self._GetRows(*args))
 
     def SetRows(self, rows):
