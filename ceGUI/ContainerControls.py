@@ -112,8 +112,13 @@ class BaseContainer(ceGUI.BaseControl):
             style |= wx.TE_READONLY
         return ceGUI.IntegerField(self, style)
 
-    def AddLabel(self, label = "", size = (-1, -1)):
-        return wx.StaticText(self, -1, label, size = size)
+    def AddLabel(self, label = "", size = (-1, -1), bold = False):
+        label = wx.StaticText(self, -1, label, size = size)
+        if bold:
+            font = label.GetFont()
+            font.SetWeight(wx.BOLD)
+            label.SetFont(font)
+        return label
 
     def AddStaticBox(self, label):
         return wx.StaticBox(self, -1, label)

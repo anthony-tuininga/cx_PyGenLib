@@ -492,16 +492,12 @@ class EditDialogColumn(ceGUI.BaseControl):
     def __init__(self, parent, attrName, labelText, field,
             required = False, constantValue = None):
         self.attrName = attrName
-        self.label = parent.AddLabel(labelText)
+        self.label = parent.AddLabel(labelText, bold = required)
         self.field = field
         self.required = required
         self.constantValue = constantValue
         self._Initialize()
         parent.columns.append(self)
-        if required:
-            font = self.label.GetFont()
-            font.SetWeight(wx.BOLD)
-            self.label.SetFont(font)
 
     def GetValue(self):
         return self.field.GetValue()
