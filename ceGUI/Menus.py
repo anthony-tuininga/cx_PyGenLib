@@ -46,9 +46,10 @@ class Menu(object):
         self.menu.AppendSeparator()
 
     def AddStockEntry(self, parent, stockId, method = None,
-            createBusyCursor = False, enabled = True):
+            createBusyCursor = False, enabled = True, passEvent = True):
         return self._AddEntry(parent, id = stockId, method = method,
-                createBusyCursor = createBusyCursor, enabled = enabled)
+                createBusyCursor = createBusyCursor, enabled = enabled,
+                passEvent = passEvent)
 
     def AddToMenuBar(self, menuBar, label):
         menuBar.Append(self.menu, label)

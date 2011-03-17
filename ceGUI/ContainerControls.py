@@ -269,9 +269,9 @@ class Frame(BaseContainer, wx.Frame):
                 passEvent, radio, checkable, windowName, enabled)
 
     def AddStockMenuItem(self, menu, stockId, method = None,
-            createBusyCursor = False, enabled = True):
+            createBusyCursor = False, enabled = True, passEvent = True):
         return menu.AddStockEntry(self, stockId, method, createBusyCursor,
-                enabled)
+                enabled, passEvent = passEvent)
 
     def AddToolbarItem(self, label, bitmapId, shortHelp = "", longHelp = "",
             method = None, createBusyCursor = False, passEvent = True,
