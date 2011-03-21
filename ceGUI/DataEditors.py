@@ -191,6 +191,7 @@ class DataListPanel(DataPanel):
     listClassName = "List"
     editDialogName = None
     updateLabelWithCount = False
+    postRetrieve = True
 
     def _GetList(self):
         cls = self._GetClass(self.listClassName)
@@ -280,7 +281,9 @@ class DataListPanel(DataPanel):
     def IsUpdatedIndependently(self):
         return self._GetEditDialog() is None
 
-    def OnCreate(self, postRetrieve = True):
+    def OnCreate(self, postRetrieve = None):
+        if postRetrieve is None:
+            postRetrieve = self.postRetrieve
         self.list = self._GetList()
         self.BindEvent(self.list, wx.EVT_LIST_ITEM_ACTIVATED,
                 self.OnItemActivated)
