@@ -206,6 +206,7 @@ class DataListPanel(DataPanel):
         row = dialog.dataSet.rows[0]
         item = self.list.AppendItem(row, refresh = False)
         self._UpdateListItem(item, row)
+        self.list.DeselectAll()
         self.list.SelectItem(item, ensureVisible = True)
         self._OnListChanged()
         if self.updateLabelWithCount:
