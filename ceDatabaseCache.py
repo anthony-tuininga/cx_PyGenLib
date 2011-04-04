@@ -286,9 +286,14 @@ class SubCache(object):
             setattr(row, attrName, value)
 
     def _FindRow(self, externalRow, errorIfMissing = False):
-        path = self.singleRowPaths[0]
-        key = path.GetKeyValue(externalRow)
-        row = path.rows.get(key)
+        row = None
+        for path in self.singleRowPaths:
+            if path.ignoreRowNotCached:
+                continue
+            key = path.GetKeyValue(externalRow)
+            row = path.rows.get(key)
+            if row is not None:
+                break
         if errorIfMissing and row is None:
             raise cx_Exceptions.NoDataFound()
         return row
