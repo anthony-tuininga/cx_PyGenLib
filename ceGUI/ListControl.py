@@ -122,14 +122,15 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
 
     def AddColumn(self, attrName, heading = "", defaultWidth = -1,
             justification = wx.LIST_FORMAT_LEFT, cls = None,
-            rightJustified = False, centered = False):
+            rightJustified = False, centered = False, numberFormat = None):
         if cls is None:
             cls = ListColumn
         if rightJustified:
             justification = wx.LIST_FORMAT_RIGHT
         elif centered:
             justification = wx.LIST_FORMAT_CENTRE
-        column = cls(attrName, heading, defaultWidth, justification)
+        column = cls(attrName, heading, defaultWidth, justification,
+                numberFormat)
         self._AddColumn(column)
         return column
 
@@ -406,14 +407,16 @@ class OrderedList(List):
 class ListColumn(ceGUI.BaseControl):
     defaultJustification = wx.LIST_FORMAT_LEFT
     defaultHeading = ""
+    defaultNumberFormat = "@"
     defaultWidth = -1
 
     def __init__(self, attrName, heading = None, defaultWidth = None,
-            justification = None):
+            justification = None, numberFormat = None):
         self.attrName = attrName
         self.heading = heading or self.defaultHeading
         self.defaultWidth = defaultWidth or self.defaultWidth
         self.justification = justification or self.defaultJustification
+        self.numberFormat = numberFormat or self.defaultNumberFormat
         self._Initialize()
 
     def __repr__(self):
@@ -478,6 +481,7 @@ class ListDateColumn(ListColumn):
 class ListDecimalColumn(ListColumn):
     defaultJustification = wx.LIST_FORMAT_RIGHT
     digitsAfterDecimal = 2
+    defaultNumberFormat = "0." + "0" * digitsAfterDecimal
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
