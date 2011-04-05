@@ -69,7 +69,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.rowHandles.insert(pos, handle)
         self.SetItemCount(len(self.rowHandles))
         if ensureVisible:
-            self.EnsureVisible(handle)
+            self.EnsureVisible(pos)
         if refresh:
             self.Refresh()
         return row
@@ -274,7 +274,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                     wx.LIST_STATE_SELECTED)
         if ensureVisible and items:
             itemIndex = itemDict[items[-1]]
-            self.EnsureVisible(self.rowHandles[itemIndex])
+            self.EnsureVisible(itemIndex)
 
     def SelectItemsByValue(self, **values):
         for itemIndex, handle in enumerate(self.rowHandles):
