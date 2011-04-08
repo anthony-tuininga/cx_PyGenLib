@@ -3,12 +3,33 @@
 import cx_Exceptions
 import cx_Logging
 import glob
+import imp
 import os
 import sys
+
+class AttributeNotFound(cx_Exceptions.BaseException):
+    message = 'Attribute named "%(name)s" not found in script text.'
+
+
+class AttributeIsOfWrongClass(cx_Exceptions.BaseException):
+    message = 'Attribute "%(name)s" must be of class "%(requiredClass)s".'
+
 
 class CommandExecutionFailed(cx_Exceptions.BaseException):
     message = "Execution of command %(command)s failed with exit code " \
               "%(exitCode)s."
+
+
+def CreateModuleFromScript(name, scriptText, **scriptGlobals):
+    """Create a module from a script and store that module in sys.modules so
+       that the module globals do not disappear when the module goes out of
+       scope."""
+    module = imp.new_module(name)
+    sys.modules[name] = module
+    module.__dict__.update(scriptGlobals)
+    code = compile(scriptText, name + ".py", "exec")
+    exec code in module.__dict__
+    return module
 
 
 def ExecuteOSCommands(*commands):
@@ -67,6 +88,20 @@ def FilesHierarchy(rootDir, namesToIgnore=[]):
     os.path.walk(rootDir, Visit, (rootDir, files, ignored))
 
     return files
+
+
+def GetClassFromScript(moduleName, scriptText, attrName, requiredClass = None,
+        **scriptGlobals):
+    """Get class from script of a particular class (if desired) and return it.
+       This is a wrapper on top of CreateModuleFromScript() above."""
+    module = CreateModuleFromScript(moduleName, scriptText, **scriptGlobals)
+    cls = module.__dict__.get(attrName)
+    if cls is None:
+        raise AttributeNotFound(name = attrName)
+    if requiredClass is not None and not issubclass(cls, requiredClass):
+        raise AttributeIsOfWrongClass(name = attrName,
+                requiredClass = requiredClass.__name__)
+    return cls
 
 
 def InlineIf(expr, trueValue, falseValue = None):
