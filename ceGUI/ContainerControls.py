@@ -207,7 +207,7 @@ class Dialog(BaseContainer, wx.Dialog):
             if self.createOkButton:
                 self.okButton = wx.Button(self, wx.ID_OK)
                 self.BindEvent(self.okButton, wx.EVT_BUTTON, self._OnOk,
-                        createBusyCursor = True)
+                        createBusyCursor = True, skipEvent = False)
             if self.createCancelButton:
                 self.cancelButton = wx.Button(self, wx.ID_CANCEL)
                 self.BindEvent(self.cancelButton, wx.EVT_BUTTON,
@@ -217,6 +217,7 @@ class Dialog(BaseContainer, wx.Dialog):
     def _OnOk(self, event):
         self.OnOk()
         self._SaveSettings()
+        event.Skip()
 
     def _OnCancel(self, event):
         self.OnCancel()
