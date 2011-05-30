@@ -778,11 +778,13 @@ class TextEditDialogColumn(EditDialogColumn):
 
     def __init__(self, parent, attrName, labelText, style = 0,
             maxLength = 0, size = (-1, -1), required = False,
-            editable = True, cls = ceGUI.TextField, multiLine = False):
+            editable = True, cls = ceGUI.TextField, multiLine = False,
+            constantValue = None):
         field = parent.AddTextField(style, maxLength, size = size, cls = cls,
-                editable = editable, multiLine = multiLine)
+                editable = editable and constantValue is None,
+                multiLine = multiLine)
         super(TextEditDialogColumn, self).__init__(parent, attrName, labelText,
-                field, required = required)
+                field, required = required, constantValue = constantValue)
 
 
 class GridEditWindow(ceGUI.Frame):
