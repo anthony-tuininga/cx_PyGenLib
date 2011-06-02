@@ -122,7 +122,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
 
     def AddColumn(self, attrName, heading = "", defaultWidth = -1,
             justification = wx.LIST_FORMAT_LEFT, cls = None,
-            rightJustified = False, centered = False, numberFormat = None):
+            rightJustified = False, centered = False, numberFormat = None,
+            **args):
         if cls is None:
             cls = ListColumn
         if rightJustified:
@@ -130,7 +131,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         elif centered:
             justification = wx.LIST_FORMAT_CENTRE
         column = cls(attrName, heading, defaultWidth, justification,
-                numberFormat)
+                numberFormat, **args)
         self._AddColumn(column)
         return column
 
@@ -480,14 +481,26 @@ class ListDateColumn(ListColumn):
 
 class ListDecimalColumn(ListColumn):
     defaultJustification = wx.LIST_FORMAT_RIGHT
-    digitsAfterDecimal = 2
-    defaultNumberFormat = "0." + "0" * digitsAfterDecimal
+
+    def __init__(self, attrName, heading, defaultWidth, justification,
+            numberFormat, digitsAfterDecimal = 2):
+        if numberFormat is None:
+            numberFormat = "0." + "0" * digitsAfterDecimal
+        self.digitsAfterDecimal = digitsAfterDecimal
+        self.format = "%%.%df" % self.digitsAfterDecimal
+        super(ListDecimalColumn, self).__init__(attrName, heading,
+                defaultWidth, justification, numberFormat)
+
+    def GetExportValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is not None:
+            return self.format % value
+        return "" 
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
         if value is not None:
-            format = "%%.%df" % self.digitsAfterDecimal
-            return format % value
+            return self.format % value
 
 
 class ListMoneyColumn(ListDecimalColumn):
