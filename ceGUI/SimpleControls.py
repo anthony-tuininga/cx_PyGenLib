@@ -65,7 +65,7 @@ class BaseControl(object):
             try:
                 value = converter(value)
             except:
-                self.settings.DeleteEntry(fullName)
+                self.settings.DeleteEntry(settingsName)
                 value = defaultValue
         return value
 
