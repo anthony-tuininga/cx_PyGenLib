@@ -95,3 +95,9 @@ class Config(object):
     dateFormat = "%Y/%m/%d"
     timestampFormat = "%Y/%m/%d %H:%M"
 
+    def __init__(self, app):
+        self.OnCreate()
+
+    def OnCreate(self):
+        pass
+
