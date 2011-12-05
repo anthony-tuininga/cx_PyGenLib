@@ -10,8 +10,8 @@ import wx
 import sys
 
 __all__ = [ "AppTopWindow", "BusyCursorContext", "EventHandler",
-            "EVT_THREAD_TERMINATED", "FrozenContext", "GetModuleItem",
-            "OpenWindow", "RequiredFieldHasNoValue", "Thread",
+            "EVT_THREAD_TERMINATED", "FrozenContext", "GetApp",
+            "GetModuleItem", "OpenWindow", "RequiredFieldHasNoValue", "Thread",
             "TransactionContext" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
@@ -89,6 +89,12 @@ def AppTopWindow():
     """Return the application top window."""
     app = wx.GetApp()
     return app.topWindow
+
+
+def GetApp():
+    """Return the application object. Created simply for convenience of not
+       having to import the wx module for this simple task."""
+    return wx.GetApp()
 
 
 def GetModuleItem(moduleName, attrName = None, associatedObj = None):
