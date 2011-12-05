@@ -243,12 +243,13 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
                 self.SetColumnWidth(columnIndex, width)
 
     def Retrieve(self, *args):
-        self.DeleteAllItems()
-        self.dataSet.Retrieve(*args)
-        self.rowHandles = self.dataSet.rows.keys()
-        self.SetItemCount(len(self.rowHandles))
-        if self.sortOnRetrieve:
-            self.SortItems()
+        with ceGUI.BusyCursorContext(parent = self.GetParent()):
+            self.DeleteAllItems()
+            self.dataSet.Retrieve(*args)
+            self.rowHandles = self.dataSet.rows.keys()
+            self.SetItemCount(len(self.rowHandles))
+            if self.sortOnRetrieve:
+                self.SortItems()
 
     def SaveColumnWidths(self, settingsName = None):
         if settingsName is None:
