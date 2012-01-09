@@ -10,7 +10,7 @@ import os
 import sys
 import wx
 
-__all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn",
+__all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn", "DataPanel",
             "DataEditPanel", "DataList", "DataListPanel", "DataNotebookPanel",
             "DateEditDialogColumn", "DecimalEditDialogColumn",
             "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
