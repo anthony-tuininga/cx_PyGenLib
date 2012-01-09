@@ -13,6 +13,7 @@ __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
+    settingsName = "ColumnWidths"
     dataSetClassName = "DataSet"
     sortOnRetrieve = True
 
@@ -192,8 +193,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         return self.table.PendingChanges()
 
     def RestoreColumnWidths(self):
-        widths = self.ReadSetting("ColumnWidths", converter = eval)
-        if widths is not None:
+        widths = self.ReadSetting(self.settingsName, converter = eval)
+        if widths is not None and len(widths) <= len(self.table.columns):
             for columnIndex, width in enumerate(widths):
                 self.SetColSize(columnIndex, width)
 
@@ -215,7 +216,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         numColumns = self.GetNumberCols()
         if numColumns > 1:
             widths = [self.GetColSize(i) for i in range(numColumns - 1)]
-            self.WriteSetting("ColumnWidths", tuple(widths))
+            self.WriteSetting(self.settingsName, tuple(widths))
 
     def SortItems(self, columnIndex = None):
         col = self.GetGridCursorCol()
