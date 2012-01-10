@@ -116,7 +116,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             if width > 0:
                 self.SetColSize(numColumns - 1, width)
 
-    def AddColumn(self, attrName, label, defaultWidth = None,
+    def AddColumn(self, attrName, heading, defaultWidth = None,
             horizontalAlignment = None, verticalAlignment = None,
             readOnly = False, cls = None, required = False,
             contextItem = None):
@@ -128,7 +128,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             verticalAlignment = cls.defaultVerticalAlignment
         if contextItem is None:
             contextItem = self.table.dataSet.contextItem
-        column = cls(attrName, label, horizontalAlignment, verticalAlignment,
+        column = cls(attrName, heading, horizontalAlignment, verticalAlignment,
                 readOnly, required, contextItem)
         columnIndex = self.table.GetNumberCols()
         self.table.AddColumn(column)
@@ -245,6 +245,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                     self.EnableCellEditControl()
                     raise exc
 
+    @property
+    def columns(self):
+        return self.table.columns
+
 
 class GridTable(wx.grid.PyGridTableBase):
 
@@ -284,7 +288,7 @@ class GridTable(wx.grid.PyGridTableBase):
         return [self.dataSet.rows[h] for h in self.rowHandles]
 
     def GetColLabelValue(self, col):
-        return self.columns[col].label
+        return self.columns[col].heading
 
     def GetNumberCols(self):
         return len(self.columns)
@@ -356,15 +360,18 @@ class GridTable(wx.grid.PyGridTableBase):
 class GridColumn(ceGUI.BaseControl):
     defaultHorizontalAlignment = wx.ALIGN_LEFT
     defaultVerticalAlignment = wx.ALIGN_CENTRE
+    defaultNumberFormat = "@"
 
-    def __init__(self, attrName, label, horizontalAlignment,
-            verticalAlignment, readOnly, required, contextItem):
+    def __init__(self, attrName, heading, horizontalAlignment,
+            verticalAlignment, readOnly, required, contextItem,
+            numberFormat = None):
         self.attrName = attrName
-        self.label = label
+        self.heading = heading
         self.required = required
         self.attr = wx.grid.GridCellAttr()
         self.attr.SetAlignment(horizontalAlignment, verticalAlignment)
         self.contextItem = contextItem
+        self.numberFormat = numberFormat or self.defaultNumberFormat
         if readOnly:
             self.attr.SetReadOnly()
         self._Initialize()
