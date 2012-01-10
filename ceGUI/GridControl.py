@@ -451,7 +451,10 @@ class GridColumnChoice(GridColumn):
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
-        return self.displayValuesByDataValue.get(value, value)
+        displayValue = self.displayValuesByDataValue.get(value, value)
+        if displayValue is None:
+            return ""
+        return displayValue
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
         value = self.dataValuesByDisplayValue.get(rawValue, rawValue)
