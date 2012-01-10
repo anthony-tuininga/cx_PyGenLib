@@ -11,11 +11,12 @@ import sys
 import wx
 
 __all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn", "DataPanel",
-            "DataEditPanel", "DataList", "DataListPanel", "DataNotebookPanel",
-            "DateEditDialogColumn", "DecimalEditDialogColumn",
-            "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
-            "EllipsisEditDialogColumn", "FileNameEditDialogColumn",
-            "GridEditWindow", "RadioButtonEditDialogColumn", "SubWindow",
+            "DataEditPanel", "DataGridPanel", "DataList", "DataListPanel",
+            "DataNotebookPanel", "DateEditDialogColumn",
+            "DecimalEditDialogColumn", "DirNameEditDialogColumn", "EditDialog",
+            "EditDialogColumn", "EllipsisEditDialogColumn",
+            "FileNameEditDialogColumn", "GridEditWindow",
+            "RadioButtonEditDialogColumn", "SubWindow",
             "TextEditDialogColumn" ]
 
 
@@ -185,6 +186,58 @@ class DataEditPanel(DataPanel):
         self.columns[origIndex] = newColumn
         if layout:
             sizer.Layout()
+
+
+class DataGridPanel(DataPanel):
+    gridClassName = "Grid"
+    updateLabelWithCount = False
+    postRetrieve = True
+
+    def _GetGrid(self):
+        cls = self._GetClass(self.gridClassName)
+        return cls(self)
+
+    def _UpdateLabelWithCount(self):
+        numRows = len(self.grid.dataSet.rows)
+        parent = self.GetParent().GetParent()
+        parent.SetPageText(self, "%s (%s)" % (self.label, numRows))
+
+    def OnCreate(self, postRetrieve = None):
+        if postRetrieve is None:
+            postRetrieve = self.postRetrieve
+        self.grid = self._GetGrid()
+        self.grid.SetFocus()
+        if self._GetEditDialog() is None:
+            if postRetrieve:
+                wx.CallAfter(self.Retrieve)
+            self.dataSet = self.grid.table.dataSet
+
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer.Add(self.grid, proportion = 1, flag = wx.EXPAND)
+        return topSizer
+
+    def OnPostCreate(self):
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
+
+    def OnRetrieve(self):
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
+
+    def PendingChanges(self):
+        self.grid.SaveEditControlValue()
+        return self.grid.PendingChanges()
+
+    def RestoreSettings(self):
+        self.grid.RestoreColumnWidths()
+
+    def Retrieve(self):
+        self.grid.Retrieve()
+        self.OnRetrieve()
+
+    def SaveSettings(self):
+        self.grid.SaveColumnWidths()
 
 
 class DataListPanel(DataPanel):
