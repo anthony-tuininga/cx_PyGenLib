@@ -134,12 +134,13 @@ class DataEditPanel(DataPanel):
         super(DataEditPanel, self)._Initialize()
 
     def AddColumn(self, attrName, labelText, field = None, required = False,
-            cls = None, constantValue = None):
+            cls = None, constantValue = None, **args):
         if cls is None:
             cls = EditDialogColumn
         if field is None and constantValue is not None:
             field = self.AddTextField(editable = False)
-        return cls(self, attrName, labelText, field, required, constantValue)
+        return cls(self, attrName, labelText, field, required, constantValue,
+                **args)
 
     def GetFieldsSizer(self):
         sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
@@ -644,9 +645,16 @@ class EllipsisEditDialogColumn(EditDialogColumn):
 
 
 class FileNameEditDialogColumn(EllipsisEditDialogColumn):
-    style = wx.FD_DEFAULT_STYLE
-    message = "Choose a file"
-    extension = None
+
+    def __init__(self, parent, attrName, labelText, field = None,
+            required = False, constantValue = None, editable = True,
+            extension = None, message = "Choose a file",
+            style = wx.FD_DEFAULT_STYLE):
+        super(FileNameEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field, required, constantValue, editable)
+        self.style = style
+        self.message = message
+        self.extension = extension
 
     def GetDefaultDirAndFileName(self, currentValue):
         if currentValue is None:
@@ -672,8 +680,14 @@ class FileNameEditDialogColumn(EllipsisEditDialogColumn):
 
 
 class DirNameEditDialogColumn(FileNameEditDialogColumn):
-    style = wx.DD_DEFAULT_STYLE
-    message = "Choose a directory"
+
+    def __init__(self, parent, attrName, labelText, field = None,
+            required = False, constantValue = None, editable = True,
+            message = "Choose a directory", style = wx.DD_DEFAULT_STYLE):
+        super(DirNameEditDialogColumn, self).__init__(parent, attrName,
+                labelText, field, required, constantValue, editable)
+        self.style = style
+        self.message = message
 
     def GetDefaultDirName(self, currentValue):
         if currentValue is None:
