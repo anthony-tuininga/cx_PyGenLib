@@ -94,14 +94,14 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if not self.table.CanInsertRow():
             return
         if self.contextRow is None:
-            row = self.GetGridCursorRow() + 1
+            pos = self.GetGridCursorRow() + 1
         elif self.contextRow == wx.NOT_FOUND:
-            row = len(self.table.rowHandles) + 1
+            pos = len(self.table.rowHandles) + 1
         else:
-            row = self.contextRow + 1
+            pos = self.contextRow + 1
         if len(self.table.rowHandles) == 0:
-            row = 0
-        self.InsertRows(row)
+            pos = 0
+        self.InsertRows(pos)
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
@@ -158,29 +158,34 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def GetInsertChoicesDialog(self, parent):
         pass
 
-    def InsertRows(self, row, numRows = 1):
+    def InsertRows(self, pos, numRows = 1):
         dialog = self.GetInsertChoicesDialog(self.GetParent())
         if dialog is None:
             choices = [None] * numRows
         else:
-            if dialog.ShowModal() == wx.ID_OK:
+            if dialog.ShowModalOk():
                 choices = dialog.GetSelectedItems()
             else:
                 choices = []
             dialog.Destroy()
             if not choices:
                 return
-        self.table.InsertRows(row, choices)
+        for choiceNum, choice in enumerate(choices):
+            row = self.table.InsertRow(pos + choiceNum, choice)
+            self.OnInsertRow(row, choice)
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, len(choices))
         self.ProcessTableMessage(msg)
-        self.SetGridCursor(row, 0)
-        self.MakeCellVisible(row, 0)
+        self.SetGridCursor(pos, 0)
+        self.MakeCellVisible(pos, 0)
         if dialog is None:
             self.EnableCellEditControl(True)
 
     def OnContextMenu(self):
         self.menu.Popup(self)
+
+    def OnInsertRow(self, row, choice):
+        pass
 
     def OnInvalidValueEntered(self, rowIndex, colIndex, rawValue):
         self.SetGridCursor(rowIndex, colIndex)
@@ -307,10 +312,10 @@ class GridTable(wx.grid.PyGridTableBase):
         row = self.dataSet.rows[handle]
         return column.GetValue(row)
 
-    def InsertRows(self, pos = 0, choices = [None]):
-        for rowNum, choice in enumerate(choices):
-            handle, row = self.dataSet.InsertRow(choice)
-            self.rowHandles.insert(pos + rowNum, handle)
+    def InsertRow(self, pos, choice):
+        handle, row = self.dataSet.InsertRow(choice)
+        self.rowHandles.insert(pos, handle)
+        return row
 
     def PendingChanges(self):
         return self.dataSet.PendingChanges()
