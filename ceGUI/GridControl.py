@@ -63,13 +63,13 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def _OnContextMenu(self, event):
         x, y = self.CalcUnscrolledPosition(event.GetPosition())
-        self.contextRow = self.YToRow(y)
+        self.contextPos = self.YToRow(y)
         self.insertMenuItem.Enable(self.table.CanInsertRow())
-        deleteEnabled = self.contextRow != wx.NOT_FOUND \
-                and self.table.CanDeleteRow(self.contextRow)
+        deleteEnabled = self.contextPos != wx.NOT_FOUND \
+                and self.table.CanDeleteRow(self.contextPos)
         self.deleteMenuItem.Enable(deleteEnabled)
         self.OnContextMenu()
-        self.contextRow = None
+        self.contextPos = None
 
     def _OnCreate(self):
         self.table = self._GetTable()
@@ -78,14 +78,14 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         accelerators = self._GetAccelerators()
         self.acceleratorTable = wx.AcceleratorTable(accelerators)
         self.SetAcceleratorTable(self.acceleratorTable)
-        self.contextRow = None
+        self.contextPos = None
         super(Grid, self)._OnCreate()
 
     def _OnDelete(self):
-        if self.contextRow is None:
+        if self.contextPos is None:
             row = self.GetGridCursorRow()
         else:
-            row = self.contextRow
+            row = self.contextPos
         if not self.table.CanDeleteRow(row):
             return
         self.DeleteRows(row)
@@ -93,15 +93,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _OnInsert(self):
         if not self.table.CanInsertRow():
             return
-        if self.contextRow is None:
-            pos = self.GetGridCursorRow() + 1
-        elif self.contextRow == wx.NOT_FOUND:
-            pos = len(self.table.rowHandles) + 1
-        else:
-            pos = self.contextRow + 1
-        if len(self.table.rowHandles) == 0:
-            pos = 0
-        self.InsertRows(pos)
+        self.InsertRows()
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
@@ -150,26 +142,37 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def GetAllRows(self):
         return self.table.GetAllRows()
 
-    def GetCurrentRow(self):
-        row = self.GetGridCursorRow()
-        if row >= 0:
-            return self.table.GetRow(row)
-
     def GetInsertChoicesDialog(self, parent):
         pass
 
-    def InsertRows(self, pos, numRows = 1):
-        dialog = self.GetInsertChoicesDialog(self.GetParent())
-        if dialog is None:
-            choices = [None] * numRows
-        else:
-            if dialog.ShowModalOk():
-                choices = dialog.GetSelectedItems()
+    def GetRow(self, pos = None):
+        if pos is None:
+            pos = self.GetGridCursorRow()
+        if pos != wx.NOT_FOUND:
+            return self.table.GetRow(pos)
+
+    def InsertRows(self, pos = None, numRows = 1, choices = None):
+        if pos is None:
+            if len(self.table.rowHandles) == 0:
+                pos = 0
+            elif self.contextPos is None:
+                pos = self.GetGridCursorRow() + 1
+            elif self.contextPos == wx.NOT_FOUND:
+                pos = len(self.table.rowHandles) + 1
             else:
-                choices = []
-            dialog.Destroy()
-            if not choices:
-                return
+                pos = self.contextPos + 1
+        if choices is None:
+            dialog = self.GetInsertChoicesDialog(self.GetParent())
+            if dialog is None:
+                choices = [None] * numRows
+            else:
+                if dialog.ShowModalOk():
+                    choices = dialog.GetSelectedItems()
+                else:
+                    choices = []
+                dialog.Destroy()
+                if not choices:
+                    return
         for choiceNum, choice in enumerate(choices):
             row = self.table.InsertRow(pos + choiceNum, choice)
             self.OnInsertRow(row, choice)
@@ -178,7 +181,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.ProcessTableMessage(msg)
         self.SetGridCursor(pos, 0)
         self.MakeCellVisible(pos, 0)
-        if dialog is None:
+        if choices is None and dialog is None:
             self.EnableCellEditControl(True)
 
     def OnContextMenu(self):
