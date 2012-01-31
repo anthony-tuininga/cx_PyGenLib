@@ -56,18 +56,8 @@ class BaseControl(object):
     def ReadSetting(self, name, defaultValue = None, isComplex = False,
             converter = None):
         settingsName = self._GetSettingsName(name)
-        value = self.settings.Read(settingsName, "")
-        if not value:
-            return defaultValue
-        if isComplex:
-            converter = eval
-        if converter is not None:
-            try:
-                value = converter(value)
-            except:
-                self.settings.DeleteEntry(settingsName)
-                value = defaultValue
-        return value
+        return self.config.ReadSetting(settingsName, defaultValue, isComplex,
+                converter)
 
     def RestoreSettings(self):
         pass
@@ -77,15 +67,7 @@ class BaseControl(object):
 
     def WriteSetting(self, name, value, isComplex = False, converter = None):
         settingsName = self._GetSettingsName(name)
-        if value is None:
-            value = ""
-        else:
-            if isComplex:
-                converter = repr
-            elif converter is None:
-                converter = str
-            value = converter(value)
-        self.settings.Write(settingsName, value)
+        self.config.WriteSetting(settingsName, value, isComplex, converter)
 
 
 class CalendarField(BaseControl, wx.calendar.CalendarCtrl):
