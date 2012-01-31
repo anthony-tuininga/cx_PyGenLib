@@ -96,8 +96,35 @@ class Config(object):
     timestampFormat = "%Y/%m/%d %H:%M"
 
     def __init__(self, app):
+        self.settings = app.settings
         self.OnCreate()
 
     def OnCreate(self):
         pass
+
+    def ReadSetting(self, name, defaultValue = None, isComplex = False,
+            converter = None):
+        value = self.settings.Read(name, "")
+        if not value:
+            return defaultValue
+        if isComplex:
+            converter = eval
+        if converter is not None:
+            try:
+                value = converter(value)
+            except:
+                self.settings.DeleteEntry(settingsName)
+                value = defaultValue
+        return value
+
+    def WriteSetting(self, name, value, isComplex = False, converter = None):
+        if value is None:
+            value = ""
+        else:
+            if isComplex:
+                converter = repr
+            elif converter is None:
+                converter = str
+            value = converter(value)
+        self.settings.Write(name, value)
 
