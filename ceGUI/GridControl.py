@@ -30,6 +30,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.menu.AddSeparator()
         self.insertMenuItem = self.menu.AddEntry(self, "Insert\tCtrl-I",
                 method = self._OnInsert, passEvent = False)
+        self.insertFromClipboardMenuItem = self.menu.AddEntry(self,
+                "Insert from clipboard", method = self._OnInsertFromClipboard,
+                passEvent = False)
         self.deleteMenuItem = self.menu.AddEntry(self, "Delete\tCtrl-D",
                 method = self._OnDelete, passEvent = False)
         self.menu.AddSeparator()
@@ -101,6 +104,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if not self.table.CanInsertRow():
             return
         self.InsertRows()
+
+    def _OnInsertFromClipboard(self):
+        if not self.table.CanInsertRow():
+            return
+        self.PasteFromClipboard(insert = True)
 
     def _Resize(self, event):
         """Resize the last column of the control to take up all remaining
@@ -224,7 +232,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def OnLabelClicked(self, event):
         self.SortItems(event.GetCol())
 
-    def PasteFromClipboard(self):
+    def PasteFromClipboard(self, insert = False):
         dataObject = wx.TextDataObject()
         clipboard = wx.Clipboard()
         clipboard.Open()
@@ -232,10 +240,16 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         clipboard.Close()
         if not success:
             return
+        data = [line.split("\t") for line in dataObject.GetText().splitlines()]
+        if not data:
+            data = [[""]]
         topLeft = self.GetSelectionBlockTopLeft()
         bottomRight = self.GetSelectionBlockBottomRight()
         selection = bool(topLeft and bottomRight)
-        if topLeft and bottomRight:
+        if insert:
+            self.InsertRows(numRows = len(data))
+            selection = False
+        if selection:
             top, left = topLeft[0]
             bottom, right = bottomRight[0]
         else:
@@ -244,9 +258,6 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             bottom = self.GetNumberRows() - 1
             right = self.GetNumberCols() - 1
         rowIndex = top
-        data = [line.split("\t") for line in dataObject.GetText().splitlines()]
-        if not data:
-            data = [[""]]
         while rowIndex <= bottom:
             for row in data:
                 colIndex = left
