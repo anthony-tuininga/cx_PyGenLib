@@ -193,7 +193,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             elif self.contextPos is None:
                 pos = self.GetGridCursorRow() + 1
             elif self.contextPos == wx.NOT_FOUND:
-                pos = len(self.table.rowHandles) + 1
+                pos = len(self.table.rowHandles)
             else:
                 pos = self.contextPos + 1
         if choices is None:
