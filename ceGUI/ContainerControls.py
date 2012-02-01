@@ -389,6 +389,7 @@ class StandardDialog(Dialog):
 
 
 class TopLevelFrame(Frame):
+    preferencesDialogName = "ceGUI.PreferencesDialog"
     baseSettingsName = ""
 
     def OnAbout(self, event):
@@ -396,7 +397,8 @@ class TopLevelFrame(Frame):
         dialog.ShowModal()
 
     def OnEditPreferences(self, event):
-        dialog = ceGUI.PreferencesDialog(self)
+        cls = self._GetClass(self.preferencesDialogName)
+        dialog = cls(self)
         dialog.ShowModal()
 
     def OnExit(self, event):
