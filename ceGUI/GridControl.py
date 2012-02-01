@@ -32,12 +32,19 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 method = self._OnInsert, passEvent = False)
         self.deleteMenuItem = self.menu.AddEntry(self, "Delete\tCtrl-D",
                 method = self._OnDelete, passEvent = False)
+        self.menu.AddSeparator()
+        self.copyMenuItem = self.menu.AddEntry(self, "Copy\tCtrl-C",
+                method = self.CopyToClipboard, passEvent = False)
+        self.pasteMenuItem = self.menu.AddEntry(self, "Paste\tCtrl-V",
+                method = self.PasteFromClipboard, passEvent = False)
 
     def _GetAccelerators(self):
         return [ ( wx.ACCEL_CTRL, ord('D'), self.deleteMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('I'), self.insertMenuItem.GetId() ),
                  ( wx.ACCEL_CTRL, ord('R'), self.refreshMenuItem.GetId() ),
-                 ( wx.ACCEL_CTRL, ord('S'), self.updateMenuItem.GetId() ) ]
+                 ( wx.ACCEL_CTRL, ord('S'), self.updateMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('C'), self.copyMenuItem.GetId() ),
+                 ( wx.ACCEL_CTRL, ord('V'), self.pasteMenuItem.GetId() )]
 
     def _GetDataSet(self):
         cls = self._GetClass(self.dataSetClassName)
@@ -132,6 +139,26 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self.SetColSize(columnIndex, defaultWidth)
         return column
 
+    def CopyToClipboard(self):
+        topLeft = self.GetSelectionBlockTopLeft()
+        bottomRight = self.GetSelectionBlockBottomRight()
+        if topLeft and bottomRight:
+            top, left = topLeft[0]
+            bottom, right = bottomRight[0]
+        else:
+            top = bottom = self.GetGridCursorRow()
+            left = right = self.GetGridCursorCol()
+        columns = list(range(left, right + 1))
+        lines = []
+        for rowIndex in range(top, bottom + 1):
+            line = "\t".join(self.GetCellValue(rowIndex, c) for c in columns)
+            lines.append(line)
+        dataObject = wx.TextDataObject()
+        dataObject.SetText("\n".join(lines))
+        wx.TheClipboard.Open()
+        wx.TheClipboard.SetData(dataObject)
+        wx.TheClipboard.Close()
+
     def DeleteRows(self, row, numRows = 1):
         currentNumRows = self.table.GetNumberRows()
         wx.grid.Grid.DeleteRows(self, row, numRows)
@@ -196,6 +223,23 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def OnLabelClicked(self, event):
         self.SortItems(event.GetCol())
+
+    def PasteFromClipboard(self):
+        dataObject = wx.TextDataObject()
+        clipboard = wx.Clipboard()
+        clipboard.Open()
+        success = clipboard.GetData(dataObject)
+        clipboard.Close()
+        if not success:
+            return
+        rowIndex = self.GetGridCursorRow()
+        left = self.GetGridCursorCol()
+        for line in dataObject.GetText().splitlines():
+            colIndex = left
+            for value in line.split("\t"):
+                self.SetCellValue(rowIndex, colIndex, value)
+                colIndex += 1
+            rowIndex += 1
 
     def PendingChanges(self):
         return self.table.PendingChanges()
