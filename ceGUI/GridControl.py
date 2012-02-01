@@ -232,14 +232,37 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         clipboard.Close()
         if not success:
             return
-        rowIndex = self.GetGridCursorRow()
-        left = self.GetGridCursorCol()
-        for line in dataObject.GetText().splitlines():
-            colIndex = left
-            for value in line.split("\t"):
-                self.SetCellValue(rowIndex, colIndex, value)
-                colIndex += 1
-            rowIndex += 1
+        topLeft = self.GetSelectionBlockTopLeft()
+        bottomRight = self.GetSelectionBlockBottomRight()
+        selection = bool(topLeft and bottomRight)
+        if topLeft and bottomRight:
+            top, left = topLeft[0]
+            bottom, right = bottomRight[0]
+        else:
+            left = self.GetGridCursorCol()
+            top = self.GetGridCursorRow()
+            bottom = self.GetNumberRows() - 1
+            right = self.GetNumberCols() - 1
+        rowIndex = top
+        data = [line.split("\t") for line in dataObject.GetText().splitlines()]
+        if not data:
+            data = [[""]]
+        while rowIndex <= bottom:
+            for row in data:
+                colIndex = left
+                while colIndex <= right:
+                    for value in row:
+                        self.SetCellValue(rowIndex, colIndex, value)
+                        colIndex += 1
+                        if colIndex > right:
+                            break
+                    if not selection:
+                        break
+                rowIndex += 1
+                if rowIndex > bottom:
+                    break
+            if not selection:
+                break
 
     def PendingChanges(self):
         return self.table.PendingChanges()
