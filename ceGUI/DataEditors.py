@@ -203,6 +203,20 @@ class DataGridPanel(DataPanel):
         parent = self.GetParent().GetParent()
         parent.SetPageText(self, "%s (%s)" % (self.label, numRows))
 
+    def DeleteSelectedItems(self):
+        topLeft = self.grid.GetSelectionBlockTopLeft()
+        bottomRight = self.grid.GetSelectionBlockBottomRight()
+        if not topLeft:
+            self.grid.DeleteRows()
+        topLeft.sort()
+        bottomRight.sort()
+        blockIndex = -1
+        for top, left in reversed(topLeft):
+            bottom, right = bottomRight[blockIndex]
+            blockIndex -= 1
+            self.grid.DeleteRows(top, numRows = bottom - top + 1)
+        self.grid.ClearSelection()
+
     def OnCreate(self, postRetrieve = None):
         if postRetrieve is None:
             postRetrieve = self.postRetrieve
@@ -307,6 +321,11 @@ class DataListPanel(DataPanel):
         self._OnListChanged()
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
+
+    def DeleteSelectedItems(self):
+        items = self.list.GetSelectedItems()
+        if items and self.list.CanDeleteItems(items):
+            self.DeleteItems(items)
 
     def EditItem(self, item, itemIndex):
         dialog = self.GetEditWindow(item)

@@ -167,9 +167,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         wx.TheClipboard.SetData(dataObject)
         wx.TheClipboard.Close()
 
-    def DeleteRows(self, row, numRows = 1):
+    def DeleteRows(self, pos = None, numRows = 1):
+        if pos is None:
+            pos = self.GetGridCursorRow()
         currentNumRows = self.table.GetNumberRows()
-        wx.grid.Grid.DeleteRows(self, row, numRows)
+        wx.grid.Grid.DeleteRows(self, pos, numRows)
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, currentNumRows, numRows)
         self.ProcessTableMessage(msg)
