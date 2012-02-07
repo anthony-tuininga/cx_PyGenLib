@@ -50,6 +50,9 @@ class Application(wx.App):
             cx_Logging.LogException(exc)
         wx.MessageBox(exc.message, "Error", wx.OK | wx.ICON_EXCLAMATION,
                 parent)
+        method = getattr(exc, "method", None)
+        if method is not None:
+            method()
 
     def OnInit(self):
         self.topWindow = None
