@@ -327,10 +327,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             for column in self.table.columns:
                 exc = column.VerifyValue(row)
                 if exc is not None:
+                    exc.method = self.EnableCellEditControl
                     colIndex = self.table.columns.index(column)
                     self.SetGridCursor(rowIndex, colIndex)
                     self.MakeCellVisible(rowIndex, colIndex)
-                    self.EnableCellEditControl()
                     raise exc
 
     @property
