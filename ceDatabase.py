@@ -535,6 +535,38 @@ class DataSet(WrappedConnection):
             cursor.execute(sql, args)
 
 
+class FilteredDataSet(DataSet):
+
+    def __init__(self, parentDataSet):
+        super(FilteredDataSet, self).__init__(parentDataSet.connection)
+        self.parentDataSet = parentDataSet
+
+    def _SetRows(self, rows):
+        handlesByRow = dict((r, h) \
+                for h, r in self.parentDataSet.rows.iteritems())
+        self.rows = dict((handlesByRow[r], r) for r in rows)
+
+    def DeleteRow(self, handle):
+        super(FilteredDataSet, self).DeleteRow(handle)
+        self.parentDataSet.DeleteRow(handle)
+
+    def InsertRow(self, choice = None, row = None):
+        handle, parentRow = self.parentDataSet.InsertRow(choice, row)
+        self.insertedRows[handle] = self.rows[handle] = parentRow
+        return handle, parentRow
+
+    def Retrieve(self, *args):
+        allRows = self.parentDataSet.GetRows()
+        super(FilteredDataSet, self).Retrieve(allRows, *args)
+
+    def SetValue(self, handle, attrName, value):
+        self.parentDataSet.SetValue(handle, attrName, value)
+
+    def Update(self):
+        self.parentDataSet.Update()
+        self.ClearChanges()
+
+
 class KeyedDataSet(object):
 
     def __init__(self, dataSet, *attrNames):
