@@ -4,6 +4,7 @@ Defines classes used for manipulating grids.
 
 import ceGUI
 import datetime
+import decimal
 import wx
 import wx.grid
 
@@ -518,6 +519,20 @@ class GridColumnChoice(GridColumn):
     allowOthers = False
 
     def OnCreate(self):
+        self.RefreshChoices()
+
+    def GetSortValue(self, row):
+        value = getattr(row, self.attrName)
+        return self.displayValuesByDataValue.get(value, value)
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        displayValue = self.displayValuesByDataValue.get(value, value)
+        if displayValue is None:
+            return ""
+        return displayValue
+
+    def RefreshChoices(self):
         displayValues = []
         self.dataValuesByDisplayValue = {}
         self.displayValuesByDataValue = {}
@@ -532,17 +547,6 @@ class GridColumnChoice(GridColumn):
         editor = wx.grid.GridCellChoiceEditor(displayValues,
                 allowOthers = self.allowOthers)
         self.attr.SetEditor(editor)
-
-    def GetSortValue(self, row):
-        value = getattr(row, self.attrName)
-        return self.displayValuesByDataValue.get(value, value)
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        displayValue = self.displayValuesByDataValue.get(value, value)
-        if displayValue is None:
-            return ""
-        return displayValue
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
         value = self.dataValuesByDisplayValue.get(rawValue, rawValue)
@@ -574,7 +578,6 @@ class GridColumnDecimal(GridColumn):
     storeAsString = False
 
     def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        import decimal
         if rawValue:
             try:
                 value = decimal.Decimal(rawValue)
