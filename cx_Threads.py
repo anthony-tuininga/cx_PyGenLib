@@ -101,6 +101,12 @@ class Queue(object):
         self.queueEvent = Event()
         self.items = []
 
+    def Clear(self):
+        """Clear the queue of all items."""
+        self.lock.acquire()
+        self.items = []
+        self.lock.release()
+
     def QueueItem(self, item):
         """Add an item to end of the list of items (for queues)."""
         self.lock.acquire()
