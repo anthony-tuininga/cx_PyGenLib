@@ -32,6 +32,7 @@ class Application(wx.App):
     configClassName = "Config"
     topLevelClassName = "w_TopLevelFrame.Frame"
     version = BUILD_RELEASE_STRING
+    logMaxFilesDefault = 1
 
     def _ExceptionHandler(self, excType, excValue, excTraceback):
         exc = cx_Exceptions.GetExceptionInfo(excType, excValue, excTraceback)
@@ -91,12 +92,13 @@ class Application(wx.App):
             os.makedirs(dirName)
         levelName = self.settings.Read("LogLevel", "ERROR")
         level = getattr(cx_Logging, levelName)
-        maxFilesRaw = self.settings.Read("LogMaxFiles", "1")
+        maxFilesRaw = self.settings.Read("LogMaxFiles",
+                str(self.logMaxFilesDefault))
         try:
             maxFiles = int(maxFilesRaw)
         except:
             self.settings.DeleteEntry("LogMaxFiles")
-            maxFiles = 1
+            maxFiles = self.logMaxFilesDefault
         cx_Logging.StartLogging(fileName, level, maxFiles)
 
 
