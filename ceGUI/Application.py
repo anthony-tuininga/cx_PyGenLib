@@ -91,7 +91,13 @@ class Application(wx.App):
             os.makedirs(dirName)
         levelName = self.settings.Read("LogLevel", "ERROR")
         level = getattr(cx_Logging, levelName)
-        cx_Logging.StartLogging(fileName, level)
+        maxFilesRaw = self.settings.Read("LogMaxFiles", "1")
+        try:
+            maxFiles = int(maxFilesRaw)
+        except:
+            self.settings.DeleteEntry("LogMaxFiles")
+            maxFiles = 1
+        cx_Logging.StartLogging(fileName, level, maxFiles)
 
 
 class Config(object):
