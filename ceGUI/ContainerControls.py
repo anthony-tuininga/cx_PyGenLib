@@ -112,11 +112,15 @@ class BaseContainer(ceGUI.BaseControl):
             style |= wx.TE_READONLY
         return ceGUI.IntegerField(self, style)
 
-    def AddLabel(self, label = "", size = (-1, -1), bold = False):
+    def AddLabel(self, label = "", size = (-1, -1), bold = False,
+            pointSize = None):
         label = wx.StaticText(self, -1, label, size = size)
-        if bold:
+        if bold or pointSize is not None:
             font = label.GetFont()
-            font.SetWeight(wx.BOLD)
+            if bold:
+                font.SetWeight(wx.BOLD)
+            if pointSize is not None:
+                font.SetPointSize(pointSize)
             label.SetFont(font)
         return label
 
