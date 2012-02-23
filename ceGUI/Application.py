@@ -33,6 +33,7 @@ class Application(wx.App):
     topLevelClassName = "w_TopLevelFrame.Frame"
     version = BUILD_RELEASE_STRING
     logMaxFilesDefault = 1
+    showTopWindowOnInit = True
 
     def _ExceptionHandler(self, excType, excValue, excTraceback):
         exc = cx_Exceptions.GetExceptionInfo(excType, excValue, excTraceback)
@@ -78,7 +79,8 @@ class Application(wx.App):
         self.topWindow = self.GetTopWindow()
         if self.topWindow is not None:
             self.SetTopWindow(self.topWindow)
-            self.topWindow.Show()
+            if self.showTopWindowOnInit:
+                self.topWindow.Show()
         return True
 
     def OnStartup(self):
