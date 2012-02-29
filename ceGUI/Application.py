@@ -126,7 +126,7 @@ class Config(object):
             try:
                 value = converter(value)
             except:
-                self.settings.DeleteEntry(settingsName)
+                self.settings.DeleteEntry(name)
                 value = defaultValue
         return value
 
