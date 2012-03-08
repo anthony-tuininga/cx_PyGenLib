@@ -161,14 +161,14 @@ class DataEditPanel(DataPanel):
         return sizer
 
     def OnPostCreate(self):
-        focusField = None
+        focusControl = None
         row = self.GetRow()
         for column in self.columns:
             column.SetValue(row)
-            if focusField is None and column.IsEditable():
-                focusField = column.field
-        if focusField is not None:
-            focusField.SetFocus()
+            if focusControl is None and column.IsEditable():
+                focusControl = column.GetControlForFocus()
+        if focusControl is not None:
+            focusControl.SetFocus()
 
     def OnPreUpdate(self):
         for column in self.columns:
@@ -590,6 +590,9 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.label.Destroy()
         self.field.Destroy()
 
+    def GetControlForFocus(self):
+        return self.field
+
     def Layout(self, sizer):
         sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
         flags = wx.ALIGN_CENTER_VERTICAL
@@ -790,6 +793,11 @@ class RadioButtonEditDialogColumn(EditDialogColumn):
             field = parent.AddTextField(editable = False)
         super(RadioButtonEditDialogColumn, self).__init__(parent, attrName,
                 labelText, field)
+
+    def GetControlForFocus(self):
+        for button in self.radioButtonsByValue.values():
+            if button.GetValue():
+                return button
 
     def GetValue(self):
         if not self.editable:
