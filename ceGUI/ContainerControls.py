@@ -310,12 +310,23 @@ class Frame(BaseContainer, wx.Frame):
 
 class Panel(BaseContainer, wx.Panel):
     saveSize = savePosition = bindClose = False
+    countFieldNum = 1
 
     def __init__(self, parent, style = wx.TAB_TRAVERSAL,
             instanceName = None):
         wx.Panel.__init__(self, parent, style = style)
         self.instanceName = instanceName
         self._Initialize()
+
+    def _DisplayNumItems(self):
+        numItems = self._GetNumItems()
+        if numItems is not None:
+            topWindow = ceGUI.AppTopWindow()
+            if topWindow is not None:
+                topWindow._DisplayNumItems(numItems, self.countFieldNum)
+
+    def _GetNumItems(self):
+        pass
 
 
 class PreviewFrame(BaseContainer, wx.PreviewFrame):
@@ -395,6 +406,15 @@ class StandardDialog(Dialog):
 class TopLevelFrame(Frame):
     preferencesDialogName = "ceGUI.PreferencesDialog"
     baseSettingsName = ""
+
+    def _DisplayNumItems(self, numItems, fieldNum = 1):
+        if numItems == 0:
+            text = "No items"
+        elif numItems == 1:
+            text = "1 item"
+        else:
+            text = "%s items" % numItems
+            self.statusBar.SetStatusText(text, fieldNum)
 
     def OnAbout(self, event):
         dialog = ceGUI.AboutDialog(self)

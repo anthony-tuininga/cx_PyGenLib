@@ -10,6 +10,9 @@ __all__ = [ "ListPanel", "OrderedListPanel", "SelectListPanel" ]
 class ListPanel(ceGUI.Panel):
     listClassName = "List"
 
+    def _GetNumItems(self):
+        return self.list.GetItemCount()
+
     def OnCreate(self):
         cls = self._GetClass(self.listClassName)
         self.list = cls(self)
