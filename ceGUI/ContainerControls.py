@@ -414,7 +414,7 @@ class TopLevelFrame(Frame):
             text = "1 item"
         else:
             text = "%s items" % numItems
-            self.statusBar.SetStatusText(text, fieldNum)
+        self.statusBar.SetStatusText(text, fieldNum)
 
     def OnAbout(self, event):
         dialog = ceGUI.AboutDialog(self)
