@@ -198,6 +198,9 @@ class DataGridPanel(DataPanel):
         cls = self._GetClass(self.gridClassName)
         return cls(self)
 
+    def _GetNumItems(self):
+        return self.grid.GetNumberRows()
+
     def _UpdateLabelWithCount(self):
         numRows = len(self.grid.dataSet.rows)
         parent = self.GetParent().GetParent()
@@ -264,6 +267,9 @@ class DataListPanel(DataPanel):
     def _GetList(self):
         cls = self._GetClass(self.listClassName)
         return cls(self, wx.SUNKEN_BORDER)
+
+    def _GetNumItems(self):
+        return self.list.GetItemCount()
 
     def _OnEditItem(self, item, itemIndex, dialog):
         row = dialog.GetRow()
