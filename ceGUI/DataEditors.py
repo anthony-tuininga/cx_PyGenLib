@@ -142,6 +142,11 @@ class DataEditPanel(DataPanel):
         return cls(self, attrName, labelText, field, required, constantValue,
                 **args)
 
+    def GetColumnForAttrName(self, attrName):
+        for column in self.columns:
+            if column.attrName == attrName:
+                return column
+
     def GetFieldsSizer(self):
         sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
                 hgap = 5)
