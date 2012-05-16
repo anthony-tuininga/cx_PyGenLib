@@ -9,7 +9,7 @@ import cx_Threads
 import wx
 import sys
 
-__all__ = [ "AppTopWindow", "BusyCursorContext", "EventHandler",
+__all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "EventHandler",
             "EVT_THREAD_TERMINATED", "FrozenContext", "GetApp",
             "GetModuleItem", "OpenWindow", "RequiredFieldHasNoValue", "Thread",
             "TransactionContext" ]
@@ -83,6 +83,14 @@ class FrozenContext(object):
 
     def __exit__(self, excType, excValue, excTraceback):
         self.window.Thaw()
+
+
+class AppExit(SystemExit):
+    """Terminate the application and display an error dialog when frozen."""
+    caption = "Error"
+
+    def __init__(self, **kwargs):
+        SystemExit.__init__(self, self.message % kwargs)
 
 
 def AppTopWindow():
