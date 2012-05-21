@@ -294,13 +294,13 @@ class SubCache(object):
             if not self.allRowsLoaded:
                 self.LoadAllRows(cache)
             return path.GetCachedValue(args)
-        rows = cache.GetRowsViaPath(path, self.rowClass, args)
         if path.loadViaPathName is not None:
             loadViaPath = self.pathsByName[path.loadViaPathName]
             for row in rows:
                 loadViaArgs = loadViaPath._DatabaseArgsToCacheArgs(cache, row)
                 self.Load(cache, path.loadViaPathName, *loadViaArgs)
             return path.GetCachedValue(args)
+        rows = cache.GetRowsViaPath(path, self.rowClass, args)
         self.OnLoadRows(cache, rows)
         loadedRows = path._OnLoad(rows, args)
         if self.rowClass.sortByAttrNames \
@@ -421,9 +421,11 @@ class Cache(object):
     def GetRowsViaPath(self, path, rowFactory, args):
         values = {}
         for attrName, value in zip(path.dbRetrievalAttrNames, args):
-            if isinstance(arg, ceDatabase.Row):
-                value = getattr(arg, attrName)
+            if isinstance(value, ceDatabase.Row):
+                value = getattr(value, attrName)
             values[attrName] = value
+        if path.rowFactoryCacheMethodName is not None:
+            rowFactory = getattr(self, path.rowFactoryCacheMethodName)
         return self.dataSource.GetRowsDirect(path.sql, values, rowFactory)
 
     def InitializePath(self, path, rowClass, attrNames):
