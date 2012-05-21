@@ -21,8 +21,7 @@ def _NormalizeValue(bases, classDict, name):
 
 class RowMetaClass(type):
     """Metaclass for rows which automatically builds a constructor function
-       which can then be used by ceODBC and cx_Oracle as a cursor row
-       factory."""
+       which can then be used by ceODBC and cx_Oracle as a row factory."""
 
     def __new__(cls, name, bases, classDict):
         attrNames = _NormalizeValue(bases, classDict, "attrNames")
@@ -108,32 +107,6 @@ class Row(object):
         return tuple(values)
 
 
-def NewRowClass(name, attrNames):
-    return type(name, (Row,), dict(attrNames = attrNames, reprName = name))
-
-
-class WrappedConnection(object):
-
-    def __init__(self, connection):
-        self.connection = connection
-        self.isOracle = self._IsOracle(type(connection))
-
-    def _GetWhereClauses(self, names, paramsUsed = 0):
-        if self.isOracle:
-            return ["%s = :%s" % (n, paramsUsed + i + 1) \
-                    for i, n in enumerate(names)]
-        else:
-            return ["%s = ?" % n for n in names]
-
-    def _IsOracle(self, cls):
-        if cls.__module__ == "cx_Oracle":
-            return True
-        for base in cls.__bases__:
-            if self._IsOracle(base):
-                return True
-        return False
-
-
 class DataSetMetaClass(type):
     """Metaclass for data sets which sets up the class used for retrieval and
        other data manipulation routines."""
@@ -162,7 +135,7 @@ class DataSetMetaClass(type):
                 dict([(n, i) for i, n in enumerate(cls.retrievalAttrNames)])
 
 
-class DataSet(WrappedConnection):
+class DataSet(object):
     """Base class for data sets which allows for retrieval, insert, update and
        deletion of rows in a database."""
     __metaclass__ = DataSetMetaClass
@@ -186,8 +159,8 @@ class DataSet(WrappedConnection):
     pkSequenceName = None
     useSlots = True
 
-    def __init__(self, connection, contextItem = None):
-        super(DataSet, self).__init__(connection)
+    def __init__(self, dataSource, contextItem = None):
+        self.dataSource = dataSource
         self.childDataSets = []
         self.contextItem = contextItem
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
@@ -195,9 +168,9 @@ class DataSet(WrappedConnection):
             self.updateTableName = self.tableName
         self.Clear()
 
-    def _DeleteRowsInDatabase(self, cursor):
+    def _DeleteRowsInDatabase(self, dataSourceContext):
         for row in self.deletedRows.itervalues():
-            self.DeleteRowInDatabase(cursor, row)
+            self.DeleteRowInDatabase(dataSourceContext, row)
 
     def _GetArgsFromNames(self, names, row = None):
         args = []
@@ -227,28 +200,19 @@ class DataSet(WrappedConnection):
         return handle
 
     def _GetRows(self, *args):
-        sql = self._GetSqlForRetrieve()
-        cursor = self.connection.cursor()
-        cursor.execute(sql, args)
-        cursor.rowfactory = self.rowClass
+        conditions = dict(zip(self.retrievalAttrNames, args))
         self.retrievalArgs = args
-        rows = cursor.fetchall()
+        rows = self.dataSource.GetRows(self.tableName, self.attrNames,
+                self.rowClass, **conditions)
         if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
             if self.rowClass.sortReversed:
                 rows.reverse()
         return rows
 
-    def _GetSqlForRetrieve(self):
-        sql = "select %s from %s" % (", ".join(self.attrNames), self.tableName)
-        if self.retrievalAttrNames:
-            whereClauses = self._GetWhereClauses(self.retrievalAttrNames)
-            sql += " where %s" % " and ".join(whereClauses)
-        return sql
-
-    def _InsertRowsInDatabase(self, cursor):
+    def _InsertRowsInDatabase(self, dataSourceContext):
         for row in self.insertedRows.itervalues():
-            self.InsertRowInDatabase(cursor, row)
+            self.InsertRowInDatabase(dataSourceContext, row)
 
     def _OnDeleteRow(self, row):
         pass
@@ -275,23 +239,23 @@ class DataSet(WrappedConnection):
             return str(value)
         return value
 
-    def _Update(self, cursor):
+    def _Update(self, dataSourceContext):
         if self.deletedRows:
-            self._DeleteRowsInDatabase(cursor)
+            self._DeleteRowsInDatabase(dataSourceContext)
         if self.updatedRows:
-            self._UpdateRowsInDatabase(cursor)
+            self._UpdateRowsInDatabase(dataSourceContext)
         if self.insertedRows:
-            self._InsertRowsInDatabase(cursor)
+            self._InsertRowsInDatabase(dataSourceContext)
         for dataSet in self.childDataSets:
-            dataSet._Update(cursor)
+            dataSet._Update(dataSourceContext)
 
-    def _UpdateRowsInDatabase(self, cursor):
+    def _UpdateRowsInDatabase(self, dataSourceContext):
         for handle, origRow in self.updatedRows.iteritems():
             row = self.rows[handle]
-            self.UpdateRowInDatabase(cursor, row, origRow)
+            self.UpdateRowInDatabase(dataSourceContext, row, origRow)
 
     def AddChildDataSet(self, cls, contextItem = None):
-        dataSet = cls(self.connection, contextItem)
+        dataSet = cls(self.dataSource, contextItem)
         self.childDataSets.append(dataSet)
         return dataSet
 
@@ -327,26 +291,20 @@ class DataSet(WrappedConnection):
                 self.updatedRows.pop(handle)
             self.deletedRows[handle] = row
 
-    def DeleteRowInDatabase(self, cursor, row):
+    def DeleteRowInDatabase(self, dataSourceContext, row):
         args = self._GetArgsFromNames(self.pkAttrNames, row)
         if self.updatePackageName is not None:
             fullProcedureName = "%s.%s" % \
                     (self.updatePackageName, self.deleteProcedureName)
-            cursor.callproc(fullProcedureName, args)
+            self.dataSource.CallProcedure(fullProcedureName, *args)
         else:
-            clauses = self._GetWhereClauses(self.pkAttrNames)
-            sql = "delete from %s where %s" % \
-                    (self.updateTableName, " and ".join(clauses))
-            cursor.execute(sql, args)
+            conditions = dict(zip(self.pkAttrNames, args))
+            whereClause, args = \
+                    self.dataSource.GetWhereClauseAndArgs(**conditions)
+            self.dataSource.DeleteRows(self.updateTableName, **conditions)
 
-    def GetGeneratedPrimaryKey(self, cursor):
-        if self.isOracle:
-            sql = "select %s.nextval from dual" % self.pkSequenceName
-        else:
-            sql = "select nextval('%s')::integer" % self.pkSequenceName
-        cursor.execute(sql)
-        value, = cursor.fetchone()
-        return value
+    def GetGeneratedPrimaryKey(self, dataSourceContext):
+        return self.dataSource.GetSequenceValue(self.pkSequenceName)
 
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, *attrNames)
@@ -372,10 +330,10 @@ class DataSet(WrappedConnection):
         self.insertedRows[handle] = self.rows[handle] = row
         return handle, row
 
-    def InsertRowInDatabase(self, cursor, row):
+    def InsertRowInDatabase(self, dataSourceContext, row):
         if self.pkIsGenerated and self.pkSequenceName is not None:
             attrName = self.pkAttrNames[0]
-            value = self.GetGeneratedPrimaryKey(cursor)
+            value = self.GetGeneratedPrimaryKey(dataSourceContext)
             setattr(row, attrName, value)
         if self.insertAttrNames:
             names = self.insertAttrNames
@@ -390,26 +348,19 @@ class DataSet(WrappedConnection):
                     (self.updatePackageName, self.insertProcedureName)
             if self.pkIsGenerated:
                 attrName = self.pkAttrNames[0]
-                value = cursor.callfunc(fullProcedureName, int, args)
+                value = self.dataSource.CallFunction(fullProcedureName, int,
+                        *args)
                 setattr(row, attrName, value)
             else:
-                cursor.callproc(fullProcedureName, args)
+                self.dataSource.CallProcedure(fullProcedureName, *args)
         else:
-            if self.isOracle:
-                values = [":%s" % i for i in range(len(names))]
-            else:
-                values = ["?"] * len(names)
-            sql = "insert into %s (%s) values (%s)" % \
-                    (self.updateTableName, ",".join(names), ",".join(values))
-            cursor.execute(sql, args)
+            values = dict(zip(names, args))
+            self.dataSource.InsertRow(self.updateTableName, **values)
             if self.pkIsGenerated and self.pkSequenceName is None:
-                whereClauses = ["%s = ?" % n for n in self.uniqueAttrNames]
-                sql = "select %s from %s where %s" % \
-                        (",".join(self.pkAttrNames), self.tableName,
-                        " and ".join(whereClauses))
                 args = self._GetArgsFromNames(self.uniqueAttrNames, row)
-                cursor.execute(sql, args)
-                pkValues, = cursor.fetchall()
+                conditions = dict(zip(self.uniqueAttrNames, args))
+                pkValues, = self.dataSource.GetRows(self.tableName,
+                        self.pkAttrNames, **conditions)
                 for attrIndex, value in enumerate(pkValues):
                     setattr(row, self.pkAttrNames[attrIndex], value)
 
@@ -473,33 +424,23 @@ class DataSet(WrappedConnection):
             cx_Logging.Debug("no update to perform")
             return
         self._PreUpdate()
-        cursor = self.connection.cursor()
-        try:
-            self._Update(cursor)
-            self.connection.commit()
-        except:
-            self.connection.rollback()
-            raise
+        with self.dataSource as dataSourceContext:
+            self._Update(dataSourceContext)
         self.ClearChanges()
         self._PostUpdate()
 
     def UpdateSingleRow(self, handle):
-        cursor = self.connection.cursor()
-        try:
+        with self.dataSource as dataSourceContext:
             if handle in self.insertedRows:
                 row = self.insertedRows[handle]
-                self.InsertRowInDatabase(cursor, row)
+                self.InsertRowInDatabase(dataSourceContext, row)
             elif handle in self.updatedRows:
                 origRow = self.updatedRows[handle]
                 row = self.rows[handle]
-                self.UpdateRowInDatabase(cursor, row, origRow)
+                self.UpdateRowInDatabase(dataSourceContext, row, origRow)
             elif handle in self.deletedRows:
                 row = self.deletedRows[handle]
-                self.DeleteRowInDatabase(cursor, row)
-            self.connection.commit()
-        except:
-            self.connection.rollback()
-            raise
+                self.DeleteRowInDatabase(dataSourceContext, row)
         if handle in self.insertedRows:
             del self.insertedRows[handle]
         elif handle in self.updatedRows:
@@ -507,7 +448,7 @@ class DataSet(WrappedConnection):
         elif handle in self.deletedRows:
             del self.deletedRows[handle]
 
-    def UpdateRowInDatabase(self, cursor, row, origRow):
+    def UpdateRowInDatabase(self, dataSourceContext, row, origRow):
         if self.updateAttrNames:
             dataAttrNames = self.updateAttrNames
         else:
@@ -518,27 +459,20 @@ class DataSet(WrappedConnection):
                     self._GetArgsFromNames(dataAttrNames, row)
             fullProcedureName = "%s.%s" % \
                     (self.updatePackageName, self.updateProcedureName)
-            cursor.callproc(fullProcedureName, args)
+            self.dataSource.CallProcedure(fullProcedureName, *args)
         else:
-            args = self._GetArgsFromNames(dataAttrNames, row) + \
-                    self._GetArgsFromNames(self.pkAttrNames, origRow)
-            if self.isOracle:
-                setClauses = ["%s = :%s" % (n, i + 1) \
-                        for i, n in enumerate(dataAttrNames)]
-            else:
-                setClauses = ["%s = ?" % n for n in dataAttrNames]
-            whereClauses = self._GetWhereClauses(self.pkAttrNames,
-                    len(setClauses))
-            sql = "update %s set %s where %s" % \
-                    (self.updateTableName, ", ".join(setClauses),
-                    " and ".join(whereClauses))
-            cursor.execute(sql, args)
+            updateArgs = self._GetArgsFromNames(dataAttrNames, row)
+            values = dict(zip(dataAttrNames, updateArgs))
+            whereArgs = self._GetArgsFromNames(self.pkAttrNames, origRow)
+            values.update(dict(zip(self.pkAttrNames, whereArgs)))
+            self.dataSource.UpdateRows(self.updateTableName, *self.pkAttrNames,
+                    **values)
 
 
 class FilteredDataSet(DataSet):
 
     def __init__(self, parentDataSet):
-        super(FilteredDataSet, self).__init__(parentDataSet.connection)
+        super(FilteredDataSet, self).__init__(parentDataSet.dataSource)
         self.parentDataSet = parentDataSet
 
     def _SetRows(self, rows):

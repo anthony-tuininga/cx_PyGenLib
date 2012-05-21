@@ -50,11 +50,7 @@ class Path(object):
         else:
             cls = subCache.pathClassesByName[self.loadViaPathName]
             attrNames = cls.dbRetrievalAttrNames
-        self.sql = "select %s from %s" % \
-                (",".join(attrNames), rowClass.tableName)
-        if self.dbRetrievalAttrNames:
-            whereClauses = cache._GetWhereClauses(self.dbRetrievalAttrNames)
-            self.sql += " where %s" % " and ".join(whereClauses)
+        cache.InitializePath(self, rowClass, attrNames)
         self.Clear()
 
     @classmethod
@@ -84,21 +80,6 @@ class Path(object):
                 value = method(value)
             cacheArgs.append(value)
         return cacheArgs
-
-    def _GetRows(self, cache, rowFactory, args):
-        dbArgs = []
-        for attrName, arg in zip(self.dbRetrievalAttrNames, args):
-            if not isinstance(arg, ceDatabase.Row):
-                dbArgs.append(arg)
-            else:
-                dbArgs.append(getattr(arg, attrName))
-        cursor = cache.connection.cursor()
-        cursor.execute(self.sql, dbArgs)
-        if self.rowFactoryCacheMethodName is not None:
-            cursor.rowfactory = getattr(cache, self.rowFactoryCacheMethodName)
-        elif self.loadViaPathName is None:
-            cursor.rowfactory = rowFactory
-        return cursor.fetchall()
 
     def Clear(self):
         self.rows.clear()
@@ -313,7 +294,7 @@ class SubCache(object):
             if not self.allRowsLoaded:
                 self.LoadAllRows(cache)
             return path.GetCachedValue(args)
-        rows = path._GetRows(cache, self.rowClass, args)
+        rows = cache.GetRowsViaPath(path, self.rowClass, args)
         if path.loadViaPathName is not None:
             loadViaPath = self.pathsByName[path.loadViaPathName]
             for row in rows:
@@ -334,7 +315,7 @@ class SubCache(object):
     def LoadAllRows(self, cache):
         cx_Logging.Debug("%s: loading all rows", self.name)
         path = Path(cache, self)
-        rows = path._GetRows(cache, self.rowClass, ())
+        rows = cache.GetRowsViaPath(path, self.rowClass, ())
         if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
             if self.rowClass.sortReversed:
@@ -420,12 +401,12 @@ class CacheMetaClass(type):
                 value._GenerateCacheMethods(cls)
 
 
-class Cache(ceDatabase.WrappedConnection):
+class Cache(object):
     __metaclass__ = CacheMetaClass
     subCacheClasses = {}
 
-    def __init__(self, connection):
-        super(Cache, self).__init__(connection)
+    def __init__(self, dataSource):
+        self.dataSource = dataSource
         self.subCaches = []
         for cls in self.subCacheClasses.itervalues():
             subCache = cls(self)
@@ -436,4 +417,17 @@ class Cache(ceDatabase.WrappedConnection):
     def Clear(self):
         for subCache in self.subCaches:
             subCache.Clear()
+
+    def GetRowsViaPath(self, path, rowFactory, args):
+        values = {}
+        for attrName, value in zip(path.dbRetrievalAttrNames, args):
+            if isinstance(arg, ceDatabase.Row):
+                value = getattr(arg, attrName)
+            values[attrName] = value
+        return self.dataSource.GetRowsDirect(path.sql, values, rowFactory)
+
+    def InitializePath(self, path, rowClass, attrNames):
+        conditions = dict((n, "DUMMY") for n in path.dbRetrievalAttrNames)
+        path.sql, args = self.dataSource.GetSqlAndArgs(rowClass.tableName,
+                attrNames, **conditions)
 

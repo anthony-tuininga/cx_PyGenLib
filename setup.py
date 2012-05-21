@@ -12,6 +12,7 @@ from distutils.core import setup
 modules = [
         "ceDatabase",
         "ceDatabaseCache",
+        "ceDataSource",
         "cx_ClassLibrary",
         "cx_CVS",
         "cx_DatabaseTable",
