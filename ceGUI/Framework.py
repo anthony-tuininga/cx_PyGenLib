@@ -141,17 +141,17 @@ class RequiredFieldHasNoValue(cx_Exceptions.BaseException):
 
 class TransactionContext(BusyCursorContext):
     
-    def __init__(self, connection, parent = None, raiseException = False):
+    def __init__(self, dataSource, parent = None, raiseException = False):
         super(TransactionContext, self).__init__(parent, raiseException)
-        self.connection = connection
+        self.dataSource = dataSource
 
     def __exit__(self, excType, excValue, excTraceback):
         if excValue is None:
             cx_Logging.Debug("transaction succeeded, committing")
-            self.connection.commit()
+            self.dataSource.commit()
         else:
             cx_Logging.Debug("transaction failed, rolling back")
-            self.connection.rollback()
+            self.dataSource.rollback()
             return super(TransactionContext, self).__exit__(excType, excValue,
                     excTraceback)
 

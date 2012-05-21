@@ -51,7 +51,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def _GetDataSet(self):
         if self.dataSetClassName is not None:
             cls = self._GetClass(self.dataSetClassName)
-            return cls(self.config.connection)
+            return cls(self.config.dataSource)
 
     def _GetItemIndexesWithState(self, state):
         itemIndex = -1

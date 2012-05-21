@@ -52,7 +52,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def _GetDataSet(self):
         cls = self._GetClass(self.dataSetClassName)
-        return cls(self.config.connection)
+        return cls(self.config.dataSource)
 
     def _GetTable(self):
         dataSet = self._GetDataSet()

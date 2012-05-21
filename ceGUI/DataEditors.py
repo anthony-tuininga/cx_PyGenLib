@@ -33,7 +33,7 @@ class EditDialog(ceGUI.StandardDialog):
 
     def _GetDataSet(self, parent):
         cls = self._GetClass(self.dataSetClassName)
-        return cls(parent.config.connection, self.parentItem)
+        return cls(parent.config.dataSource, self.parentItem)
 
     def GetRow(self):
         return self.dataSet.rows[0]
