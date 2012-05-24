@@ -4,6 +4,7 @@ Define classes and methods suitable for accessing databases in a generic way.
 
 import cx_Logging
 import datetime
+import decimal
 
 def _NormalizeValue(bases, classDict, name):
     """Helper routine for row metaclass."""
@@ -28,6 +29,8 @@ class RowMetaClass(type):
         extraAttrNames = _NormalizeValue(bases, classDict, "extraAttrNames")
         charBooleanAttrNames = \
                 _NormalizeValue(bases, classDict, "charBooleanAttrNames")
+        decimalAttrNames = \
+                _NormalizeValue(bases, classDict, "decimalAttrNames")
         pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
@@ -40,6 +43,9 @@ class RowMetaClass(type):
         for attrName in attrNames + extraAttrNames:
             if attrName in charBooleanAttrNames:
                 value = '%s in ("Y", "1", True)' % attrName
+            elif attrName in decimalAttrNames:
+                value = '%s and decimal.Decimal(%s) or None' % \
+                        (attrName, attrName)
             else:
                 value = "%s" % attrName
             initLines.append("    self.%s = %s\n" % (attrName, value))
@@ -48,7 +54,7 @@ class RowMetaClass(type):
             codeString = "def __init__(self, %s):\n%s" % \
                     (", ".join(initArgs), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
-            exec code in dict(), classDict
+            exec code in dict(decimal = decimal), classDict
         return type.__new__(cls, name, bases, classDict)
 
     def New(cls):
@@ -63,6 +69,7 @@ class Row(object):
     attrNames = []
     extraAttrNames = []
     charBooleanAttrNames = []
+    decimalAttrNames = []
     sortByAttrNames = []
     reprAttrNames = []
     pkAttrNames = []
@@ -117,6 +124,7 @@ class DataSetMetaClass(type):
             classDict = dict(attrNames = cls.attrNames,
                     extraAttrNames = cls.extraAttrNames,
                     charBooleanAttrNames = cls.charBooleanAttrNames,
+                    decimalAttrNames = cls.decimalAttrNames,
                     pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
                     sortByAttrNames = cls.sortByAttrNames,
                     sortReversed = cls.sortReversed)
@@ -149,6 +157,7 @@ class DataSet(object):
     extraAttrNames = []
     pkAttrNames = []
     charBooleanAttrNames = []
+    decimalAttrNames = []
     retrievalAttrNames = []
     sortByAttrNames = []
     sortReversed = False
