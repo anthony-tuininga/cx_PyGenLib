@@ -42,9 +42,10 @@ class DatabaseDataSource(DataSource):
 
     def __init__(self, connection):
         self.connection = connection
+        self.cursor = connection.cursor()
 
     def __enter__(self):
-        return self.connection.cursor()
+        return self.cursor
 
     def __exit__(self, excType, excValue, tb):
         if excType is None and excValue is None and tb is None:
@@ -59,20 +60,17 @@ class DatabaseDataSource(DataSource):
         raise NotImplementedError
 
     def CallFunction(self, functionName, returnType, *args):
-        cursor = self.connection.cursor()
-        return cursor.callfunc(functionName, returnType, args)
+        return self.cursor.callfunc(functionName, returnType, args)
 
     def CallProcedure(self, procedureName, *args):
-        cursor = self.connection.cursor()
-        return cursor.callproc(procedureName, args)
+        return self.cursor.callproc(procedureName, args)
 
     def DeleteRows(self, tableName, **conditions):
         whereClause, args = self.GetWhereClauseAndArgs(**conditions)
         sql = "delete from %s" % tableName
         if whereClause is not None:
             sql += " where " + whereClause
-        cursor = self.connection.cursor()
-        cursor.execute(sql, args)
+        self.cursor.execute(sql, args)
 
     def GetSqlAndArgs(self, tableName, columnNames, **conditions):
         sql = "select %s from %s" % (", ".join(columnNames), tableName)
@@ -102,11 +100,10 @@ class DatabaseDataSource(DataSource):
         return whereClause, args
 
     def GetRowsDirect(self, sql, args, rowFactory = None):
-        cursor = self.connection.cursor()
-        cursor.execute(sql, args)
+        self.cursor.execute(sql, args)
         if rowFactory is not None:
-            cursor.rowfactory = rowFactory
-        return cursor.fetchall()
+            self.cursor.rowfactory = rowFactory
+        return self.cursor.fetchall()
 
 
 class OracleDataSource(DatabaseDataSource):
@@ -165,9 +162,8 @@ class OracleDataSource(DatabaseDataSource):
         return {}
 
     def GetSequenceValue(self, sequenceName):
-        cursor = self.connection.cursor()
-        cursor.execute("select %s.nextval from dual" % sequenceName)
-        value, = cursor.fetchone()
+        self.cursor.execute("select %s.nextval from dual" % sequenceName)
+        value, = self.cursor.fetchone()
         return value
 
     def InsertRow(self, tableName, **values):
@@ -175,8 +171,7 @@ class OracleDataSource(DatabaseDataSource):
         insertValues = [":%s" % n for n in insertNames]
         sql = "insert into %s (%s) values (%s)" % \
                 (tableName, insertNames, insertValues)
-        cursor = self.connection.cursor()
-        cursor.execute(sql, values)
+        self.cursor.execute(sql, values)
 
     def UpdateRows(self, tableName, *whereNames, **values):
         setClauses = ["%s = :%s" % (n, n) for n in values \
@@ -184,8 +179,7 @@ class OracleDataSource(DatabaseDataSource):
         whereClauses = ["%s = :%s" % (n, n) for n in whereNames]
         statement = "update %s set %s where %s" % \
                 (tableName, ",".join(setClauses), " and ".join(whereClauses))
-        cursor = self.connection.cursor()
-        cursor.execute(statement, args)
+        self.cursor.execute(statement, args)
 
 
 class SqlServerDataSource(DatabaseDataSource):
@@ -194,9 +188,8 @@ class SqlServerDataSource(DatabaseDataSource):
         return []
 
     def GetSequenceValue(self, sequenceName):
-        cursor = self.connection.cursor()
-        cursor.execute("select nextval('%s')::integer" % sequenceName)
-        value, = cursor.fetchone()
+        self.cursor.execute("select nextval('%s')::integer" % sequenceName)
+        value, = self.cursor.fetchone()
         return value
 
     def UpdateRows(self, tableName, *whereNames, **values):
@@ -206,6 +199,5 @@ class SqlServerDataSource(DatabaseDataSource):
         whereClauses = ["%s = ?" % (n, n) for n in whereNames]
         statement = "update %s set %s where %s" % \
                 (tableName, ",".join(setClauses), " and ".join(whereClauses))
-        cursor = self.connection.cursor()
-        cursor.execute(statement, args)
+        self.cursor.execute(statement, args)
 
