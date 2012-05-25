@@ -32,6 +32,7 @@ class RowMetaClass(type):
         decimalAttrNames = \
                 _NormalizeValue(bases, classDict, "decimalAttrNames")
         clobAttrNames = _NormalizeValue(bases, classDict, "clobAttrNames")
+        blobAttrNames = _NormalizeValue(bases, classDict, "blobAttrNames")
         pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
@@ -48,6 +49,10 @@ class RowMetaClass(type):
                 value = '%s and decimal.Decimal(%s) or None' % \
                         (attrName, attrName)
             elif attrName in clobAttrNames:
+                format = '%s if %s is None or isinstance(%s, basestring) ' \
+                         'else %s.read()'
+                value = format % (attrName, attrName, attrName, attrName)
+            elif attrName in blobAttrNames:
                 format = '%s if %s is None or isinstance(%s, basestring) ' \
                          'else %s.read()'
                 value = format % (attrName, attrName, attrName, attrName)
@@ -76,6 +81,7 @@ class Row(object):
     charBooleanAttrNames = []
     decimalAttrNames = []
     clobAttrNames = []
+    blobAttrNames = []
     sortByAttrNames = []
     reprAttrNames = []
     pkAttrNames = []
@@ -132,6 +138,7 @@ class DataSetMetaClass(type):
                     charBooleanAttrNames = cls.charBooleanAttrNames,
                     decimalAttrNames = cls.decimalAttrNames,
                     clobAttrNames = cls.clobAttrNames,
+                    blobAttrNames = cls.blobAttrNames,
                     pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
                     sortByAttrNames = cls.sortByAttrNames,
                     sortReversed = cls.sortReversed)
@@ -176,6 +183,7 @@ class DataSet(object):
     charBooleanAttrNames = []
     decimalAttrNames = []
     clobAttrNames = []
+    blobAttrNames = []
     retrievalAttrNames = []
     sortByAttrNames = []
     sortReversed = False
