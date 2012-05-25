@@ -31,6 +31,7 @@ class RowMetaClass(type):
                 _NormalizeValue(bases, classDict, "charBooleanAttrNames")
         decimalAttrNames = \
                 _NormalizeValue(bases, classDict, "decimalAttrNames")
+        clobAttrNames = _NormalizeValue(bases, classDict, "clobAttrNames")
         pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
@@ -46,6 +47,10 @@ class RowMetaClass(type):
             elif attrName in decimalAttrNames:
                 value = '%s and decimal.Decimal(%s) or None' % \
                         (attrName, attrName)
+            elif attrName in clobAttrNames:
+                format = '%s if %s is None or isinstance(%s, basestring) ' \
+                         'else %s.read()'
+                value = format % (attrName, attrName, attrName, attrName)
             else:
                 value = "%s" % attrName
             initLines.append("    self.%s = %s\n" % (attrName, value))
@@ -70,6 +75,7 @@ class Row(object):
     extraAttrNames = []
     charBooleanAttrNames = []
     decimalAttrNames = []
+    clobAttrNames = []
     sortByAttrNames = []
     reprAttrNames = []
     pkAttrNames = []
@@ -125,6 +131,7 @@ class DataSetMetaClass(type):
                     extraAttrNames = cls.extraAttrNames,
                     charBooleanAttrNames = cls.charBooleanAttrNames,
                     decimalAttrNames = cls.decimalAttrNames,
+                    clobAttrNames = cls.clobAttrNames,
                     pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
                     sortByAttrNames = cls.sortByAttrNames,
                     sortReversed = cls.sortReversed)
@@ -141,6 +148,16 @@ class DataSetMetaClass(type):
             cls.retrievalAttrNames = cls.retrievalAttrNames.split()
         cls.retrievalAttrIndexes = \
                 dict([(n, i) for i, n in enumerate(cls.retrievalAttrNames)])
+        if not cls.insertAttrNames:
+            if cls.pkIsGenerated and cls.pkSequenceName is None:
+                names = [n for n in cls.attrNames if n not in cls.pkAttrNames]
+            else:
+                names = [n for n in cls.retrievalAttrNames \
+                        if n not in cls.attrNames] + cls.attrNames
+            cls.insertAttrNames = names
+        if not cls.updateAttrNames:
+            cls.updateAttrNames = [n for n in cls.attrNames \
+                    if n not in cls.pkAttrNames]
 
 
 class DataSet(object):
@@ -158,6 +175,7 @@ class DataSet(object):
     pkAttrNames = []
     charBooleanAttrNames = []
     decimalAttrNames = []
+    clobAttrNames = []
     retrievalAttrNames = []
     sortByAttrNames = []
     sortReversed = False
@@ -344,14 +362,7 @@ class DataSet(object):
             attrName = self.pkAttrNames[0]
             value = self.GetGeneratedPrimaryKey(dataSourceContext)
             setattr(row, attrName, value)
-        if self.insertAttrNames:
-            names = self.insertAttrNames
-        elif self.pkIsGenerated and self.pkSequenceName is None:
-            names = [n for n in self.attrNames if n not in self.pkAttrNames]
-        else:
-            names = [n for n in self.retrievalAttrNames \
-                    if n not in self.attrNames] + self.attrNames
-        args = self._GetArgsFromNames(names, row)
+        args = self._GetArgsFromNames(self.insertAttrNames, row)
         if self.updatePackageName is not None:
             fullProcedureName = "%s.%s" % \
                     (self.updatePackageName, self.insertProcedureName)
@@ -363,7 +374,7 @@ class DataSet(object):
             else:
                 self.dataSource.CallProcedure(fullProcedureName, *args)
         else:
-            values = dict(zip(names, args))
+            values = dict(zip(self.insertAttrNames, args))
             self.dataSource.InsertRow(self.updateTableName, **values)
             if self.pkIsGenerated and self.pkSequenceName is None:
                 args = self._GetArgsFromNames(self.uniqueAttrNames, row)
@@ -458,20 +469,15 @@ class DataSet(object):
             del self.deletedRows[handle]
 
     def UpdateRowInDatabase(self, dataSourceContext, row, origRow):
-        if self.updateAttrNames:
-            dataAttrNames = self.updateAttrNames
-        else:
-            dataAttrNames = [n for n in self.attrNames \
-                    if n not in self.pkAttrNames]
         if self.updatePackageName is not None:
             args = self._GetArgsFromNames(self.pkAttrNames, origRow) + \
-                    self._GetArgsFromNames(dataAttrNames, row)
+                    self._GetArgsFromNames(self.updateAttrNames, row)
             fullProcedureName = "%s.%s" % \
                     (self.updatePackageName, self.updateProcedureName)
             self.dataSource.CallProcedure(fullProcedureName, *args)
         else:
-            updateArgs = self._GetArgsFromNames(dataAttrNames, row)
-            values = dict(zip(dataAttrNames, updateArgs))
+            updateArgs = self._GetArgsFromNames(self.updateAttrNames, row)
+            values = dict(zip(self.updateAttrNames, updateArgs))
             whereArgs = self._GetArgsFromNames(self.pkAttrNames, origRow)
             values.update(dict(zip(self.pkAttrNames, whereArgs)))
             self.dataSource.UpdateRows(self.updateTableName, *self.pkAttrNames,
