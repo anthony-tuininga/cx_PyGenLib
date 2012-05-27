@@ -302,7 +302,7 @@ class DataListPanel(DataPanel):
         parent.SetPageText(self, "%s (%s)" % (self.label, numRows))
 
     def _UpdateListItem(self, item, row, itemIndex = None):
-        for attrName in item.attrNames:
+        for attrName in item.attrNames + item.extraAttrNames:
             if not hasattr(row, attrName):
                 continue
             value = getattr(row, attrName)
