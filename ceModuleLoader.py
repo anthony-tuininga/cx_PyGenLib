@@ -3,6 +3,7 @@ Module loader which generates a module from a script but only for as long as is
 needed by the use of a context variable.
 """
 
+import cx_Exceptions
 import imp
 import sys
 import types
@@ -85,4 +86,12 @@ class NamespaceLoader(object):
         code = compile(moduleOrScript, "<generated>", "exec")
         exec code in module.__dict__
         return module
+
+
+class AttributeNotFound(cx_Exceptions.BaseException):
+    message = 'Attribute named "%(name)s" not found in script text.'
+
+
+class AttributeIsOfWrongClass(cx_Exceptions.BaseException):
+    message = 'Attribute "%(name)s" must be of class "%(requiredClass)s".'
 
