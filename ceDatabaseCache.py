@@ -44,13 +44,12 @@ class Path(object):
 
     def __init__(self, cache, subCache):
         self.rows = {}
-        rowClass = subCache.rowClass
+        self.rowClass = subCache.rowClass
         if self.loadViaPathName is None:
-            attrNames = self.attrNames or rowClass.attrNames
+            self.selectAttrNames = self.attrNames or self.rowClass.attrNames
         else:
             cls = subCache.pathClassesByName[self.loadViaPathName]
-            attrNames = cls.dbRetrievalAttrNames
-        cache.InitializePath(self, rowClass, attrNames)
+            self.selectAttrNames = cls.dbRetrievalAttrNames
         self.Clear()
 
     @classmethod
@@ -419,17 +418,13 @@ class Cache(object):
             subCache.Clear()
 
     def GetRowsViaPath(self, path, rowFactory, args):
-        values = {}
+        conditions = {}
         for attrName, value in zip(path.dbRetrievalAttrNames, args):
             if isinstance(value, ceDatabase.Row):
                 value = getattr(value, attrName)
-            values[attrName] = value
+            conditions[attrName] = value
         if path.rowFactoryCacheMethodName is not None:
             rowFactory = getattr(self, path.rowFactoryCacheMethodName)
-        return self.dataSource.GetRowsDirect(path.sql, values, rowFactory)
-
-    def InitializePath(self, path, rowClass, attrNames):
-        conditions = dict((n, "DUMMY") for n in path.dbRetrievalAttrNames)
-        path.sql, args = self.dataSource.GetSqlAndArgs(rowClass.tableName,
-                attrNames, **conditions)
+        return self.dataSource.GetRows(path.rowClass.tableName,
+                path.selectAttrNames, rowFactory, **conditions)
 
