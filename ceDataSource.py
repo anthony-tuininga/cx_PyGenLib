@@ -50,7 +50,8 @@ class DatabaseDataSource(DataSource):
     def __exit__(self, excType, excValue, tb):
         if excType is None and excValue is None and tb is None:
             self.connection.commit()
-        self.connection.rollback()
+        else:
+            self.connection.rollback()
 
     def _AddWhereClauseAndArg(self, columnName, rawOperator, value,
             whereClauses, args):
@@ -170,7 +171,7 @@ class OracleDataSource(DatabaseDataSource):
         insertNames = values.keys()
         insertValues = [":%s" % n for n in insertNames]
         sql = "insert into %s (%s) values (%s)" % \
-                (tableName, insertNames, insertValues)
+                (tableName, ",".join(insertNames), ",".join(insertValues))
         self.cursor.execute(sql, values)
 
     def UpdateRows(self, tableName, *whereNames, **values):
@@ -184,6 +185,22 @@ class OracleDataSource(DatabaseDataSource):
 
 class SqlServerDataSource(DatabaseDataSource):
 
+    def _AddWhereClauseAndArg(self, columnName, rawOperator, value,
+            whereClauses, args):
+        if rawOperator is None:
+            if value is None:
+                whereClauses.append("%s is null" % columnName)
+                return
+            clauseFormat = "%s = ?"
+        else:
+            operator = self.operators.get(rawOperator, "?")
+            if rawOperator == "ne" and value is None:
+                whereClauses.append("%s is not null" % columnName)
+                return
+            clauseFormat = "%%s %s ?" % operator
+        args.append(value)
+        whereClauses.append(clauseFormat % columnName)
+
     def _GetEmptyArgs(self):
         return []
 
@@ -192,11 +209,19 @@ class SqlServerDataSource(DatabaseDataSource):
         value, = self.cursor.fetchone()
         return value
 
+    def InsertRow(self, tableName, **values):
+        insertNames = values.keys()
+        args = [values[n] for n in insertNames]
+        insertValues = ["?" for n in insertNames]
+        sql = "insert into %s (%s) values (%s)" % \
+                (tableName, ",".join(insertNames), ",".join(insertValues))
+        self.cursor.execute(sql, args)
+
     def UpdateRows(self, tableName, *whereNames, **values):
         args = [values[n] for n in values if n not in whereNames] + \
                [values[n] for n in whereNames]
         setClauses = ["%s = ?" % n for n in values if n not in whereNames]
-        whereClauses = ["%s = ?" % (n, n) for n in whereNames]
+        whereClauses = ["%s = ?" % n for n in whereNames]
         statement = "update %s set %s where %s" % \
                 (tableName, ",".join(setClauses), " and ".join(whereClauses))
         self.cursor.execute(statement, args)
