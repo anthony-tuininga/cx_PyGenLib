@@ -51,8 +51,9 @@ class Loader(object):
 
 class NamespaceLoader(object):
 
-    def __init__(self, namespace):
+    def __init__(self, namespace, **moduleGlobals):
         self.namespace = namespace
+        self.moduleGlobals = moduleGlobals
         self.cache = {}
 
     def __enter__(self):
@@ -84,6 +85,7 @@ class NamespaceLoader(object):
             return moduleOrScript
         self.cache[name] = module = imp.new_module(name)
         code = compile(moduleOrScript, "<generated>", "exec")
+        module.__dict__.update(self.moduleGlobals)
         exec code in module.__dict__
         return module
 
