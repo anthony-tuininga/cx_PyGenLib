@@ -130,7 +130,7 @@ class OracleDataSource(DatabaseDataSource):
         else:
             seqNum = 1
             argName = columnName
-            while argName in existingArgs:
+            while argName in args:
                 seqNum += 1
                 strSeqNum = str(seqNum)
                 argName = columnName[:30 - len(strSeqNum)] + strSeqNum
