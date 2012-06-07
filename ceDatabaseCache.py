@@ -293,13 +293,13 @@ class SubCache(object):
             if not self.allRowsLoaded:
                 self.LoadAllRows(cache)
             return path.GetCachedValue(args)
+        rows = cache.GetRowsViaPath(path, self.rowClass, args)
         if path.loadViaPathName is not None:
             loadViaPath = self.pathsByName[path.loadViaPathName]
             for row in rows:
                 loadViaArgs = loadViaPath._DatabaseArgsToCacheArgs(cache, row)
                 self.Load(cache, path.loadViaPathName, *loadViaArgs)
             return path.GetCachedValue(args)
-        rows = cache.GetRowsViaPath(path, self.rowClass, args)
         self.OnLoadRows(cache, rows)
         loadedRows = path._OnLoad(rows, args)
         if self.rowClass.sortByAttrNames \
