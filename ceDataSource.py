@@ -3,6 +3,8 @@ Define classes for accessing data sources in a generic fashion (and may not be
 connected directly but indirectly through a web service, for example).
 """
 
+import cx_Exceptions
+
 class DataSource(object):
 
     def CallFunction(self, functionName, returnType, *args):
@@ -22,6 +24,16 @@ class DataSource(object):
 
     def GetWhereClauseAndArgs(self, **conditions):
         raise NotImplementedError
+
+    def GetRow(self, _tableName, _columnNames, _rowFactory = None,
+            **_conditions):
+        rows = self.GetRows(_tableName, _columnNames, _rowFactory,
+                **_conditions)
+        if len(rows) == 0:
+            raise cx_Exceptions.NoDataFound()
+        elif len(rows) > 1:
+            raise cx_Exceptions.TooManyRows(numRows = len(rows))
+        return rows[0]
 
     def GetRows(self, _tableName, _columnNames, _rowFactory = None,
             **_conditions):

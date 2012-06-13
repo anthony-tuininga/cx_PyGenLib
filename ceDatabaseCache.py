@@ -35,7 +35,6 @@ class Path(object):
     retrievalAttrNames = []
     retrievalAttrCacheMethodNames = []
     stringRetrievalAttrNames = []
-    loadViaPathName = None
     subCacheAttrName = None
     cacheAttrName = None
     rowFactoryCacheMethodName = None
@@ -44,12 +43,8 @@ class Path(object):
 
     def __init__(self, cache, subCache):
         self.rows = {}
+        self.subCacheName = subCache.name
         self.rowClass = subCache.rowClass
-        if self.loadViaPathName is None:
-            self.selectAttrNames = self.attrNames or self.rowClass.attrNames
-        else:
-            cls = subCache.pathClassesByName[self.loadViaPathName]
-            self.selectAttrNames = cls.dbRetrievalAttrNames
         self.Clear()
 
     @classmethod
@@ -101,10 +96,23 @@ class Path(object):
             return args[0]
         return tuple(args)
 
+    def GetRowsFromDataSource(self, cache, *args):
+        conditions = {}
+        for attrName, value in zip(self.dbRetrievalAttrNames, args):
+            if isinstance(value, ceDatabase.Row):
+                value = getattr(value, attrName)
+            conditions[attrName] = value
+        if self.rowFactoryCacheMethodName is not None:
+            rowFactory = getattr(cache, self.rowFactoryCacheMethodName)
+        else:
+            rowFactory = self.rowClass
+        return cache.dataSource.GetRows(self.rowClass.tableName,
+                self.rowClass.attrNames, rowFactory, **conditions)
+
 
 class SingleRowPath(Path):
 
-    def _OnLoad(self, rows, args):
+    def _OnLoad(self, rows, *args):
         if len(rows) == 0:
             raise cx_Exceptions.NoDataFound()
         elif len(rows) > 1:
@@ -118,11 +126,21 @@ class SingleRowPath(Path):
 class MultipleRowPath(Path):
     ignoreRowNotCached = True
 
-    def _OnLoad(self, rows, args):
+    def _OnLoad(self, rows, *args):
+        if self.rowClass.sortByAttrNames:
+            cx_Logging.Debug("%s: sorting rows for path %s", self.subCacheName,
+                    self.name)
+            rows.sort(key = self.rowClass.SortValue)
+            if self.rowClass.sortReversed:
+                rows.reverse()
         return self._CacheValue(args, rows)
 
     def OnRowNotCached(self, args):
         return list()
+
+
+class AllRowsPath(MultipleRowPath):
+    name = "AllRows"
 
 
 class SubCacheMetaClass(type):
@@ -293,36 +311,19 @@ class SubCache(object):
             if not self.allRowsLoaded:
                 self.LoadAllRows(cache)
             return path.GetCachedValue(args)
-        rows = cache.GetRowsViaPath(path, self.rowClass, args)
-        if path.loadViaPathName is not None:
-            loadViaPath = self.pathsByName[path.loadViaPathName]
-            for row in rows:
-                loadViaArgs = loadViaPath._DatabaseArgsToCacheArgs(cache, row)
-                self.Load(cache, path.loadViaPathName, *loadViaArgs)
-            return path.GetCachedValue(args)
+        rows = path.GetRowsFromDataSource(cache, *args)
         self.OnLoadRows(cache, rows)
-        loadedRows = path._OnLoad(rows, args)
-        if self.rowClass.sortByAttrNames \
-                and isinstance(path, MultipleRowPath):
-            cx_Logging.Debug("%s: sorting rows for path %s", self.name,
-                    pathName)
-            loadedRows.sort(key = self.rowClass.SortValue)
-            if self.rowClass.sortReversed:
-                loadedRows.reverse()
-        return loadedRows
+        return path._OnLoad(rows, *args)
 
     def LoadAllRows(self, cache):
-        cx_Logging.Debug("%s: loading all rows", self.name)
-        path = Path(cache, self)
-        rows = cache.GetRowsViaPath(path, self.rowClass, ())
-        if self.rowClass.sortByAttrNames:
-            rows.sort(key = self.rowClass.SortValue)
-            if self.rowClass.sortReversed:
-                rows.reverse()
+        if self.tracePathLoads:
+            cx_Logging.Debug("%s: loading all rows", self.name)
+        path = AllRowsPath(cache, self)
+        rows = path.GetRowsFromDataSource(cache)
         self.OnLoadRows(cache, rows)
-        self.allRows = rows
+        self.allRows = path._OnLoad(rows)
         self.allRowsLoaded = True
-        return rows
+        return self.allRows
 
     def OnLoadRows(self, cache, rows):
         method = getattr(self, self.onLoadRowMethodName, None)
@@ -416,15 +417,4 @@ class Cache(object):
     def Clear(self):
         for subCache in self.subCaches:
             subCache.Clear()
-
-    def GetRowsViaPath(self, path, rowFactory, args):
-        conditions = {}
-        for attrName, value in zip(path.dbRetrievalAttrNames, args):
-            if isinstance(value, ceDatabase.Row):
-                value = getattr(value, attrName)
-            conditions[attrName] = value
-        if path.rowFactoryCacheMethodName is not None:
-            rowFactory = getattr(self, path.rowFactoryCacheMethodName)
-        return self.dataSource.GetRows(path.rowClass.tableName,
-                path.selectAttrNames, rowFactory, **conditions)
 
