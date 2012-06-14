@@ -320,7 +320,7 @@ class DataListPanel(DataPanel):
             response = dialog.ShowModal()
             dialog.Destroy()
             if response != wx.ID_YES:
-                return
+                return False
         for itemIndex in reversed(list(self.list.GetSelectedItemIndexes())):
             self.list.DeleteItem(itemIndex, refresh = False)
         if self.IsUpdatedIndependently():
@@ -332,6 +332,7 @@ class DataListPanel(DataPanel):
         self._OnListChanged()
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
+        return True
 
     def DeleteSelectedItems(self):
         items = self.list.GetSelectedItems()
