@@ -104,10 +104,12 @@ class Path(object):
             conditions[attrName] = value
         if self.rowFactoryCacheMethodName is not None:
             rowFactory = getattr(cache, self.rowFactoryCacheMethodName)
+            attrNames = self.attrNames
         else:
             rowFactory = self.rowClass
-        return cache.dataSource.GetRows(self.rowClass.tableName,
-                self.rowClass.attrNames, rowFactory, **conditions)
+            attrNames = self.rowClass.attrNames
+        return cache.dataSource.GetRows(self.rowClass.tableName, attrNames,
+                rowFactory, **conditions)
 
 
 class SingleRowPath(Path):
