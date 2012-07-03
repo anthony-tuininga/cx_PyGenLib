@@ -94,6 +94,11 @@ class Path(object):
         return cache.dataSource.GetRows(self.rowClass.tableName, attrNames,
                 rowFactory, **conditions)
 
+    def Load(self, cache, subCache, *args):
+        rows = self.GetRowsFromDataSource(cache, *args)
+        subCache.OnLoadRows(cache, rows)
+        return self._OnLoad(rows, *args)
+
 
 class SingleRowPath(Path):
 
@@ -302,9 +307,7 @@ class SubCache(object):
             if not self.allRowsLoaded:
                 self.LoadAllRows(cache)
             return path.GetCachedValue(actualArgs)
-        rows = path.GetRowsFromDataSource(cache, *actualArgs)
-        self.OnLoadRows(cache, rows)
-        return path._OnLoad(rows, *actualArgs)
+        return path.Load(cache, self, *actualArgs)
 
     def LoadAllRows(self, cache):
         if self.tracePathLoads:
