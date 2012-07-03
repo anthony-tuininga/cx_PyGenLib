@@ -14,9 +14,6 @@ class PathMetaClass(type):
             cls.attrNames = cls.attrNames.split()
         if isinstance(cls.retrievalAttrNames, basestring):
             cls.retrievalAttrNames = cls.retrievalAttrNames.split()
-        if isinstance(cls.retrievalAttrCacheMethodNames, basestring):
-            cls.retrievalAttrCacheMethodNames = \
-                    cls.retrievalAttrCacheMethodNames.split()
         if isinstance(cls.stringRetrievalAttrNames, basestring):
             cls.stringRetrievalAttrNames = cls.stringRetrievalAttrNames.split()
         if "name" not in classDict:
@@ -33,7 +30,6 @@ class Path(object):
     __metaclass__ = PathMetaClass
     attrNames = []
     retrievalAttrNames = []
-    retrievalAttrCacheMethodNames = []
     stringRetrievalAttrNames = []
     subCacheAttrName = None
     cacheAttrName = None
@@ -66,15 +62,6 @@ class Path(object):
             self.rows[args] = value
         return value
 
-    def _DatabaseArgsToCacheArgs(self, cache, dbArgs):
-        cacheArgs = []
-        for i, value in enumerate(dbArgs):
-            if i < len(self.retrievalAttrCacheMethodNames):
-                method = getattr(cache, self.retrievalAttrCacheMethodNames[i])
-                value = method(value)
-            cacheArgs.append(value)
-        return cacheArgs
-
     def Clear(self):
         self.rows.clear()
 
@@ -97,11 +84,7 @@ class Path(object):
         return tuple(args)
 
     def GetRowsFromDataSource(self, cache, *args):
-        conditions = {}
-        for attrName, value in zip(self.dbRetrievalAttrNames, args):
-            if isinstance(value, ceDatabase.Row):
-                value = getattr(value, attrName)
-            conditions[attrName] = value
+        conditions = dict(zip(self.dbRetrievalAttrNames, args))
         if self.rowFactoryCacheMethodName is not None:
             rowFactory = getattr(cache, self.rowFactoryCacheMethodName)
             attrNames = self.attrNames
@@ -309,13 +292,19 @@ class SubCache(object):
             cx_Logging.Debug("%s: loading rows by path %s with args %s",
                     self.name, pathName, args)
         path = self.pathsByName[pathName]
+        actualArgs = []
+        for attrName, value in zip(path.dbRetrievalAttrNames, args):
+            if isinstance(value, ceDatabase.Row):
+                value = getattr(value, attrName)
+            actualArgs.append(value)
+        actualArgs = tuple(actualArgs)
         if self.loadAllRowsOnFirstLoad:
             if not self.allRowsLoaded:
                 self.LoadAllRows(cache)
-            return path.GetCachedValue(args)
-        rows = path.GetRowsFromDataSource(cache, *args)
+            return path.GetCachedValue(actualArgs)
+        rows = path.GetRowsFromDataSource(cache, *actualArgs)
         self.OnLoadRows(cache, rows)
-        return path._OnLoad(rows, *args)
+        return path._OnLoad(rows, *actualArgs)
 
     def LoadAllRows(self, cache):
         if self.tracePathLoads:
