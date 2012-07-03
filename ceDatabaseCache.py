@@ -20,10 +20,6 @@ class PathMetaClass(type):
             cls.name = cls.__name__
         if "subCacheAttrName" not in classDict:
             cls.subCacheAttrName = "rowsBy%s" % cls.name
-        if "dbRetrievalAttrNames" in classDict:
-            cls.dbRetrievalAttrNames = cls.dbRetrievalAttrNames.split()
-        else:
-            cls.dbRetrievalAttrNames = cls.retrievalAttrNames
 
 
 class Path(object):
@@ -84,7 +80,7 @@ class Path(object):
         return tuple(args)
 
     def GetRowsFromDataSource(self, cache, *args):
-        conditions = dict(zip(self.dbRetrievalAttrNames, args))
+        conditions = dict(zip(self.retrievalAttrNames, args))
         if self.rowFactoryCacheMethodName is not None:
             rowFactory = getattr(cache, self.rowFactoryCacheMethodName)
             attrNames = self.attrNames
@@ -298,7 +294,7 @@ class SubCache(object):
                     self.name, pathName, args)
         path = self.pathsByName[pathName]
         actualArgs = []
-        for attrName, value in zip(path.dbRetrievalAttrNames, args):
+        for attrName, value in zip(path.retrievalAttrNames, args):
             if isinstance(value, ceDatabase.Row):
                 value = getattr(value, attrName)
             actualArgs.append(value)
