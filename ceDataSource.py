@@ -113,10 +113,11 @@ class DatabaseDataSource(DataSource):
         return whereClause, args
 
     def GetRowsDirect(self, sql, args, rowFactory = None):
-        self.cursor.execute(sql, args)
+        cursor = self.connection.cursor()
+        cursor.execute(sql, args)
         if rowFactory is not None:
-            self.cursor.rowfactory = rowFactory
-        return self.cursor.fetchall()
+            cursor.rowfactory = rowFactory
+        return cursor.fetchall()
 
 
 class OracleDataSource(DatabaseDataSource):
