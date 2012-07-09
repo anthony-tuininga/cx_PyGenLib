@@ -488,20 +488,20 @@ class ListDecimalColumn(ListColumn):
         if numberFormat is None:
             numberFormat = "0." + "0" * digitsAfterDecimal
         self.digitsAfterDecimal = digitsAfterDecimal
-        self.format = "%%.%df" % self.digitsAfterDecimal
+        self.format = "{0:,.%sf}" % self.digitsAfterDecimal
         super(ListDecimalColumn, self).__init__(attrName, heading,
                 defaultWidth, justification, numberFormat)
 
     def GetExportValue(self, row):
         value = getattr(row, self.attrName)
         if value is not None:
-            return self.format % value
+            return self.format.format(value)
         return "" 
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
         if value is not None:
-            return self.format % value
+            return self.format.format(value)
 
 
 class ListMoneyColumn(ListDecimalColumn):
@@ -509,7 +509,7 @@ class ListMoneyColumn(ListDecimalColumn):
     def GetValue(self, row):
         value = getattr(row, self.attrName)
         if value is not None:
-            return "$%.2f" % value
+            return "${0:,.2f}".format(value)
 
 
 class ListTimestampColumn(ListDateColumn):
