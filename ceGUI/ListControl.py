@@ -484,11 +484,16 @@ class ListDecimalColumn(ListColumn):
     defaultJustification = wx.LIST_FORMAT_RIGHT
 
     def __init__(self, attrName, heading, defaultWidth, justification,
-            numberFormat, digitsAfterDecimal = 2):
+            numberFormat, format = None, digitsAfterDecimal = 2):
         if numberFormat is None:
-            numberFormat = "0." + "0" * digitsAfterDecimal
+            if digitsAfterDecimal == 0:
+                numberFormat = "#,##0"
+            else:
+                numberFormat = "#,##0." + "0" * digitsAfterDecimal
+        if format is None:
+            format = "{0:,.%sf}" % digitsAfterDecimal
         self.digitsAfterDecimal = digitsAfterDecimal
-        self.format = "{0:,.%sf}" % self.digitsAfterDecimal
+        self.format = format
         super(ListDecimalColumn, self).__init__(attrName, heading,
                 defaultWidth, justification, numberFormat)
 
@@ -506,10 +511,14 @@ class ListDecimalColumn(ListColumn):
 
 class ListMoneyColumn(ListDecimalColumn):
 
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is not None:
-            return "${0:,.2f}".format(value)
+    def __init__(self, attrName, heading, defaultWidth, justification,
+            numberFormat, format = None):
+        if numberFormat is None:
+            numberFormat = "$#,##0.00"
+        if format is None:
+            format = "${0:,.2f}"
+        super(ListMoneyColumn, self).__init__(attrName, heading,
+                defaultWidth, justification, numberFormat, format = format)
 
 
 class ListTimestampColumn(ListDateColumn):
