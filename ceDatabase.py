@@ -203,9 +203,9 @@ class DataSet(object):
             self.updateTableName = self.tableName
         self.Clear()
 
-    def _DeleteRowsInDatabase(self, dataSourceContext):
+    def _DeleteRowsInDatabase(self, transaction):
         for row in self.deletedRows.itervalues():
-            self.DeleteRowInDatabase(dataSourceContext, row)
+            self.DeleteRowInDatabase(transaction, row)
 
     def _GetArgsFromNames(self, names, row = None):
         args = []
@@ -245,9 +245,9 @@ class DataSet(object):
                 rows.reverse()
         return rows
 
-    def _InsertRowsInDatabase(self, dataSourceContext):
+    def _InsertRowsInDatabase(self, transaction):
         for row in self.insertedRows.itervalues():
-            self.InsertRowInDatabase(dataSourceContext, row)
+            self.InsertRowInDatabase(transaction, row)
 
     def _OnDeleteRow(self, row):
         pass
@@ -257,6 +257,24 @@ class DataSet(object):
 
     def _OnSetValue(self, row, attrName, value, origValue):
         pass
+
+    def _GetPrimaryKeyValues(self, transaction):
+        if self.pkIsGenerated and self.updatePackageName is None \
+                and self.pkSequenceName is None:
+            for row in self.insertedRows.itervalues():
+                args = self._GetArgsFromNames(self.uniqueAttrNames, row)
+                conditions = dict(zip(self.uniqueAttrNames, args))
+                pkValues, = self.dataSource.GetRows(self.tableName,
+                        self.pkAttrNames, **conditions)
+                for attrIndex, value in enumerate(pkValues):
+                    setattr(row, self.pkAttrNames[attrIndex], value)
+        elif self.pkIsGenerated:
+            attrName = self.pkAttrNames[0]
+            for row in self.insertedRows.itervalues():
+                item = transaction.itemsByRow.get(row)
+                setattr(row, attrName, item.generatedKey)
+        for dataSet in self.childDataSets:
+            dataSet._GetPrimaryKeyValues(transaction)
 
     def _PostUpdate(self):
         pass
@@ -274,20 +292,20 @@ class DataSet(object):
             return str(value)
         return value
 
-    def _Update(self, dataSourceContext):
+    def _Update(self, transaction):
         if self.deletedRows:
-            self._DeleteRowsInDatabase(dataSourceContext)
+            self._DeleteRowsInDatabase(transaction)
         if self.updatedRows:
-            self._UpdateRowsInDatabase(dataSourceContext)
+            self._UpdateRowsInDatabase(transaction)
         if self.insertedRows:
-            self._InsertRowsInDatabase(dataSourceContext)
+            self._InsertRowsInDatabase(transaction)
         for dataSet in self.childDataSets:
-            dataSet._Update(dataSourceContext)
+            dataSet._Update(transaction)
 
-    def _UpdateRowsInDatabase(self, dataSourceContext):
+    def _UpdateRowsInDatabase(self, transaction):
         for handle, origRow in self.updatedRows.iteritems():
             row = self.rows[handle]
-            self.UpdateRowInDatabase(dataSourceContext, row, origRow)
+            self.UpdateRowInDatabase(transaction, row, origRow)
 
     def AddChildDataSet(self, cls, contextItem = None):
         dataSet = cls(self.dataSource, contextItem)
@@ -326,20 +344,8 @@ class DataSet(object):
                 self.updatedRows.pop(handle)
             self.deletedRows[handle] = row
 
-    def DeleteRowInDatabase(self, dataSourceContext, row):
-        args = self._GetArgsFromNames(self.pkAttrNames, row)
-        if self.updatePackageName is not None:
-            fullProcedureName = "%s.%s" % \
-                    (self.updatePackageName, self.deleteProcedureName)
-            self.dataSource.CallProcedure(fullProcedureName, *args)
-        else:
-            conditions = dict(zip(self.pkAttrNames, args))
-            whereClause, args = \
-                    self.dataSource.GetWhereClauseAndArgs(**conditions)
-            self.dataSource.DeleteRows(self.updateTableName, **conditions)
-
-    def GetGeneratedPrimaryKey(self, dataSourceContext):
-        return self.dataSource.GetSequenceValue(self.pkSequenceName)
+    def DeleteRowInDatabase(self, transaction, row):
+        transaction.RemoveRow(self, row)
 
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, *attrNames)
@@ -365,32 +371,8 @@ class DataSet(object):
         self.insertedRows[handle] = self.rows[handle] = row
         return handle, row
 
-    def InsertRowInDatabase(self, dataSourceContext, row):
-        if self.pkIsGenerated and self.pkSequenceName is not None:
-            attrName = self.pkAttrNames[0]
-            value = self.GetGeneratedPrimaryKey(dataSourceContext)
-            setattr(row, attrName, value)
-        args = self._GetArgsFromNames(self.insertAttrNames, row)
-        if self.updatePackageName is not None:
-            fullProcedureName = "%s.%s" % \
-                    (self.updatePackageName, self.insertProcedureName)
-            if self.pkIsGenerated:
-                attrName = self.pkAttrNames[0]
-                value = self.dataSource.CallFunction(fullProcedureName, int,
-                        *args)
-                setattr(row, attrName, value)
-            else:
-                self.dataSource.CallProcedure(fullProcedureName, *args)
-        else:
-            values = dict(zip(self.insertAttrNames, args))
-            self.dataSource.InsertRow(self.updateTableName, **values)
-            if self.pkIsGenerated and self.pkSequenceName is None:
-                args = self._GetArgsFromNames(self.uniqueAttrNames, row)
-                conditions = dict(zip(self.uniqueAttrNames, args))
-                pkValues, = self.dataSource.GetRows(self.tableName,
-                        self.pkAttrNames, **conditions)
-                for attrIndex, value in enumerate(pkValues):
-                    setattr(row, self.pkAttrNames[attrIndex], value)
+    def InsertRowInDatabase(self, transaction, row):
+        transaction.CreateRow(self, row)
 
     def MarkAllRowsAsNew(self):
         for handle, row in self.rows.iteritems():
@@ -452,23 +434,27 @@ class DataSet(object):
             cx_Logging.Debug("no update to perform")
             return
         self._PreUpdate()
-        with self.dataSource as dataSourceContext:
-            self._Update(dataSourceContext)
+        transaction = self.dataSource.BeginTransaction()
+        self._Update(transaction)
+        self.dataSource.CommitTransaction(transaction)
+        self._GetPrimaryKeyValues(transaction)
         self.ClearChanges()
         self._PostUpdate()
 
     def UpdateSingleRow(self, handle):
-        with self.dataSource as dataSourceContext:
-            if handle in self.insertedRows:
-                row = self.insertedRows[handle]
-                self.InsertRowInDatabase(dataSourceContext, row)
-            elif handle in self.updatedRows:
-                origRow = self.updatedRows[handle]
-                row = self.rows[handle]
-                self.UpdateRowInDatabase(dataSourceContext, row, origRow)
-            elif handle in self.deletedRows:
-                row = self.deletedRows[handle]
-                self.DeleteRowInDatabase(dataSourceContext, row)
+        transaction = self.dataSource.BeginTransaction()
+        if handle in self.insertedRows:
+            row = self.insertedRows[handle]
+            self.InsertRowInDatabase(transaction, row)
+        elif handle in self.updatedRows:
+            origRow = self.updatedRows[handle]
+            row = self.rows[handle]
+            self.UpdateRowInDatabase(transaction, row, origRow)
+        elif handle in self.deletedRows:
+            row = self.deletedRows[handle]
+            self.DeleteRowInDatabase(transaction, row)
+        self.dataSource.CommitTransaction(transaction)
+        self._GetPrimaryKeyValues(transaction)
         if handle in self.insertedRows:
             del self.insertedRows[handle]
         elif handle in self.updatedRows:
@@ -476,20 +462,8 @@ class DataSet(object):
         elif handle in self.deletedRows:
             del self.deletedRows[handle]
 
-    def UpdateRowInDatabase(self, dataSourceContext, row, origRow):
-        if self.updatePackageName is not None:
-            args = self._GetArgsFromNames(self.pkAttrNames, origRow) + \
-                    self._GetArgsFromNames(self.updateAttrNames, row)
-            fullProcedureName = "%s.%s" % \
-                    (self.updatePackageName, self.updateProcedureName)
-            self.dataSource.CallProcedure(fullProcedureName, *args)
-        else:
-            updateArgs = self._GetArgsFromNames(self.updateAttrNames, row)
-            values = dict(zip(self.updateAttrNames, updateArgs))
-            whereArgs = self._GetArgsFromNames(self.pkAttrNames, origRow)
-            values.update(dict(zip(self.pkAttrNames, whereArgs)))
-            self.dataSource.UpdateRows(self.updateTableName, *self.pkAttrNames,
-                    **values)
+    def UpdateRowInDatabase(self, transaction, row, origRow):
+        transaction.ModifyRow(self, row, origRow)
 
 
 class FilteredDataSet(DataSet):
