@@ -14,7 +14,7 @@ class BaseException(Exception):
     templateId = 0
     logLevel = 40
 
-    def __init__(self, **arguments):
+    def __init__(self, framesToSkip = 0, **arguments):
         self.details = []
         self.traceback = []
         self.arguments = {}
@@ -25,7 +25,7 @@ class BaseException(Exception):
                 self.message = self.message % arguments
             except:
                 pass
-        self._FormatStack()
+        self._FormatStack(framesToSkip = framesToSkip)
 
     def __str__(self):
         return self.message
@@ -77,14 +77,18 @@ class BaseException(Exception):
             tb = tb.tb_next
         self.__AddLocalVariables(frame, initialTb)
 
-    def _FormatStack(self):
+    def _FormatStack(self, framesToSkip = 0):
         """Format the traceback for the current location."""
         self.details = []
         self.traceback = []
         try:
             raise ZeroDivisionError
         except ZeroDivisionError:
-            frame = sys.exc_info()[2].tb_frame.f_back.f_back
+            frame = sys.exc_info()[2].tb_frame
+            framesToSkip += 2
+            while framesToSkip > 0:
+                frame = frame.f_back
+                framesToSkip -= 1
         self.__AddLocalVariables(frame)
 
     def _FormatValue(self, value, maxLength = None):
