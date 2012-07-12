@@ -7,10 +7,16 @@ import cx_Exceptions
 
 class DataSource(object):
 
+    def BeginTransaction(self):
+        return Transaction()
+
     def CallFunction(self, functionName, returnType, *args):
         raise NotImplementedError
 
     def CallProcedure(self, procedureName, *args):
+        raise NotImplementedError
+
+    def CommitTransaction(self, transaction):
         raise NotImplementedError
 
     def DeleteRows(self, tableName, **conditions):
@@ -72,11 +78,64 @@ class DatabaseDataSource(DataSource):
     def _GetEmptyArgs(self):
         raise NotImplementedError
 
+    def _SetupArgs(self, cursor, transactionItem):
+        if transactionItem.procedureName is not None:
+            inputSizes = []
+            for attrIndex in transactionItem.clobArgs:
+                while len(inputSizes) <= attrIndex:
+                    inputSizes.append(None)
+                inputSizes[attrIndex] = cursor.connection.NCLOB
+            for attrIndex in transactionItem.blobArgs:
+                while len(inputSizes) <= attrIndex:
+                    inputSizes.append(None)
+                inputSizes[attrIndex] = cursor.connection.BLOB
+            if inputSizes:
+                cursor.setinputsizes(*inputSizes)
+        else:
+            inputSizes = {}
+            for attrName in transactionItem.clobArgs:
+                inputSizes[attrName] = cursor.connection.NCLOB
+            for attrName in transactionItem.blobArgs:
+                inputSizes[attrName] = cursor.connection.BLOB
+            if inputSizes:
+                cursor.setinputsizes(**inputSizes)
+
     def CallFunction(self, functionName, returnType, *args):
         return self.cursor.callfunc(functionName, returnType, args)
 
     def CallProcedure(self, procedureName, *args):
         return self.cursor.callproc(procedureName, args)
+
+    def CommitTransaction(self, transaction):
+        with self.connection:
+            cursor = self.connection.cursor()
+            for item in transaction.items:
+                self._SetupArgs(cursor, item)
+                if item.procedureName is not None:
+                    args = list(item.args)
+                    for attrIndex in item.fkArgs:
+                        args[attrIndex] = item.referencedItem.generatedKey
+                    if item.returnType is not None:
+                        item.generatedKey = cursor.callfunc(item.procedureName,
+                                item.returnType, args)
+                    else:
+                        cursor.callproc(item.procedureName, args)
+                elif item.setValues is not None and item.conditions is None:
+                    args = item.setValues.copy()
+                    for attrName in item.fkArgs:
+                        args[attrName] = item.referencedItem.generatedKey
+                    if item.pkIsGenerated:
+                        item.generatedKey = \
+                                self.GetSequenceValue(item.pkSequenceName)
+                        args[item.pkAttrName] = item.generatedKey
+                    self.InsertRow(item.tableName, **args)
+                elif item.setValues is not None:
+                    args = item.setValues.copy()
+                    args.update(item.conditions)
+                    pkAttrNames = item.conditions.keys()
+                    self.UpdateRows(item.tableName, *pkAttrNames, **args)
+                else:
+                    self.DeleteRows(item.tableName, **item.conditions)
 
     def DeleteRows(self, tableName, **conditions):
         whereClause, args = self.GetWhereClauseAndArgs(**conditions)
@@ -238,4 +297,104 @@ class SqlServerDataSource(DatabaseDataSource):
         statement = "update %s set %s where %s" % \
                 (tableName, ",".join(setClauses), " and ".join(whereClauses))
         self.cursor.execute(statement, args)
+
+
+class Transaction(object):
+
+    def __init__(self):
+        self.items = []
+        self.itemsByRow = {}
+
+    def CreateRow(self, dataSet, row):
+        referencedItem = self.itemsByRow.get(dataSet.contextItem)
+        args = dataSet._GetArgsFromNames(dataSet.insertAttrNames, row)
+        if dataSet.updatePackageName is not None:
+            procedureName = "%s.%s" % \
+                    (dataSet.updatePackageName, dataSet.insertProcedureName)
+            returnType = int if dataSet.pkIsGenerated else None
+            item = TransactionItem(procedureName = procedureName, args = args,
+                    returnType = returnType, referencedItem = referencedItem)
+        else:
+            setValues = dict(zip(dataSet.insertAttrNames, args))
+            pkSequenceName = dataSet.pkSequenceName if dataSet.pkIsGenerated \
+                    else None
+            pkAttrName = dataSet.pkAttrNames[0] if dataSet.pkIsGenerated \
+                    else None
+            item = TransactionItem(tableName = dataSet.updateTableName,
+                    setValues = setValues, pkSequenceName = pkSequenceName,
+                    pkAttrName = pkAttrName, referencedItem = referencedItem)
+        self.items.append(item)
+        self.itemsByRow[row] = item
+        item._SetArgTypes(dataSet, row, dataSet.insertAttrNames)
+
+    def ModifyRow(self, dataSet, row, origRow):
+        if dataSet.updatePackageName is not None:
+            args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, origRow) + \
+                    dataSet._GetArgsFromNames(dataSet.updateAttrNames, row)
+            procedureName = "%s.%s" % \
+                    (dataSet.updatePackageName, dataSet.updateProcedureName)
+            item = TransactionItem(procedureName = procedureName, args = args)
+        else:
+            args = dataSet._GetArgsFromNames(dataSet.updateAttrNames, row)
+            setValues = dict(zip(dataSet.updateAttrNames, args))
+            args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, origRow)
+            conditions = dict(zip(dataSet.pkAttrNames, args))
+            item = TransactionItem(tableName = dataSet.updateTableName,
+                    setValues = setValues, conditions = conditions)
+        self.items.append(item)
+        item._SetArgTypes(dataSet, row,
+                dataSet.pkAttrNames + dataSet.updateAttrNames)
+
+    def RemoveRow(self, dataSet, row):
+        args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, row)
+        if dataSet.updatePackageName is not None:
+            procedureName = "%s.%s" % \
+                    (dataSet.updatePackageName, dataSet.deleteProcedureName)
+            item = TransactionItem(procedureName = procedureName, args = args)
+        else:
+            conditions = dict(zip(dataSet.pkAttrNames, args))
+            item = TransactionItem(tableName = dataSet.updateTableName,
+                    conditions = conditions)
+        self.items.append(item)
+
+
+class TransactionItem(object):
+
+    def __init__(self, procedureName = None, args = None, returnType = None,
+            tableName = None, setValues = None, conditions = None,
+            referencedItem = None, pkSequenceName = None, pkAttrName = None):
+        self.procedureName = procedureName
+        self.args = args
+        self.returnType = returnType
+        self.tableName = tableName
+        self.setValues = setValues
+        self.conditions = conditions
+        self.referencedItem = referencedItem
+        self.pkSequenceName = pkSequenceName
+        self.pkAttrName = pkAttrName
+        self.generatedKey = None
+        self.clobArgs = []
+        self.blobArgs = []
+        self.fkArgs = []
+
+    def _SetArgTypes(self, dataSet, row, attrNames):
+        offset = 1 if self.returnType is not None else 0
+        for attrIndex, attrName in enumerate(attrNames):
+            if attrName in dataSet.clobAttrNames:
+                if self.procedureName is not None:
+                    self.clobArgs.append(attrIndex + offset)
+                else:
+                    self.clobArgs.append(attrName)
+            elif attrName in dataSet.blobAttrNames:
+                if self.procedureName is not None:
+                    self.blobArgs.append(attrIndex + offset)
+                else:
+                    self.blobArgs.append(attrName)
+            elif self.referencedItem is not None \
+                    and not hasattr(row, attrName) \
+                    and hasattr(dataSet.contextItem, attrName):
+                if self.procedureName is not None:
+                    self.fkArgs.append(attrIndex)
+                else:
+                    self.fkArgs.append(attrName)
 
