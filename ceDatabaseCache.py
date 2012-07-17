@@ -92,8 +92,9 @@ class Path(object):
 
     def Load(self, cache, subCache, *args):
         rows = self.GetRowsFromDataSource(cache, *args)
+        self._OnLoad(rows, *args)
         subCache.OnLoadRows(cache, rows)
-        return self._OnLoad(rows, *args)
+        return rows
 
 
 class SingleRowPath(Path):
@@ -309,9 +310,7 @@ class SubCache(object):
         if self.tracePathLoads:
             cx_Logging.Debug("%s: loading all rows", self.name)
         path = AllRowsPath(cache, self)
-        rows = path.GetRowsFromDataSource(cache)
-        self.OnLoadRows(cache, rows)
-        self.allRows = path._OnLoad(rows)
+        self.allRows = path.Load(cache, self)
         self.allRowsLoaded = True
         return self.allRows
 
