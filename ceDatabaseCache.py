@@ -92,9 +92,9 @@ class Path(object):
 
     def Load(self, cache, subCache, *args):
         rows = self.GetRowsFromDataSource(cache, *args)
-        self._OnLoad(rows, *args)
+        cachedValue = self._OnLoad(rows, *args)
         subCache.OnLoadRows(cache, rows)
-        return rows
+        return cachedValue
 
 
 class SingleRowPath(Path):
