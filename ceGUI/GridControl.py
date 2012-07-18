@@ -66,8 +66,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.DisableDragRowSize()
         self.BindEvent(self.GetGridWindow(), wx.EVT_RIGHT_DOWN,
                 self._OnContextMenu)
-        parent.BindEvent(self, wx.EVT_SIZE, self._Resize)
-        parent.BindEvent(self, wx.grid.EVT_GRID_COL_SIZE, self._Resize)
+        parent.BindEvent(self, wx.EVT_SIZE, self._Resize,
+                passEvent = False)
+        parent.BindEvent(self, wx.grid.EVT_GRID_COL_SIZE, self._Resize,
+                passEvent = False)
         parent.BindEvent(self, wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
                 self.OnLabelClicked, skipEvent = False)
         super(Grid, self)._Initialize()
@@ -111,7 +113,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             return
         self.PasteFromClipboard(insert = True)
 
-    def _Resize(self, event):
+    def _Resize(self):
         """Resize the last column of the control to take up all remaining
            space."""
         if not self:
@@ -147,6 +149,19 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if defaultWidth is not None:
             self.SetColSize(columnIndex, defaultWidth)
         return column
+
+    def Clear(self):
+        self.ClearGrid()
+        self.table.Clear()
+
+    def ClearAll(self):
+        self.ClearGrid()
+        numCols = self.table.GetNumberCols()
+        if numCols > 0:
+            msg = wx.grid.GridTableMessage(self.table,
+                    wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, numCols)
+            self.ProcessTableMessage(msg)
+        self.table.ClearAll()
 
     def CopyToClipboard(self):
         topLeft = self.GetSelectionBlockTopLeft()
@@ -286,6 +301,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if widths is not None and len(widths) <= len(self.table.columns):
             for columnIndex, width in enumerate(widths):
                 self.SetColSize(columnIndex, width)
+            self._Resize()
 
     def Retrieve(self, *args):
         numRows = self.table.GetNumberRows()
@@ -344,9 +360,7 @@ class GridTable(wx.grid.PyGridTableBase):
     def __init__(self, dataSet):
         super(GridTable, self).__init__()
         self.dataSet = dataSet
-        self.columns = []
-        self.rowHandles = []
-        self.sortByColumnIndexes = []
+        self.ClearAll()
 
     def _GetSortKey(self, item, sortByColumns):
         return [c.GetSortValue(item) for c in sortByColumns]
@@ -366,6 +380,14 @@ class GridTable(wx.grid.PyGridTableBase):
     def CanInsertRow(self):
         return self.dataSet.CanInsertRow()
 
+    def Clear(self):
+        self.rowHandles = []
+
+    def ClearAll(self):
+        self.columns = []
+        self.rowHandles = []
+        self.sortByColumnIndexes = []
+
     def DeleteRows(self, pos = 0, numRows = 1):
         while numRows > 0:
             handle = self.rowHandles[pos]
@@ -377,7 +399,9 @@ class GridTable(wx.grid.PyGridTableBase):
         return [self.dataSet.rows[h] for h in self.rowHandles]
 
     def GetColLabelValue(self, col):
-        return self.columns[col].heading
+        if col < len(self.columns):
+            return self.columns[col].heading
+        return ""
 
     def GetNumberCols(self):
         return len(self.columns)
