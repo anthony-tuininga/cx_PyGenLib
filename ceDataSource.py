@@ -124,7 +124,7 @@ class DatabaseDataSource(DataSource):
                     args = item.setValues.copy()
                     for attrName in item.fkArgs:
                         args[attrName] = item.referencedItem.generatedKey
-                    if item.pkIsGenerated:
+                    if item.pkSequenceName is not None:
                         item.generatedKey = \
                                 self.GetSequenceValue(item.pkSequenceName)
                         args[item.pkAttrName] = item.generatedKey
