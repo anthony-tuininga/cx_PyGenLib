@@ -104,6 +104,9 @@ class Row(object):
                 setattr(row, name, getattr(self, name))
         return row
 
+    def GetAttributeNames(self):
+        return self.attrNames + self.extraAttrNames
+
     def GetPrimaryKeyTuple(self):
         return tuple([getattr(self, n) for n in self.pkAttrNames])
 

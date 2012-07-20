@@ -38,13 +38,17 @@ class EditDialog(ceGUI.StandardDialog):
     def GetRow(self):
         return self.dataSet.rows[0]
 
+    def IsUpdatedIndependently(self, parent = None):
+        if parent is None:
+            parent = self.GetParent()
+        return not isinstance(parent, EditDialog)
+
     def OnNewRow(self, parent, row):
         pass
 
     def OnOk(self):
         self.OnPreUpdate()
-        parent = self.GetParent()
-        if not isinstance(parent, EditDialog):
+        if self.IsUpdatedIndependently():
             self.dataSet.Update()
         self.OnPostUpdate()
 
@@ -61,7 +65,7 @@ class EditDialog(ceGUI.StandardDialog):
         if self.parentItem is None:
             handle, row = self.dataSet.InsertRow()
             self.OnNewRow(parent, row)
-        elif isinstance(parent, EditDialog):
+        elif not self.IsUpdatedIndependently(parent):
             values = [getattr(self.parentItem, n) \
                     for n in self.dataSet.attrNames]
             row = self.dataSet.rowClass(*values)
@@ -302,7 +306,7 @@ class DataListPanel(DataPanel):
         parent.SetPageText(self, "%s (%s)" % (self.label, numRows))
 
     def _UpdateListItem(self, item, row, itemIndex = None):
-        for attrName in item.attrNames + item.extraAttrNames:
+        for attrName in item.GetAttributeNames():
             if not hasattr(row, attrName):
                 continue
             value = getattr(row, attrName)
