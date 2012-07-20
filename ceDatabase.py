@@ -345,7 +345,7 @@ class DataSet(object):
             self.deletedRows[handle] = row
 
     def DeleteRowInDatabase(self, transaction, row):
-        transaction.RemoveRow(self, row)
+        return transaction.RemoveRow(self, row)
 
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, *attrNames)
@@ -372,7 +372,7 @@ class DataSet(object):
         return handle, row
 
     def InsertRowInDatabase(self, transaction, row):
-        transaction.CreateRow(self, row)
+        return transaction.CreateRow(self, row)
 
     def MarkAllRowsAsNew(self):
         for handle, row in self.rows.iteritems():
@@ -463,7 +463,7 @@ class DataSet(object):
             del self.deletedRows[handle]
 
     def UpdateRowInDatabase(self, transaction, row, origRow):
-        transaction.ModifyRow(self, row, origRow)
+        return transaction.ModifyRow(self, row, origRow)
 
 
 class FilteredDataSet(DataSet):
