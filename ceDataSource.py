@@ -305,6 +305,11 @@ class Transaction(object):
         self.items = []
         self.itemsByRow = {}
 
+    def AddItem(self, **args):
+        item = TransactionItem(**args)
+        self.items.append(item)
+        return item
+
     def CreateRow(self, dataSet, row):
         referencedItem = self.itemsByRow.get(dataSet.contextItem)
         args = dataSet._GetArgsFromNames(dataSet.insertAttrNames, row)
@@ -326,6 +331,7 @@ class Transaction(object):
         self.items.append(item)
         self.itemsByRow[row] = item
         item._SetArgTypes(dataSet, row, dataSet.insertAttrNames)
+        return item
 
     def ModifyRow(self, dataSet, row, origRow):
         if dataSet.updatePackageName is not None:
@@ -344,6 +350,7 @@ class Transaction(object):
         self.items.append(item)
         item._SetArgTypes(dataSet, row,
                 dataSet.pkAttrNames + dataSet.updateAttrNames)
+        return item
 
     def RemoveRow(self, dataSet, row):
         args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, row)
@@ -356,13 +363,15 @@ class Transaction(object):
             item = TransactionItem(tableName = dataSet.updateTableName,
                     conditions = conditions)
         self.items.append(item)
+        return item
 
 
 class TransactionItem(object):
 
     def __init__(self, procedureName = None, args = None, returnType = None,
             tableName = None, setValues = None, conditions = None,
-            referencedItem = None, pkSequenceName = None, pkAttrName = None):
+            referencedItem = None, pkSequenceName = None, pkAttrName = None,
+            clobArgs = None, blobArgs = None, fkArgs = None):
         self.procedureName = procedureName
         self.args = args
         self.returnType = returnType
@@ -373,9 +382,9 @@ class TransactionItem(object):
         self.pkSequenceName = pkSequenceName
         self.pkAttrName = pkAttrName
         self.generatedKey = None
-        self.clobArgs = []
-        self.blobArgs = []
-        self.fkArgs = []
+        self.clobArgs = clobArgs or []
+        self.blobArgs = blobArgs or []
+        self.fkArgs = fkArgs or []
 
     def _SetArgTypes(self, dataSet, row, attrNames):
         offset = 1 if self.returnType is not None else 0
