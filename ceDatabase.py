@@ -46,7 +46,7 @@ class RowMetaClass(type):
             if attrName in charBooleanAttrNames:
                 value = '%s in ("Y", "1", True)' % attrName
             elif attrName in decimalAttrNames:
-                value = '%s and decimal.Decimal(%s) or None' % \
+                value = 'decimal.Decimal(%s) if %s is not None else None' % \
                         (attrName, attrName)
             elif attrName in clobAttrNames:
                 format = '%s if %s is None or isinstance(%s, basestring) ' \
