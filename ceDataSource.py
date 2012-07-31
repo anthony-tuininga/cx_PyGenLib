@@ -19,12 +19,6 @@ class DataSource(object):
     def CommitTransaction(self, transaction):
         raise NotImplementedError
 
-    def DeleteRows(self, tableName, **conditions):
-        raise NotImplementedError
-
-    def GetSequenceValue(self, sequenceName):
-        raise NotImplementedError
-
     def GetSqlAndArgs(self, tableName, columnNames, **conditions):
         raise NotImplementedError
 
@@ -49,12 +43,6 @@ class DataSource(object):
     def GetRowsDirect(self, sql, args, rowFactory = None):
         raise NotImplementedError
 
-    def InsertRow(self, tableName, **values):
-        raise NotImplementedError
-
-    def UpdateRows(self, tableName, *whereNames, **values):
-        raise NotImplementedError
-
 
 class DatabaseDataSource(DataSource):
 
@@ -75,30 +63,65 @@ class DatabaseDataSource(DataSource):
             whereClauses, args):
         raise NotImplementedError
 
+    def _GetBlobType(self):
+        raise NotImplementedError
+
+    def _GetClobType(self):
+        raise NotImplementedError
+
     def _GetEmptyArgs(self):
         raise NotImplementedError
 
-    def _SetupArgs(self, cursor, transactionItem):
-        if transactionItem.procedureName is not None:
-            inputSizes = []
-            for attrIndex in transactionItem.clobArgs:
-                while len(inputSizes) <= attrIndex:
-                    inputSizes.append(None)
-                inputSizes[attrIndex] = cursor.connection.NCLOB
-            for attrIndex in transactionItem.blobArgs:
-                while len(inputSizes) <= attrIndex:
-                    inputSizes.append(None)
-                inputSizes[attrIndex] = cursor.connection.BLOB
-            if inputSizes:
-                cursor.setinputsizes(*inputSizes)
+    def _TransactionCallProcedure(self, cursor, item):
+        args = self._TransactionSetupPositionalArgs(cursor, item.args,
+                item.clobArgs, item.blobArgs, item.fkArgs, item.referencedItem)
+        if item.returnType is not None:
+            item.generatedKey = cursor.callfunc(item.procedureName,
+                    item.returnType, args)
         else:
-            inputSizes = {}
-            for attrName in transactionItem.clobArgs:
-                inputSizes[attrName] = cursor.connection.NCLOB
-            for attrName in transactionItem.blobArgs:
-                inputSizes[attrName] = cursor.connection.BLOB
-            if inputSizes:
-                cursor.setinputsizes(**inputSizes)
+            cursor.callproc(item.procedureName, args)
+
+    def _TransactionDeleteRow(self, cursor, item):
+        whereClause, args = self.GetWhereClauseAndArgs(**item.conditions)
+        sql = "delete from %s" % item.tableName
+        if whereClause is not None:
+            sql += " where " + whereClause
+        cursor.execute(sql, args)
+
+    def _TransactionInsertRow(self, cursor, item):
+        raise NotImplementedError
+
+    def _TransactionSetupKeywordArgs(self, cursor, args, clobArgs, blobArgs,
+            fkArgs = [], referencedItem = None):
+        inputSizes = {}
+        for attrName in clobArgs:
+            inputSizes[attrName] = self._GetClobType()
+        for attrName in blobArgs:
+            inputSizes[attrName] = self._GetBlobType()
+        if inputSizes:
+            cursor.setinputsizes(**inputSizes)
+        args = args.copy()
+        for attrName in fkArgs:
+            args[attrName] = referencedItem.generatedKey
+        return args
+
+    def _TransactionSetupPositionalArgs(self, cursor, args, clobArgs, blobArgs,
+            fkArgs = [], referencedItem = None):
+        inputSizes = []
+        for attrIndex in clobArgs:
+            while len(inputSizes) <= attrIndex:
+                inputSizes.append(None)
+            inputSizes[attrIndex] = self._GetClobType()
+        for attrIndex in blobArgs:
+            while len(inputSizes) <= attrIndex:
+                inputSizes.append(None)
+            inputSizes[attrIndex] = self._GetBlobType()
+        if inputSizes:
+            cursor.setinputsizes(*inputSizes)
+        args = list(args)
+        for attrIndex in fkArgs:
+            args[attrIndex] = referencedItem.generatedKey
+        return args
 
     def CallFunction(self, functionName, returnType, *args):
         return self.cursor.callfunc(functionName, returnType, args)
@@ -110,39 +133,14 @@ class DatabaseDataSource(DataSource):
         with self.connection:
             cursor = self.connection.cursor()
             for item in transaction.items:
-                self._SetupArgs(cursor, item)
                 if item.procedureName is not None:
-                    args = list(item.args)
-                    for attrIndex in item.fkArgs:
-                        args[attrIndex] = item.referencedItem.generatedKey
-                    if item.returnType is not None:
-                        item.generatedKey = cursor.callfunc(item.procedureName,
-                                item.returnType, args)
-                    else:
-                        cursor.callproc(item.procedureName, args)
+                    self._TransactionCallProcedure(cursor, item)
                 elif item.setValues is not None and item.conditions is None:
-                    args = item.setValues.copy()
-                    for attrName in item.fkArgs:
-                        args[attrName] = item.referencedItem.generatedKey
-                    if item.pkSequenceName is not None:
-                        item.generatedKey = \
-                                self.GetSequenceValue(item.pkSequenceName)
-                        args[item.pkAttrName] = item.generatedKey
-                    self.InsertRow(item.tableName, **args)
+                    self._TransactionInsertRow(cursor, item)
                 elif item.setValues is not None:
-                    args = item.setValues.copy()
-                    args.update(item.conditions)
-                    pkAttrNames = item.conditions.keys()
-                    self.UpdateRows(item.tableName, *pkAttrNames, **args)
+                    self._TransactionUpdateRow(cursor, item)
                 else:
-                    self.DeleteRows(item.tableName, **item.conditions)
-
-    def DeleteRows(self, tableName, **conditions):
-        whereClause, args = self.GetWhereClauseAndArgs(**conditions)
-        sql = "delete from %s" % tableName
-        if whereClause is not None:
-            sql += " where " + whereClause
-        self.cursor.execute(sql, args)
+                    self._TransactionDeleteRow(cursor, item)
 
     def GetSqlAndArgs(self, tableName, columnNames, **conditions):
         sql = "select %s from %s" % (", ".join(columnNames), tableName)
@@ -231,31 +229,45 @@ class OracleDataSource(DatabaseDataSource):
         args[argName] = value
         whereClauses.append(clauseFormat % (columnName, argName))
 
+    def _GetBlobType(self):
+        return self.connection.BLOB
+
+    def _GetClobType(self):
+        return self.connection.NCLOB
+
     def _GetEmptyArgs(self):
         return {}
 
-    def GetSequenceValue(self, sequenceName):
-        self.cursor.execute("select %s.nextval from dual" % sequenceName)
-        value, = self.cursor.fetchone()
-        return value
-
-    def InsertRow(self, tableName, **values):
+    def _TransactionInsertRow(self, cursor, item):
+        if item.pkSequenceName is not None:
+            sql = "select %s.nextval from dual" % item.pkSequenceName
+            cursor.execute(sql)
+            item.generatedKey, = cursor.fetchone()
+        values = self._TransactionSetupKeywordArgs(cursor, item.setValues,
+                item.clobArgs, item.blobArgs, item.fkArgs, item.referencedItem)
+        if item.pkSequenceName is not None:
+            values[item.pkAttrName] = item.generatedKey
         insertNames = values.keys()
         insertValues = [":%s" % n for n in insertNames]
         sql = "insert into %s (%s) values (%s)" % \
-                (tableName, ",".join(insertNames), ",".join(insertValues))
-        self.cursor.execute(sql, values)
+                (item.tableName, ",".join(insertNames), ",".join(insertValues))
+        cursor.execute(sql, values)
 
-    def UpdateRows(self, tableName, *whereNames, **values):
-        setClauses = ["%s = :%s" % (n, n) for n in values \
-                if n not in whereNames]
-        whereClauses = ["%s = :%s" % (n, n) for n in whereNames]
-        statement = "update %s set %s where %s" % \
-                (tableName, ",".join(setClauses), " and ".join(whereClauses))
-        self.cursor.execute(statement, args)
+    def _TransactionUpdateRow(self, cursor, item):
+        args = self._TransactionSetupKeywordArgs(cursor, item.setValues,
+                item.clobArgs, item.blobArgs)
+        args.update(item.conditions)
+        conditionNames = item.conditions.keys()
+        setClauses = ["%s = :%s" % (n, n) for n in args \
+                if n not in conditionNames]
+        whereClauses = ["%s = :%s" % (n, n) for n in conditionNames]
+        sql = "update %s set %s where %s" % \
+                (item.tableName, ",".join(setClauses),
+                        " and ".join(whereClauses))
+        cursor.execute(sql, args)
 
 
-class SqlServerDataSource(DatabaseDataSource):
+class ODBCDataSource(DatabaseDataSource):
 
     def _AddWhereClauseAndArg(self, columnName, rawOperator, value,
             whereClauses, args):
@@ -276,27 +288,46 @@ class SqlServerDataSource(DatabaseDataSource):
     def _GetEmptyArgs(self):
         return []
 
-    def GetSequenceValue(self, sequenceName):
-        self.cursor.execute("select nextval('%s')::integer" % sequenceName)
-        value, = self.cursor.fetchone()
-        return value
-
-    def InsertRow(self, tableName, **values):
-        insertNames = values.keys()
-        args = [values[n] for n in insertNames]
+    def _TransactionInsertRow(self, cursor, item):
+        if item.pkSequenceName is not None:
+            sql = "select nextval('%s')::integer" % item.pkSequenceName
+            cursor.execute(sql)
+            item.generatedKey, = cursor.fetchone()
+        insertNames = item.setValues.keys()
+        args = self._TransactionSetupArgs(cursor, item, insertNames)
         insertValues = ["?" for n in insertNames]
         sql = "insert into %s (%s) values (%s)" % \
-                (tableName, ",".join(insertNames), ",".join(insertValues))
-        self.cursor.execute(sql, args)
+                (item.tableName, ",".join(insertNames), ",".join(insertValues))
+        cursor.execute(sql, args)
 
-    def UpdateRows(self, tableName, *whereNames, **values):
-        args = [values[n] for n in values if n not in whereNames] + \
-               [values[n] for n in whereNames]
-        setClauses = ["%s = ?" % n for n in values if n not in whereNames]
-        whereClauses = ["%s = ?" % n for n in whereNames]
-        statement = "update %s set %s where %s" % \
-                (tableName, ",".join(setClauses), " and ".join(whereClauses))
-        self.cursor.execute(statement, args)
+    def _TransactionSetupArgs(self, cursor, item, setValueNames):
+        clobArgs = []
+        blobArgs = []
+        fkArgs = []
+        args = []
+        for attrIndex, name in enumerate(setValueNames):
+            if name in item.clobArgs:
+                clobArgs.append(attrIndex)
+            elif name in item.blobArgs:
+                blobArgs.append(attrIndex)
+            elif name in item.fkArgs:
+                fkArgs.append(attrIndex)
+            args.append(item.setValues[name])
+        return self._TransactionSetupPositionalArgs(cursor, args, clobArgs,
+                blobArgs, fkArgs, item.referencedItem)
+
+    def _TransactionUpdateRow(self, cursor, item):
+        setNames = item.setValues.keys()
+        conditionNames = item.conditions.keys()
+        args = self._TransactionSetupArgs(cursor, item, setNames)
+        for name in conditionNames:
+            args.append(item.conditions[name])
+        setClauses = ["%s = ?" % n for n in setNames]
+        whereClauses = ["%s = ?" % n for n in conditionNames]
+        sql = "update %s set %s where %s" % \
+                (item.tableName, ",".join(setClauses),
+                        " and ".join(whereClauses))
+        cursor.execute(sql, args)
 
 
 class Transaction(object):
