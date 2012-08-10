@@ -293,6 +293,7 @@ class ODBCDataSource(DatabaseDataSource):
             sql = "select nextval('%s')::integer" % item.pkSequenceName
             cursor.execute(sql)
             item.generatedKey, = cursor.fetchone()
+            item.setValues[item.pkAttrName] = item.generatedKey
         insertNames = item.setValues.keys()
         args = self._TransactionSetupArgs(cursor, item, insertNames)
         insertValues = ["?" for n in insertNames]
