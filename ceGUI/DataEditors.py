@@ -420,8 +420,9 @@ class FilteredDataListPanel(DataListPanel):
 
     def _AddToSizer(self, sizer, labelControl, fieldControl):
         baseFlag = flag = wx.ALIGN_CENTER_VERTICAL
-        if self.GetChildren():
+        for child in sizer.GetChildren():
             flag |= wx.LEFT
+            break
         sizer.Add(labelControl, flag = flag, border = 10)
         sizer.Add(fieldControl, flag = baseFlag | wx.LEFT, border = 5)
 
@@ -471,8 +472,10 @@ class FilteredDataListPanel(DataListPanel):
                 columnsThisSizer = 0
             self._AddToSizer(sizer, labelControl, fieldControl)
             columnsThisSizer += 1
+        flag = wx.ALL
         for sizer in sizers:
-            topSizer.Add(sizer, flag = wx.EXPAND | wx.ALL, border = 5)
+            topSizer.Add(sizer, flag = wx.EXPAND | flag, border = 5)
+            flag = wx.LEFT | wx.RIGHT | wx.BOTTOM
         if self.createRetrieveButton:
             sizers[-1].Add(self.retrieveButton,
                     flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 10)
