@@ -268,6 +268,19 @@ class OracleDataSource(DatabaseDataSource):
 
 
 class ODBCDataSource(DatabaseDataSource):
+    operators = {
+            "contains" : "like",
+            "icontains" : "ilike",
+            "endswith" : "like",
+            "iendswith" : "ilike",
+            "lt" : "<",
+            "lte" : "<=",
+            "ne" : "!=",
+            "gt" : ">",
+            "gte" : ">=",
+            "startswith" : "like",
+            "istartswith" : "ilike"
+    }
 
     def _AddWhereClauseAndArg(self, columnName, rawOperator, value,
             whereClauses, args):
@@ -278,10 +291,17 @@ class ODBCDataSource(DatabaseDataSource):
             clauseFormat = "%s = ?"
         else:
             operator = self.operators.get(rawOperator, "?")
-            if rawOperator == "ne" and value is None:
+            if rawOperator in ("contains", "icontains"):
+                clauseFormat = "%s {0} '%%' || ? || '%%'".format(operator)
+            elif rawOperator in ("startswith", "istartswith"):
+                clauseFormat = "%s {0} ? || '%%'".format(operator)
+            elif rawOperator in ("endswith", "iendswith"):
+                clauseFormat = "%s {0} '%%' || ?".format(operator)
+            elif rawOperator == "ne" and value is None:
                 whereClauses.append("%s is not null" % columnName)
                 return
-            clauseFormat = "%%s %s ?" % operator
+            else:
+                clauseFormat = "%%s %s ?" % operator
         args.append(value)
         whereClauses.append(clauseFormat % columnName)
 
