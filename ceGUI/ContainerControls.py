@@ -328,6 +328,9 @@ class Panel(BaseContainer, wx.Panel):
     def _GetNumItems(self):
         pass
 
+    def OnActivated(self):
+        self._DisplayNumItems()
+
 
 class PreviewFrame(BaseContainer, wx.PreviewFrame):
 
@@ -406,15 +409,23 @@ class StandardDialog(Dialog):
 class TopLevelFrame(Frame):
     preferencesDialogName = "ceGUI.PreferencesDialog"
     baseSettingsName = ""
+    statusBar = None
 
     def _DisplayNumItems(self, numItems, fieldNum = 1):
-        if numItems == 0:
-            text = "No items"
-        elif numItems == 1:
-            text = "1 item"
-        else:
-            text = "%s items" % numItems
-        self.statusBar.SetStatusText(text, fieldNum)
+        if self.statusBar:
+            if numItems == 0:
+                text = "No items"
+            elif numItems == 1:
+                text = "1 item"
+            else:
+                text = "%s items" % numItems
+            self.statusBar.SetStatusText(text, fieldNum)
+
+    def CreateSimpleStatusBar(self):
+        self.statusBar = wx.StatusBar(self)
+        self.statusBar.SetFieldsCount(2)
+        self.statusBar.SetStatusWidths([-1, 100])
+        self.SetStatusBar(self.statusBar)
 
     def OnAbout(self, event):
         dialog = ceGUI.AboutDialog(self)
