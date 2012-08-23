@@ -13,6 +13,7 @@ modules = [
         "ceDatabase",
         "ceDatabaseCache",
         "ceDataSource",
+        "ceWin32NamedPipes",
         "cx_ClassLibrary",
         "cx_CVS",
         "cx_DatabaseTable",
