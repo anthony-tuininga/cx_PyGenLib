@@ -4,6 +4,7 @@ Handles communication of arbitrary objects across Win32 named pipes.
 
 import cPickle
 import cx_Exceptions
+import cx_Logging
 import pywintypes
 import win32file
 import win32pipe
@@ -11,31 +12,20 @@ import win32pipe
 class NamedPipe(object):
 
     def __init__(self, name, serverName = None, maxSize = 65536, timeout = 30,
-            maxLengthDigits = 6, asServer = True):
+            maxLengthDigits = 6, asServer = True,
+            maxInstances = win32pipe.PIPE_UNLIMITED_INSTANCES):
         self.name = name
         self.serverName = serverName
         self.maxSize = maxSize
         self.timeout = timeout
         self.maxLengthDigits = maxLengthDigits
         self.asServer = asServer
+        self.maxInstances = maxInstances
         self.handle = None
 
     def __enter__(self):
-        pipeName = r"\\%s\pipe\%s" % (self.serverName or ".", self.name)
-        if self.asServer:
-            print "Creating server..."
-            sa = pywintypes.SECURITY_ATTRIBUTES()
-            sa.SetSecurityDescriptorDacl(1, None, 0)
-            self.handle = win32pipe.CreateNamedPipe(pipeName,
-                    win32pipe.PIPE_ACCESS_DUPLEX,
-                    win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT, 1,
-                    self.maxSize, self.maxSize, self.timeout, sa)
-            win32pipe.ConnectNamedPipe(self.handle)
-        else:
-            print "Creating client..."
-            self.handle = win32file.CreateFile(pipeName,
-                    win32file.GENERIC_READ | win32file.GENERIC_WRITE, 0, None,
-                    win32file.OPEN_EXISTING, 0, None)
+        if self.handle is None:
+            self.Open()
         return self
 
     def __exit__(self, excType, excValue, excTraceback):
@@ -45,6 +35,25 @@ class NamedPipe(object):
     def Close(self):
         win32file.CloseHandle(self.handle)
         self.handle = None
+
+    def Open(self):
+        pipeName = r"\\%s\pipe\%s" % (self.serverName or ".", self.name)
+        if self.asServer:
+            cx_Logging.Info("Creating pipe (as server): %s", self.name)
+            sa = pywintypes.SECURITY_ATTRIBUTES()
+            sa.SetSecurityDescriptorDacl(1, None, 0)
+            self.handle = win32pipe.CreateNamedPipe(pipeName,
+                    win32pipe.PIPE_ACCESS_DUPLEX,
+                    win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_WAIT,
+                    self.maxInstances, self.maxSize, self.maxSize,
+                    self.timeout, sa)
+            win32pipe.ConnectNamedPipe(self.handle)
+        else:
+            cx_Logging.Info("Connecting to pipe (as client): %s on %s",
+                    self.name, self.serverName or ".")
+            self.handle = win32file.CreateFile(pipeName,
+                    win32file.GENERIC_READ | win32file.GENERIC_WRITE, 0, None,
+                    win32file.OPEN_EXISTING, 0, None)
 
     def Read(self):
         hr, data = win32file.ReadFile(self.handle, self.maxLengthDigits)
