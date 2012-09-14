@@ -69,11 +69,15 @@ class NamedPipe(object):
     def Write(self, obj):
         data = cPickle.dumps(obj)
         length = str(len(data))
+        maxSize = self.maxSize - self.maxLengthDigits
         if len(length) > self.maxLengthDigits:
             raise ValueTooLong()
         win32file.WriteFile(self.handle,
                 length.rjust(self.maxLengthDigits, "0"))
-        win32file.WriteFile(self.handle, data)
+        while data:
+            dataToWrite = data[:maxSize]
+            data = data[maxSize:]
+            win32file.WriteFile(self.handle, dataToWrite)
 
 
 class ValueTooLong(cx_Exceptions.BaseException):
