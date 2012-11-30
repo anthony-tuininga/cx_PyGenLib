@@ -439,7 +439,7 @@ class Transaction(object):
             self.blobArgs = blobArgs or []
             self.fkArgs = fkArgs or []
 
-        def _SetArgType(self, dataSet, attrIndex, attrName, offset):
+        def _SetArgType(self, dataSet, row, attrIndex, attrName, offset):
             if attrName in dataSet.clobAttrNames:
                 if self.procedureName is not None:
                     self.clobArgs.append(attrIndex + offset)
@@ -461,5 +461,5 @@ class Transaction(object):
         def _SetArgTypes(self, dataSet, row, attrNames):
             offset = 1 if self.returnType is not None else 0
             for attrIndex, attrName in enumerate(attrNames):
-                self._SetArgType(dataSet, attrIndex, attrName, offset)
+                self._SetArgType(dataSet, row, attrIndex, attrName, offset)
 
