@@ -386,7 +386,8 @@ class DataListPanel(DataPanel):
         itemIndex = event.GetIndex()
         handle = self.list.rowHandles[itemIndex]
         item = self.list.dataSet.rows[handle]
-        self.EditItem(item, itemIndex)
+        if self.list.CanEditItem(item):
+            self.EditItem(item, itemIndex)
 
     def OnLayout(self):
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
