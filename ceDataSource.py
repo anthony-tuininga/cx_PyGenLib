@@ -74,7 +74,8 @@ class DatabaseDataSource(DataSource):
 
     def _TransactionCallProcedure(self, cursor, item):
         args = self._TransactionSetupPositionalArgs(cursor, item.args,
-                item.clobArgs, item.blobArgs, item.fkArgs, item.referencedItem)
+                item.clobArgs, item.blobArgs, item.fkArgs,
+                item.referencedItems)
         if item.returnType is not None:
             item.generatedKey = cursor.callfunc(item.procedureName,
                     item.returnType, args)
@@ -92,7 +93,7 @@ class DatabaseDataSource(DataSource):
         raise NotImplementedError
 
     def _TransactionSetupKeywordArgs(self, cursor, args, clobArgs, blobArgs,
-            fkArgs = [], referencedItem = None):
+            fkArgs = [], referencedItems = []):
         inputSizes = {}
         for attrName in clobArgs:
             inputSizes[attrName] = self._GetClobType()
@@ -101,12 +102,12 @@ class DatabaseDataSource(DataSource):
         if inputSizes:
             cursor.setinputsizes(**inputSizes)
         args = args.copy()
-        for attrName in fkArgs:
+        for attrName, referencedItem in zip(fkArgs, referencedItems):
             args[attrName] = referencedItem.generatedKey
         return args
 
     def _TransactionSetupPositionalArgs(self, cursor, args, clobArgs, blobArgs,
-            fkArgs = [], referencedItem = None):
+            fkArgs = [], referencedItems = []):
         inputSizes = []
         for attrIndex in clobArgs:
             while len(inputSizes) <= attrIndex:
@@ -119,7 +120,7 @@ class DatabaseDataSource(DataSource):
         if inputSizes:
             cursor.setinputsizes(*inputSizes)
         args = list(args)
-        for attrIndex in fkArgs:
+        for attrIndex, referencedItem in zip(fkArgs, referencedItems):
             args[attrIndex] = referencedItem.generatedKey
         return args
 
@@ -244,7 +245,8 @@ class OracleDataSource(DatabaseDataSource):
             cursor.execute(sql)
             item.generatedKey, = cursor.fetchone()
         values = self._TransactionSetupKeywordArgs(cursor, item.setValues,
-                item.clobArgs, item.blobArgs, item.fkArgs, item.referencedItem)
+                item.clobArgs, item.blobArgs, item.fkArgs,
+                item.referencedItems)
         if item.pkSequenceName is not None:
             values[item.pkAttrName] = item.generatedKey
         insertNames = values.keys()
@@ -335,7 +337,7 @@ class ODBCDataSource(DatabaseDataSource):
                 fkArgs.append(attrIndex)
             args.append(item.setValues[name])
         return self._TransactionSetupPositionalArgs(cursor, args, clobArgs,
-                blobArgs, fkArgs, item.referencedItem)
+                blobArgs, fkArgs, item.referencedItems)
 
     def _TransactionUpdateRow(self, cursor, item):
         setNames = item.setValues.keys()
@@ -363,14 +365,17 @@ class Transaction(object):
         return item
 
     def CreateRow(self, dataSet, row):
+        referencedItems = []
         referencedItem = self.itemsByRow.get(dataSet.contextItem)
+        if referencedItem is not None:
+            referencedItems.append(referencedItem)
         args = dataSet._GetArgsFromNames(dataSet.insertAttrNames, row)
         if dataSet.updatePackageName is not None:
             procedureName = "%s.%s" % \
                     (dataSet.updatePackageName, dataSet.insertProcedureName)
             returnType = int if dataSet.pkIsGenerated else None
             item = self.itemClass(procedureName = procedureName, args = args,
-                    returnType = returnType, referencedItem = referencedItem)
+                    returnType = returnType, referencedItems = referencedItems)
         else:
             setValues = dict(zip(dataSet.insertAttrNames, args))
             pkSequenceName = dataSet.pkSequenceName if dataSet.pkIsGenerated \
@@ -379,7 +384,7 @@ class Transaction(object):
                     else None
             item = self.itemClass(tableName = dataSet.updateTableName,
                     setValues = setValues, pkSequenceName = pkSequenceName,
-                    pkAttrName = pkAttrName, referencedItem = referencedItem)
+                    pkAttrName = pkAttrName, referencedItems = referencedItems)
         self.items.append(item)
         self.itemsByRow[row] = item
         item._SetArgTypes(dataSet, row, dataSet.insertAttrNames)
@@ -421,7 +426,7 @@ class Transaction(object):
 
         def __init__(self, procedureName = None, args = None,
                 returnType = None, tableName = None, setValues = None,
-                conditions = None, referencedItem = None,
+                conditions = None, referencedItems = None,
                 pkSequenceName = None, pkAttrName = None, clobArgs = None,
                 blobArgs = None, fkArgs = None, methodName = None):
             self.procedureName = procedureName
@@ -431,7 +436,7 @@ class Transaction(object):
             self.tableName = tableName
             self.setValues = setValues
             self.conditions = conditions
-            self.referencedItem = referencedItem
+            self.referencedItems = referencedItems or []
             self.pkSequenceName = pkSequenceName
             self.pkAttrName = pkAttrName
             self.generatedKey = None
@@ -450,8 +455,7 @@ class Transaction(object):
                     self.blobArgs.append(attrIndex + offset)
                 else:
                     self.blobArgs.append(attrName)
-            elif self.referencedItem is not None \
-                    and not hasattr(row, attrName) \
+            elif self.referencedItems and not hasattr(row, attrName) \
                     and hasattr(dataSet.contextItem, attrName):
                 if self.procedureName is not None:
                     self.fkArgs.append(attrIndex)
