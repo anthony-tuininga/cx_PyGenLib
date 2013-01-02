@@ -285,6 +285,8 @@ class DecimalField(IntegerField):
     def GetValue(self):
         textValue = wx.TextCtrl.GetValue(self)
         if textValue:
+            if textValue == ".":
+                return decimal.Decimal(0)
             pos = textValue.find(".")
             if pos < 0:
                 digitsBeforeDecimal = len(textValue)
