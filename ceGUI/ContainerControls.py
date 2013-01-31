@@ -439,3 +439,12 @@ class TopLevelFrame(Frame):
     def OnExit(self, event):
         self.Close()
 
+    def Recreate(self):
+        self._SaveSettings()
+        app = ceGUI.GetApp()
+        newFrame = app.GetTopWindow()
+        self.Hide()
+        newFrame.Show()
+        app.topWindow = newFrame
+        wx.CallAfter(self.Destroy)
+
