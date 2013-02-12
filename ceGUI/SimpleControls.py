@@ -237,6 +237,9 @@ class UpperCaseTextField(TextField):
                 skipEvent = False)
 
     def OnChar(self, event):
+        if not self.IsEditable():
+            event.Skip()
+            return
         key = event.GetKeyCode()
         if key < ord('a') or key > ord('z'):
             event.Skip()
