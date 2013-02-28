@@ -938,7 +938,7 @@ class DateEditDialogColumn(EditDialogColumn):
             field = parent.AddTextField(editable = False)
         self.editable = editable
         super(DateEditDialogColumn, self).__init__(parent, attrName, labelText,
-                field)
+                field, required = not allowNone)
 
     def SetValue(self, row):
         value = getattr(row, self.attrName)
