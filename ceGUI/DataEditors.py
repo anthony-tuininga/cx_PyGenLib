@@ -43,6 +43,9 @@ class EditDialog(ceGUI.StandardDialog):
             parent = self.GetParent()
         return not isinstance(parent, EditDialog)
 
+    def OnCancel(self):
+        self.panel.OnCancelEditing()
+
     def OnNewRow(self, parent, row):
         pass
 
@@ -112,6 +115,9 @@ class DataPanel(ceGUI.Panel):
         self.dataSet = self._GetDataSet()
         super(DataPanel, self)._Initialize()
 
+    def OnCancelEditing(self):
+        pass
+
     def OnPostCreate(self):
         pass
 
@@ -159,6 +165,10 @@ class DataEditPanel(DataPanel):
 
     def GetRow(self):
         return self.dataSet.rows[0]
+
+    def OnCancelEditing(self):
+        for column in self.columns:
+            column.OnCancelEditing()
 
     def OnLayout(self, proportion = 1):
         self.fieldsSizer = self.GetFieldsSizer()
@@ -696,6 +706,9 @@ class EditDialogColumn(ceGUI.BaseControl):
         elif self.expandField:
             flags |= wx.EXPAND
         sizer.Add(self.field, flag = flags, border = 4)
+
+    def OnCancelEditing(self):
+        pass
 
     def OnRequiredFieldHasNoValue(self):
         self.field.SetFocus()
