@@ -367,7 +367,8 @@ class Transaction(object):
     def CreateRow(self, dataSet, row):
         referencedItems = []
         referencedItem = self.itemsByRow.get(dataSet.contextItem)
-        if referencedItem is not None:
+        if referencedItem is not None \
+                and referencedItem.returnType is not None:
             referencedItems.append(referencedItem)
         args = dataSet._GetArgsFromNames(dataSet.insertAttrNames, row)
         if dataSet.updatePackageName is not None:
