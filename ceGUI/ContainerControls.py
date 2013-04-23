@@ -234,6 +234,7 @@ class Dialog(BaseContainer, wx.Dialog):
         pass
 
     def ShowModalOk(self):
+        self.SetCursor(wx.NullCursor)
         return self.ShowModal() == wx.ID_OK
 
 
