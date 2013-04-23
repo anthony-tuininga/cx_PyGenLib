@@ -207,11 +207,11 @@ class OracleDataSource(DatabaseDataSource):
                 argName = columnName[:30 - len(strSeqNum)] + strSeqNum
             operator = self.operators.get(rawOperator, "?")
             if rawOperator == "contains":
-                clauseFormat = "%s like '%%' || :%s || '%%'"
+                clauseFormat = "regexp_like(%s, :%s, 'i')"
             elif rawOperator == "startswith":
-                clauseFormat = "%s like :%s || '%%'"
+                clauseFormat = "regexp_like(%s, '^' || :%s, 'i')"
             elif rawOperator == "endswith":
-                clauseFormat = "%s like '%%' || :%s"
+                clauseFormat = "regexp_like(%s, :%s || '$', 'i')"
             elif rawOperator == "in":
                 inClauseParts = []
                 for i, inValue in enumerate(value):
