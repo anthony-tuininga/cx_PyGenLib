@@ -80,7 +80,7 @@ class CalendarField(BaseControl, wx.calendar.CalendarCtrl):
 
     def GetValue(self):
         wxDate = self.GetDate()
-        return datetime.date(wxDate.GetYear(), wxDate.GetMonth() + 1,
+        return datetime.datetime(wxDate.GetYear(), wxDate.GetMonth() + 1,
                 wxDate.GetDay())
 
     def SetValue(self, value):
@@ -157,7 +157,7 @@ class DateField(BaseControl, wx.DatePickerCtrl):
     def GetValue(self):
         wxDate = wx.DatePickerCtrl.GetValue(self)
         if wxDate.IsValid():
-            return datetime.date(wxDate.GetYear(), wxDate.GetMonth() + 1,
+            return datetime.datetime(wxDate.GetYear(), wxDate.GetMonth() + 1,
                     wxDate.GetDay())
 
     def SetValue(self, value):
