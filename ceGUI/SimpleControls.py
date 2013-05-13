@@ -161,9 +161,11 @@ class DateField(BaseControl, wx.DatePickerCtrl):
                     wxDate.GetDay())
 
     def SetValue(self, value):
-        if value is not None:
+        if value is None:
+            wxDate = wx.DateTime()
+        else:
             wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
-            wx.DatePickerCtrl.SetValue(self, wxDate)
+        wx.DatePickerCtrl.SetValue(self, wxDate)
 
 
 class Notebook(BaseControl, wx.Notebook):
