@@ -146,6 +146,8 @@ class DateField(BaseControl, wx.DatePickerCtrl):
     copyAppAttributes = False
 
     def __init__(self, parent, allowNone = False, showDropDown = False):
+        self.allowNone = allowNone
+        self.showDropDown = showDropDown
         style = wx.DP_DEFAULT | wx.DP_SHOWCENTURY
         if allowNone:
             style |= wx.DP_ALLOWNONE
@@ -161,11 +163,12 @@ class DateField(BaseControl, wx.DatePickerCtrl):
                     wxDate.GetDay())
 
     def SetValue(self, value):
-        if value is None:
-            wxDate = wx.DateTime()
-        else:
+        if value is not None:
             wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
-        wx.DatePickerCtrl.SetValue(self, wxDate)
+            wx.DatePickerCtrl.SetValue(self, wxDate)
+        elif self.allowNone:
+            wxDate = wx.DateTime()
+            wx.DatePickerCtrl.SetValue(self, wxDate)
 
 
 class Notebook(BaseControl, wx.Notebook):
