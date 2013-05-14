@@ -14,7 +14,8 @@ from wx.lib.pubsub import Publisher
 __all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "EventHandler",
             "EVT_THREAD_TERMINATED", "FrozenContext", "GetApp",
             "GetModuleItem", "OpenWindow", "RequiredFieldHasNoValue",
-            "SendMessage", "Subscribe", "Thread", "TransactionContext" ]
+            "SendMessage", "Subscribe", "Thread", "TransactionContext",
+            "UnsubscribeAll" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -147,6 +148,10 @@ def SendMessage(topic, data = None):
 
 def Subscribe(listener, topic):
     Publisher().subscribe(listener, topic)
+
+
+def UnsubscribeAll(topics = None):
+    Publisher().unsubAll(topics)
 
 
 class TransactionContext(BusyCursorContext):
