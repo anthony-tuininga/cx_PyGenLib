@@ -87,6 +87,7 @@ class Row(object):
     pkAttrNames = []
     useSlots = True
     sortReversed = False
+    tableName = None
 
     def __repr__(self):
         reprAttrNames = self.reprAttrNames or self.attrNames
@@ -148,6 +149,8 @@ class DataSetMetaClass(type):
             cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         cls.pkAttrNames = cls.rowClass.pkAttrNames
+        if cls.tableName is None:
+            cls.tableName = cls.rowClass.tableName
         if isinstance(cls.uniqueAttrNames, basestring):
             cls.uniqueAttrNames = cls.uniqueAttrNames.split()
         if isinstance(cls.insertAttrNames, basestring):
