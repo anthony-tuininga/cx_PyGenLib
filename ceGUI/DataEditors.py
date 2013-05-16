@@ -846,6 +846,8 @@ class BooleanEditDialogColumn(EditDialogColumn):
 
     def SetValue(self, row):
         value = getattr(row, self.attrName)
+        if not isinstance(value, bool):
+            value = False
         if self.editable:
             self.field.SetValue(value)
         else:
