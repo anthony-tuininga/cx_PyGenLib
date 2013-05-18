@@ -9,7 +9,9 @@ import cx_Threads
 import wx
 import sys
 
-from wx.lib.pubsub import Publisher
+import wx.lib.pubsub.setupkwargs
+
+from wx.lib.pubsub import pub
 
 __all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "EventHandler",
             "EVT_THREAD_TERMINATED", "FrozenContext", "GetApp",
@@ -142,16 +144,16 @@ class RequiredFieldHasNoValue(cx_Exceptions.BaseException):
     message = "Required field has no value."
 
 
-def SendMessage(topic, data = None):
-    Publisher().sendMessage(topic, data)
+def SendMessage(topic, **args):
+    pub.sendMessage(topic, **args)
 
 
 def Subscribe(listener, topic):
-    Publisher().subscribe(listener, topic)
+    pub.subscribe(listener, topic)
 
 
 def UnsubscribeAll(topics = None):
-    Publisher().unsubAll(topics)
+    pub.unsubAll(topics)
 
 
 class TransactionContext(BusyCursorContext):
