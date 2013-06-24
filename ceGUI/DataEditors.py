@@ -24,16 +24,23 @@ class EditDialog(ceGUI.StandardDialog):
     dataSetClassName = "DataSet"
     saveWidthOnly = True
 
-    def __init__(self, parent, instanceName = None, parentItem = None):
+    def __init__(self, parent, instanceName = None, parentItem = None,
+            clone = False):
         self.parentItem = parentItem
         self.dataSet = self._GetDataSet(parent)
         self.Retrieve(parent)
         super(EditDialog, self).__init__(parent, instanceName)
         self.OnPostCreate()
+        if clone:
+            wx.CallAfter(self.Clone, parent, self.GetRow())
 
     def _GetDataSet(self, parent):
         cls = self._GetClass(self.dataSetClassName)
         return cls(parent.config.dataSource, self.parentItem)
+
+    def Clone(self, parent, row):
+        self.dataSet.MarkAllRowsAsNew()
+        self.OnClone(parent, row)
 
     def GetRow(self):
         return self.dataSet.rows[0]
@@ -45,6 +52,9 @@ class EditDialog(ceGUI.StandardDialog):
 
     def OnCancel(self):
         self.panel.OnCancelEditing()
+
+    def OnClone(self, parent, row):
+        pass
 
     def OnNewRow(self, parent, row):
         pass
