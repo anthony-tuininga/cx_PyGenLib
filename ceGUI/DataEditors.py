@@ -973,8 +973,7 @@ class DateEditDialogColumn(EditDialogColumn):
         elif value is None:
             self.field.SetValue("")
         else:
-            wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
-            self.field.SetValue(wxDate.FormatDate())
+            self.field.SetValue(value.strftime(self.config.dateFormat))
 
 
 class DecimalEditDialogColumn(EditDialogColumn):
