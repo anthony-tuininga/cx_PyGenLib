@@ -36,7 +36,8 @@ class EditDialog(ceGUI.StandardDialog):
 
     def _GetDataSet(self, parent):
         cls = self._GetClass(self.dataSetClassName)
-        return cls(parent.config.dataSource, self.parentItem)
+        app = ceGUI.GetApp()
+        return cls(app.config.dataSource, self.parentItem)
 
     def Clone(self, parent, row):
         self.dataSet.MarkAllRowsAsNew()
