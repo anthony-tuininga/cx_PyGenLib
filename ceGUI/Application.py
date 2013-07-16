@@ -110,7 +110,15 @@ class Config(object):
 
     def __init__(self, app):
         self.settings = app.settings
+        appName = app.__class__.__name__
+        self._OnCreate(app, appName)
+
+    def _OnCreate(self, app, appName):
+        self.dataSource = self.ConnectToDataSource(app, appName)
         self.OnCreate()
+
+    def ConnectToDataSource(self, app, appName):
+        pass
 
     def OnCreate(self):
         pass
