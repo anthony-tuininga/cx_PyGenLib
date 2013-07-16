@@ -77,7 +77,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _OnContextMenu(self, event):
         x, y = self.CalcUnscrolledPosition(event.GetPosition())
         self.contextPos = self.YToRow(y)
-        self.insertMenuItem.Enable(self.table.CanInsertRow())
+        insertEnabled = self.table.CanInsertRow()
+        self.insertMenuItem.Enable(insertEnabled)
+        self.insertFromClipboardMenuItem.Enable(insertEnabled)
         deleteEnabled = self.contextPos != wx.NOT_FOUND \
                 and self.table.CanDeleteRow(self.contextPos)
         self.deleteMenuItem.Enable(deleteEnabled)
@@ -296,6 +298,20 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def PendingChanges(self):
         return self.table.PendingChanges()
 
+    def RefreshFromDataSet(self):
+        numRows = self.table.GetNumberRows()
+        if numRows > 0:
+            msg = wx.grid.GridTableMessage(self.table,
+                    wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, numRows, numRows)
+            self.ProcessTableMessage(msg)
+        self.table.RefreshFromDataSet()
+        if self.sortOnRetrieve:
+            self.table.SortItems()
+        numRows = self.table.GetNumberRows()
+        msg = wx.grid.GridTableMessage(self.table,
+                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
+        self.ProcessTableMessage(msg)
+
     def RestoreColumnWidths(self):
         widths = self.ReadSetting(self.settingsName, converter = eval)
         if widths is not None and len(widths) <= len(self.table.columns):
@@ -427,6 +443,9 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def PendingChanges(self):
         return self.dataSet.PendingChanges()
+
+    def RefreshFromDataSet(self):
+        self.rowHandles = self.dataSet.rows.keys()
 
     def Retrieve(self, *args):
         self.dataSet.Retrieve(*args)
