@@ -96,6 +96,16 @@ class Row(object):
             return "<%s %s>" % (self.__class__.reprName, ", ".join(values))
         return "<%s>" % self.__class__.reprName
 
+    @classmethod
+    def GetRow(cls, dataSource, **conditions):
+        return dataSource.GetRow(cls.tableName, cls.attrNames, cls,
+                **conditions)
+
+    @classmethod
+    def GetRows(cls, dataSource, **conditions):
+        return dataSource.GetRows(cls.tableName, cls.attrNames, cls,
+                **conditions)
+
     def Copy(self):
         cls = self.__class__
         args = [getattr(self, n) for n in cls.attrNames]
