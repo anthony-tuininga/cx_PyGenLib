@@ -251,6 +251,7 @@ class DataGridPanel(DataPanel):
         self.grid.ClearSelection()
 
     def OnCreate(self, postRetrieve = None):
+        self.SetWindowStyle(0)
         if postRetrieve is None:
             postRetrieve = self.postRetrieve
         self.grid = self._GetGrid()
