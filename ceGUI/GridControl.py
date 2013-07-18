@@ -16,6 +16,7 @@ __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
     settingsName = "ColumnWidths"
     dataSetClassName = "DataSet"
+    stripSpacesOnPaste = True
     sortOnRetrieve = True
 
     def __init__(self, parent):
@@ -283,6 +284,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 colIndex = left
                 while colIndex <= right:
                     for value in row:
+                        if self.stripSpacesOnPaste \
+                                and isinstance(value, basestring):
+                            value = value.strip()
                         self.SetCellValue(rowIndex, colIndex, value)
                         colIndex += 1
                         if colIndex > right:
@@ -297,6 +301,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def PendingChanges(self):
         return self.table.PendingChanges()
+
+    def RefreshEditors(self):
+        for column in self.table.columns:
+            if isinstance(column, ceGUI.GridColumnChoice):
+                column.RefreshChoices()
 
     def RefreshFromDataSet(self):
         numRows = self.table.GetNumberRows()
