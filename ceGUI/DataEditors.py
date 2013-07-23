@@ -11,8 +11,8 @@ import sys
 import wx
 
 __all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn", "DataPanel",
-            "DataEditPanel", "DataGridPanel", "DataList", "DataListPanel",
-            "DataNotebookPanel", "DateEditDialogColumn",
+            "DataEditPanel", "DataGrid", "DataGridPanel", "DataList",
+            "DataListPanel", "DataNotebookPanel", "DateEditDialogColumn",
             "DecimalEditDialogColumn", "DirNameEditDialogColumn", "EditDialog",
             "EditDialogColumn", "EllipsisEditDialogColumn",
             "FileNameEditDialogColumn", "GridEditWindow",
@@ -100,9 +100,12 @@ class DataPanel(ceGUI.Panel):
         editDialog = self._GetEditDialog()
         if self.dataSetClassName is not None:
             cls = self._GetClass(self.dataSetClassName)
-            dataSet = editDialog.dataSet.AddChildDataSet(cls,
-                    editDialog.GetRow())
-            dataSet.Retrieve()
+            if editDialog is not None:
+                dataSet = editDialog.dataSet.AddChildDataSet(cls,
+                        editDialog.GetRow())
+            else:
+                app = ceGUI.GetApp()
+                dataSet = cls(app.cache.dataSource)
             return dataSet
         if editDialog is not None:
             return editDialog.dataSet
@@ -250,7 +253,6 @@ class DataMultipleRowPanel(DataPanel):
         return args
 
     def OnCreate(self):
-        super(DataMultipleRowPanel, self).OnCreate()
         self.filterColumns = []
         self.OnCreateFilterColumns()
         if self.createRetrieveButton:
@@ -258,7 +260,8 @@ class DataMultipleRowPanel(DataPanel):
                     passEvent = False)
         else:
             wx.CallAfter(self.Retrieve, refresh = True)
-        if self._GetEditDialog() is None:
+        super(DataMultipleRowPanel, self).OnCreate()
+        if self.dataSet is None:
             control = getattr(self, self.multipleRowControlAttrName)
             self.dataSet = control.dataSet
 
@@ -305,14 +308,27 @@ class DataMultipleRowPanel(DataPanel):
         else:
             if refresh:
                 self.rows = self.GetBaseRows()
-            control.Retrieve(self.rows, *args)
+            if self.rows is None:
+                control.Retrieve(*args)
+            else:
+                control.Retrieve(self.rows, *args)
         self.OnRetrieve()
 
 
 class DataGridPanel(DataMultipleRowPanel):
     multipleRowControlAttrName = "grid"
+    dataSetClassName = "DataSet"
+    filteredDataSetClassName = None
     gridClassName = "Grid"
     updateLabelWithCount = False
+
+    def _GetDataSet(self):
+        dataSet = super(DataGridPanel, self)._GetDataSet()
+        if self.filteredDataSetClassName is None:
+            return dataSet
+        self.primaryDataSet = dataSet
+        cls = self._GetClass(self.filteredDataSetClassName)
+        return cls(self.primaryDataSet)
 
     def _GetGrid(self):
         cls = self._GetClass(self.gridClassName)
@@ -340,6 +356,9 @@ class DataGridPanel(DataMultipleRowPanel):
             self.grid.DeleteRows(top, numRows = bottom - top + 1)
         self.grid.ClearSelection()
 
+    def GetBaseRows(self):
+        self.primaryDataSet.Retrieve()
+
     def OnCreate(self):
         self.SetWindowStyle(0)
         self.grid = self._GetGrid()
@@ -359,6 +378,19 @@ class DataGridPanel(DataMultipleRowPanel):
 
     def SaveSettings(self):
         self.grid.SaveColumnWidths()
+
+
+class DataGrid(ceGUI.Grid):
+
+    def _GetDataSet(self):
+        parent = self.GetParent()
+        if isinstance(parent, DataGridPanel) and parent.dataSet is not None:
+            return parent.dataSet
+        return super(DataGrid, self)._GetDataSet()
+
+    def _OnRefresh(self):
+        parent = self.GetParent()
+        parent.Retrieve(refresh = True)
 
 
 class DataListPanel(DataMultipleRowPanel):
@@ -536,7 +568,6 @@ class DataList(ceGUI.List):
         else:
             parent.BindEvent(self, wx.EVT_LIST_ITEM_RIGHT_CLICK,
                     self._OnRightClick)
-        self.RefreshFromDataSet()
 
     def _OnDeleteItems(self):
         items = self.GetSelectedItems()
@@ -602,7 +633,7 @@ class DataList(ceGUI.List):
 
     def OnRefresh(self):
         parent = self.GetParent()
-        parent.Retrieve()
+        parent.Retrieve(refresh = True)
 
 
 class DataNotebookPanel(DataPanel):

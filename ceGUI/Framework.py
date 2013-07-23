@@ -16,9 +16,9 @@ from wx.lib.pubsub import pub
 
 __all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "DataSet",
             "DataSetRow", "EventHandler", "EVT_THREAD_TERMINATED",
-            "FrozenContext", "GetApp", "GetModuleItem", "OpenWindow",
-            "RequiredFieldHasNoValue", "SendMessage", "Subscribe", "Thread",
-            "TransactionContext", "UnsubscribeAll" ]
+            "FilteredDataSet", "FrozenContext", "GetApp", "GetModuleItem",
+            "OpenWindow", "RequiredFieldHasNoValue", "SendMessage",
+            "Subscribe", "Thread", "TransactionContext", "UnsubscribeAll" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -59,6 +59,10 @@ class DataSet(ceDatabase.DataSet):
     def config(self):
         app = wx.GetApp()
         return app.config
+
+
+class FilteredDataSet(ceDatabase.FilteredDataSet, DataSet):
+    pass
 
 
 class DataSetRow(ceDatabase.Row):
