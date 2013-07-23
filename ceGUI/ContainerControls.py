@@ -13,6 +13,8 @@ __all__ = ["BaseContainer", "Dialog", "Frame", "Panel", "PreviewFrame",
 
 
 class BaseContainer(ceGUI.BaseControl):
+    continueQueryMessage = "Do you want to save your changes?"
+    continueQueryTitle = "Confirmation"
     saveSize = savePosition = bindClose = True
     saveWidthOnly = False
     instanceName = None
@@ -137,12 +139,13 @@ class BaseContainer(ceGUI.BaseControl):
 
     def ContinueQuery(self, allowCancel = True):
         if self.PendingChanges():
-            message = "Do you want to save your changes?"
             flag = wx.YES_NO | wx.ICON_EXCLAMATION
             if allowCancel:
                 flag |= wx.CANCEL
-            dialog = wx.MessageDialog(self, message, self.GetTitle(), flag)
+            dialog = wx.MessageDialog(self, self.continueQueryMessage,
+                    self.continueQueryTitle, flag)
             response = dialog.ShowModal()
+            dialog.Destroy()
             if response == wx.ID_YES:
                 self.UpdateChanges()
             elif response == wx.ID_CANCEL:
