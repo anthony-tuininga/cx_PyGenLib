@@ -15,8 +15,8 @@ __all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn", "DataPanel",
             "DataNotebookPanel", "DateEditDialogColumn",
             "DecimalEditDialogColumn", "DirNameEditDialogColumn", "EditDialog",
             "EditDialogColumn", "EllipsisEditDialogColumn",
-            "FileNameEditDialogColumn", "FilteredDataListPanel",
-            "GridEditWindow", "RadioButtonEditDialogColumn", "SubWindow",
+            "FileNameEditDialogColumn", "GridEditWindow",
+            "RadioButtonEditDialogColumn", "SubWindow",
             "TextEditDialogColumn" ]
 
 
@@ -219,10 +219,100 @@ class DataEditPanel(DataPanel):
             sizer.Layout()
 
 
-class DataGridPanel(DataPanel):
+class DataMultipleRowPanel(DataPanel):
+    createRetrieveButton = False
+    filterColumnsPerRow = 5
+
+    def _AddToSizer(self, sizer, labelControl, fieldControl, labelBorder):
+        baseFlag = flag = wx.ALIGN_CENTER_VERTICAL
+        for child in sizer.GetChildren():
+            flag |= wx.LEFT
+            break
+        sizer.Add(labelControl, flag = flag, border = labelBorder)
+        sizer.Add(fieldControl, flag = baseFlag | wx.LEFT, border = 5)
+
+    def AddFilterColumn(self, label, fieldControl, bindEvent = None,
+            labelBorder = 10):
+        labelControl = self.AddLabel(label)
+        self.filterColumns.append((labelControl, fieldControl, labelBorder))
+        if bindEvent is not None:
+            self.BindEvent(fieldControl, bindEvent, self.Retrieve,
+                    passEvent = False)
+        return fieldControl
+
+    def GetBaseRows(self):
+        return [] 
+
+    def GetRetrievalArgs(self):
+        args = []
+        for labelControl, fieldControl, labelBorder in self.filterColumns:
+            args.append(fieldControl.GetValue())
+        return args
+
+    def OnCreate(self):
+        super(DataMultipleRowPanel, self).OnCreate()
+        self.filterColumns = []
+        self.OnCreateFilterColumns()
+        if self.createRetrieveButton:
+            self.retrieveButton = self.AddButton("Retrieve", self.Retrieve,
+                    passEvent = False)
+        else:
+            wx.CallAfter(self.Retrieve, refresh = True)
+        if self._GetEditDialog() is None:
+            control = getattr(self, self.multipleRowControlAttrName)
+            self.dataSet = control.dataSet
+
+    def OnCreateFilterColumns(self):
+        pass
+
+    def OnLayout(self):
+        topSizer = wx.BoxSizer(wx.VERTICAL)
+        if self.filterColumns:
+            self.OnLayoutFilterColumns(topSizer)
+        control = getattr(self, self.multipleRowControlAttrName)
+        topSizer.Add(control, proportion = 1, flag = wx.EXPAND)
+        return topSizer
+
+    def OnLayoutFilterColumns(self, topSizer):
+        sizers = []
+        columnsThisSizer = self.filterColumnsPerRow
+        for labelControl, fieldControl, labelBorder in self.filterColumns:
+            if columnsThisSizer == self.filterColumnsPerRow:
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                sizers.append(sizer)
+                columnsThisSizer = 0
+            self._AddToSizer(sizer, labelControl, fieldControl, labelBorder)
+            columnsThisSizer += 1
+        flag = wx.ALL
+        for sizer in sizers:
+            topSizer.Add(sizer, flag = wx.EXPAND | flag, border = 5)
+            flag = wx.LEFT | wx.RIGHT | wx.BOTTOM
+        if self.createRetrieveButton:
+            sizers[-1].Add(self.retrieveButton,
+                    flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 10)
+
+    def OnRetrieve(self):
+        if self.updateLabelWithCount:
+            self._UpdateLabelWithCount()
+        else:
+            self._DisplayNumItems()
+
+    def Retrieve(self, refresh = False):
+        args = self.GetRetrievalArgs()
+        control = getattr(self, self.multipleRowControlAttrName)
+        if self.createRetrieveButton or not self.filterColumns:
+            control.Retrieve(*args)
+        else:
+            if refresh:
+                self.rows = self.GetBaseRows()
+            control.Retrieve(self.rows, *args)
+        self.OnRetrieve()
+
+
+class DataGridPanel(DataMultipleRowPanel):
+    multipleRowControlAttrName = "grid"
     gridClassName = "Grid"
     updateLabelWithCount = False
-    postRetrieve = True
 
     def _GetGrid(self):
         cls = self._GetClass(self.gridClassName)
@@ -250,27 +340,13 @@ class DataGridPanel(DataPanel):
             self.grid.DeleteRows(top, numRows = bottom - top + 1)
         self.grid.ClearSelection()
 
-    def OnCreate(self, postRetrieve = None):
+    def OnCreate(self):
         self.SetWindowStyle(0)
-        if postRetrieve is None:
-            postRetrieve = self.postRetrieve
         self.grid = self._GetGrid()
         self.grid.SetFocus()
-        if self._GetEditDialog() is None:
-            if postRetrieve:
-                wx.CallAfter(self.Retrieve)
-            self.dataSet = self.grid.table.dataSet
-
-    def OnLayout(self):
-        topSizer = wx.BoxSizer(wx.VERTICAL)
-        topSizer.Add(self.grid, proportion = 1, flag = wx.EXPAND)
-        return topSizer
+        super(DataGridPanel, self).OnCreate()
 
     def OnPostCreate(self):
-        if self.updateLabelWithCount:
-            self._UpdateLabelWithCount()
-
-    def OnRetrieve(self):
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
 
@@ -281,19 +357,15 @@ class DataGridPanel(DataPanel):
     def RestoreSettings(self):
         self.grid.RestoreColumnWidths()
 
-    def Retrieve(self):
-        self.grid.Retrieve()
-        self.OnRetrieve()
-
     def SaveSettings(self):
         self.grid.SaveColumnWidths()
 
 
-class DataListPanel(DataPanel):
+class DataListPanel(DataMultipleRowPanel):
+    multipleRowControlAttrName = "list"
     listClassName = "List"
     editDialogName = None
     updateLabelWithCount = False
-    postRetrieve = True
 
     def _GetList(self):
         cls = self._GetClass(self.listClassName)
@@ -393,16 +465,11 @@ class DataListPanel(DataPanel):
     def IsUpdatedIndependently(self):
         return self._GetEditDialog() is None
 
-    def OnCreate(self, postRetrieve = None):
-        if postRetrieve is None:
-            postRetrieve = self.postRetrieve
+    def OnCreate(self):
         self.list = self._GetList()
         self.BindEvent(self.list, wx.EVT_LIST_ITEM_ACTIVATED,
                 self.OnItemActivated)
-        if self._GetEditDialog() is None:
-            if postRetrieve:
-                wx.CallAfter(self.Retrieve)
-            self.dataSet = self.list.dataSet
+        super(DataListPanel, self).OnCreate()
 
     def OnItemActivated(self, event):
         itemIndex = event.GetIndex()
@@ -411,106 +478,15 @@ class DataListPanel(DataPanel):
         if self.list.CanEditItem(item):
             self.EditItem(item, itemIndex)
 
-    def OnLayout(self):
-        topSizer = wx.BoxSizer(wx.HORIZONTAL)
-        topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
-        return topSizer
-
     def OnPostCreate(self):
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
 
-    def OnRetrieve(self):
-        if self.updateLabelWithCount:
-            self._UpdateLabelWithCount()
-        else:
-            self._DisplayNumItems()
-
     def RestoreSettings(self):
         self.list.RestoreColumnWidths()
 
-    def Retrieve(self):
-        self.list.Retrieve()
-        self.OnRetrieve()
-
     def SaveSettings(self):
         self.list.SaveColumnWidths()
-
-
-class FilteredDataListPanel(DataListPanel):
-    createRetrieveButton = False
-    columnsPerRow = 5
-
-    def _AddToSizer(self, sizer, labelControl, fieldControl):
-        baseFlag = flag = wx.ALIGN_CENTER_VERTICAL
-        for child in sizer.GetChildren():
-            flag |= wx.LEFT
-            break
-        sizer.Add(labelControl, flag = flag, border = 10)
-        sizer.Add(fieldControl, flag = baseFlag | wx.LEFT, border = 5)
-
-    def AddFilterColumn(self, label, fieldControl, bindEvent = None):
-        labelControl = self.AddLabel(label)
-        self.filterColumns.append((labelControl, fieldControl))
-        if bindEvent is not None:
-            self.BindEvent(fieldControl, bindEvent, self.Retrieve,
-                    passEvent = False)
-
-    def GetBaseRows(self):
-        return [] 
-
-    def GetRetrievalArgs(self):
-        args = []
-        for labelControl, fieldControl in self.filterColumns:
-            args.append(fieldControl.GetValue())
-        return args
-
-    def OnCreate(self):
-        self.postRetrieve = not self.createRetrieveButton
-        super(FilteredDataListPanel, self).OnCreate()
-        self.filterColumns = []
-        self.OnCreateFilterColumns()
-        if self.createRetrieveButton:
-            self.retrieveButton = self.AddButton("Retrieve", self.Retrieve,
-                    passEvent = False)
-        else:
-            self.rows = self.GetBaseRows()
-
-    def OnCreateFilterColumns(self):
-        pass
-
-    def OnLayout(self):
-        topSizer = wx.BoxSizer(wx.VERTICAL)
-        filterSizer = self.OnLayoutFilterColumns(topSizer)
-        topSizer.Add(self.list, proportion = 1, flag = wx.EXPAND)
-        return topSizer
-
-    def OnLayoutFilterColumns(self, topSizer):
-        sizers = []
-        columnsThisSizer = self.columnsPerRow
-        for labelControl, fieldControl in self.filterColumns:
-            if columnsThisSizer == self.columnsPerRow:
-                sizer = wx.BoxSizer(wx.HORIZONTAL)
-                sizers.append(sizer)
-                columnsThisSizer = 0
-            self._AddToSizer(sizer, labelControl, fieldControl)
-            columnsThisSizer += 1
-        flag = wx.ALL
-        for sizer in sizers:
-            topSizer.Add(sizer, flag = wx.EXPAND | flag, border = 5)
-            flag = wx.LEFT | wx.RIGHT | wx.BOTTOM
-        if self.createRetrieveButton:
-            sizers[-1].Add(self.retrieveButton,
-                    flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 10)
-
-    def Retrieve(self):
-        args = self.GetRetrievalArgs()
-        if self.createRetrieveButton:
-            self.list.Retrieve(*args)
-        else:
-            rows = self.GetBaseRows()
-            self.list.Retrieve(rows, *args)
-        self.OnRetrieve()
 
 
 class DataList(ceGUI.List):
