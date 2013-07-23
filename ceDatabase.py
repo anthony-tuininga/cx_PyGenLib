@@ -251,6 +251,8 @@ class DataSet(object):
         return handle
 
     def _GetRows(self, *args):
+        if self.tableName is None:
+            return []
         conditions = dict(zip(self.retrievalAttrNames, args))
         self.retrievalArgs = args
         rows = self.dataSource.GetRows(self.tableName, self.attrNames,
