@@ -303,6 +303,8 @@ class DataMultipleRowPanel(DataPanel):
     def Retrieve(self, refresh = False):
         args = self.GetRetrievalArgs()
         control = getattr(self, self.multipleRowControlAttrName)
+        if refresh and not self.ContinueQuery():
+            return
         if self.createRetrieveButton or not self.filterColumns:
             control.Retrieve(*args)
         else:
@@ -378,6 +380,9 @@ class DataGridPanel(DataMultipleRowPanel):
 
     def SaveSettings(self):
         self.grid.SaveColumnWidths()
+
+    def UpdateChanges(self):
+        self.grid.Update()
 
 
 class DataGrid(ceGUI.Grid):
