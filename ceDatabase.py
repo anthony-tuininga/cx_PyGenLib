@@ -504,6 +504,9 @@ class FilteredDataSet(DataSet):
         self.insertedRows[handle] = self.rows[handle] = parentRow
         return handle, parentRow
 
+    def PendingChanges(self):
+        return self.parentDataSet.PendingChanges()
+
     def Retrieve(self, *args):
         allRows = self.parentDataSet.GetRows()
         super(FilteredDataSet, self).Retrieve(allRows, *args)
