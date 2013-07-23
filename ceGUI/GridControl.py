@@ -135,7 +135,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def AddColumn(self, attrName, heading, defaultWidth = None,
             horizontalAlignment = None, verticalAlignment = None,
             readOnly = False, cls = None, required = False,
-            contextItem = None):
+            contextItem = None, **args):
         if cls is None:
             cls = GridColumn
         if horizontalAlignment is None:
@@ -145,7 +145,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if contextItem is None:
             contextItem = self.table.dataSet.contextItem
         column = cls(attrName, heading, horizontalAlignment, verticalAlignment,
-                readOnly, required, contextItem)
+                readOnly, required, contextItem, **args)
         columnIndex = self.table.GetNumberCols()
         self.table.AddColumn(column)
         self.SetColAttr(columnIndex, column.attr)
@@ -469,15 +469,16 @@ class GridTable(wx.grid.PyGridTableBase):
         row = self.dataSet.rows[handle]
         grid = self.GetView()
         try:
-            validValue = column.SetValue(grid, self.dataSet, handle, row,
-                    rawValue)
+            if not rawValue:
+                value = None
+            else:
+                value = column.VerifyValueOnChange(row, rawValue)
+            column.SetValue(grid, self.dataSet, handle, row, value)
         except InvalidValueEntered, e:
-            validValue = False
             dialog = wx.MessageDialog(grid.GetParent(), e.messageToDisplay,
                     "Invalid Value", style = wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()
             dialog.Destroy()
-        if not validValue:
             wx.CallAfter(grid.OnInvalidValueEntered, rowIndex, colIndex,
                     rawValue)
 
@@ -508,7 +509,7 @@ class GridColumn(ceGUI.BaseControl):
 
     def __init__(self, attrName, heading, horizontalAlignment,
             verticalAlignment, readOnly, required, contextItem,
-            numberFormat = None):
+            numberFormat = None, **args):
         self.attrName = attrName
         self.heading = heading
         self.required = required
@@ -519,6 +520,10 @@ class GridColumn(ceGUI.BaseControl):
         if readOnly:
             self.attr.SetReadOnly()
         self._Initialize()
+        self.ExtendedInitialize(**args)
+
+    def ExtendedInitialize(self, **args):
+        pass
 
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
@@ -536,19 +541,17 @@ class GridColumn(ceGUI.BaseControl):
             return value
         return str(value)
 
-    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        if rawValue:
-            value = rawValue
-        else:
-            value = None
+    def SetValue(self, grid, dataSet, rowHandle, row, value):
         dataSet.SetValue(rowHandle, self.attrName, value)
-        return True
 
     def VerifyValue(self, row):
         if self.required:
             value = getattr(row, self.attrName)
             if value is None:
                 return ceGUI.RequiredFieldHasNoValue()
+
+    def VerifyValueOnChange(self, row, rawValue):
+        return rawValue
 
 
 class GridColumnBool(GridColumn):
@@ -564,10 +567,8 @@ class GridColumnBool(GridColumn):
         value = getattr(row, self.attrName)
         return str(int(value))
 
-    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        value = bool(int(rawValue))
-        dataSet.SetValue(rowHandle, self.attrName, value)
-        return True
+    def VerifyValueOnChange(self, row, rawValue):
+        return bool(int(rawValue))
 
 
 class GridColumnChoice(GridColumn):
@@ -603,10 +604,8 @@ class GridColumnChoice(GridColumn):
                 allowOthers = self.allowOthers)
         self.attr.SetEditor(editor)
 
-    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        value = self.dataValuesByDisplayValue.get(rawValue, rawValue)
-        dataSet.SetValue(rowHandle, self.attrName, value)
-        return True
+    def VerifyValueOnChange(self, row, rawValue):
+        return self.dataValuesByDisplayValue.get(rawValue, rawValue)
 
 
 class GridColumnInt(GridColumn):
@@ -615,36 +614,28 @@ class GridColumnInt(GridColumn):
     def OnCreate(self):
         self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
 
-    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        if rawValue:
-            try:
-                value = int(rawValue)
-            except ValueError:
-                message = "'%s' is not a valid integer." % rawValue
-                raise InvalidValueEntered(message)
-        else:
-            value = None
-        dataSet.SetValue(rowHandle, self.attrName, value)
-        return True
+    def VerifyValueOnChange(self, row, rawValue):
+        try:
+            return int(rawValue)
+        except ValueError:
+            message = "'%s' is not a valid integer." % rawValue
+            raise InvalidValueEntered(message)
+
 
 
 class GridColumnDecimal(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_RIGHT
     storeAsString = False
 
-    def SetValue(self, grid, dataSet, rowHandle, row, rawValue):
-        if rawValue:
-            try:
-                value = decimal.Decimal(rawValue)
-            except decimal.InvalidOperation:
-                message = "'%s' is not a valid number." % rawValue
-                raise InvalidValueEntered(message)
+    def VerifyValueOnChange(self, row, rawValue):
+        try:
+            value = decimal.Decimal(rawValue)
             if self.storeAsString:
                 value = rawValue
-        else:
-            value = None
-        dataSet.SetValue(rowHandle, self.attrName, value)
-        return True
+            return value
+        except decimal.InvalidOperation:
+            message = "'%s' is not a valid number." % rawValue
+            raise InvalidValueEntered(message)
 
 
 class GridColumnStr(GridColumn):
