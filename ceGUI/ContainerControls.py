@@ -154,7 +154,7 @@ class BaseContainer(ceGUI.BaseControl):
 
     def ContinueQueryChildren(self, allowCancel = True):
         for window in self.GetChildren():
-            if not isinstance(window, BaseContainer):
+            if not isinstance(window, ceGUI.BaseControl):
                 continue
             if not window.ContinueQuery(allowCancel):
                 return False
