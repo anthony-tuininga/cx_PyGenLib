@@ -3,6 +3,7 @@ Defines methods used for handling events and other framework items including
 such things as exception handling and managing busy cursors.
 """
 
+import ceDatabase
 import cx_Exceptions
 import cx_Logging
 import cx_Threads
@@ -13,11 +14,11 @@ import wx.lib.pubsub.setupkwargs
 
 from wx.lib.pubsub import pub
 
-__all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "EventHandler",
-            "EVT_THREAD_TERMINATED", "FrozenContext", "GetApp",
-            "GetModuleItem", "OpenWindow", "RequiredFieldHasNoValue",
-            "SendMessage", "Subscribe", "Thread", "TransactionContext",
-            "UnsubscribeAll" ]
+__all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "DataSet",
+            "DataSetRow", "EventHandler", "EVT_THREAD_TERMINATED",
+            "FrozenContext", "GetApp", "GetModuleItem", "OpenWindow",
+            "RequiredFieldHasNoValue", "SendMessage", "Subscribe", "Thread",
+            "TransactionContext", "UnsubscribeAll" ]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -45,6 +46,23 @@ class BusyCursorContext(object):
                     excTraceback)
             app.OnException(exc, self.parent)
             return True
+
+
+class DataSet(ceDatabase.DataSet):
+
+    @property
+    def cache(self):
+        app = wx.GetApp()
+        return app.cache
+
+    @property
+    def config(self):
+        app = wx.GetApp()
+        return app.config
+
+
+class DataSetRow(ceDatabase.Row):
+    pass
 
 
 class EventHandler(object):
