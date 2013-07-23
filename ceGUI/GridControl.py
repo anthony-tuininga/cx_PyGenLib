@@ -26,7 +26,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _CreateContextMenu(self):
         self.menu = ceGUI.Menu()
         self.refreshMenuItem = self.menu.AddEntry(self, "Refresh\tCtrl-R",
-                method = self.Retrieve, passEvent = False)
+                method = self._OnRefresh, passEvent = False)
         self.updateMenuItem = self.menu.AddEntry(self, "Save\tCtrl-S",
                 method = self.Update, passEvent = False)
         self.menu.AddSeparator()
@@ -115,6 +115,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if not self.table.CanInsertRow():
             return
         self.PasteFromClipboard(insert = True)
+
+    def _OnRefresh(self):
+        self.Retrieve()
 
     def _Resize(self):
         """Resize the last column of the control to take up all remaining
