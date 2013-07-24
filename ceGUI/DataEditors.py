@@ -252,6 +252,9 @@ class DataMultipleRowPanel(DataPanel):
             args.append(fieldControl.GetValue())
         return args
 
+    def IsUpdatedIndependently(self):
+        return self._GetEditDialog() is None
+
     def OnCreate(self):
         self.filterColumns = []
         self.OnCreateFilterColumns()
@@ -382,7 +385,10 @@ class DataGridPanel(DataMultipleRowPanel):
         self.grid.SaveColumnWidths()
 
     def UpdateChanges(self):
-        self.grid.Update()
+        self.OnPreUpdate()
+        if self.IsUpdatedIndependently():
+            self.grid.Update()
+        self.OnPostUpdate()
 
 
 class DataGrid(ceGUI.Grid):
@@ -498,9 +504,6 @@ class DataListPanel(DataMultipleRowPanel):
             if dialog.ShowModal() == wx.ID_OK:
                 self._OnInsertItems(dialog)
         dialog.Destroy()
-
-    def IsUpdatedIndependently(self):
-        return self._GetEditDialog() is None
 
     def OnCreate(self):
         self.list = self._GetList()
