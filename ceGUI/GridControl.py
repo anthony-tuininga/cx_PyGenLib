@@ -79,14 +79,15 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _OnContextMenu(self, event):
         x, y = self.CalcUnscrolledPosition(event.GetPosition())
         self.contextPos = self.YToRow(y)
-        insertEnabled = self.table.CanInsertRow()
+        self.contextItem = self.GetRow(self.contextPos)
+        insertEnabled = self.CanInsertItems()
         self.insertMenuItem.Enable(insertEnabled)
         self.insertFromClipboardMenuItem.Enable(insertEnabled)
-        deleteEnabled = self.contextPos != wx.NOT_FOUND \
-                and self.table.CanDeleteRow(self.contextPos)
+        deleteEnabled = self.contxtItem is not None \
+                and self.CanDeleteItems([self.contextItem])
         self.deleteMenuItem.Enable(deleteEnabled)
         self.OnContextMenu()
-        self.contextPos = None
+        self.contextPos = self.contextItem = None
 
     def _OnCreate(self):
         self.table = self._GetTable()
@@ -95,25 +96,27 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         accelerators = self._GetAccelerators()
         self.acceleratorTable = wx.AcceleratorTable(accelerators)
         self.SetAcceleratorTable(self.acceleratorTable)
-        self.contextPos = None
+        self.contextPos = self.contextItem = None
         super(Grid, self)._OnCreate()
 
     def _OnDelete(self):
-        if self.contextPos is None:
-            row = self.GetGridCursorRow()
+        if self.contextItem is None:
+            pos = self.GetGridCursorRow()
+            item = self.GetRow(pos)
         else:
-            row = self.contextPos
-        if not self.table.CanDeleteRow(row):
+            pos = self.contextPos
+            item = self.contextItem
+        if not self.CanDeleteItems([item]):
             return
-        self.DeleteRows(row)
+        self.DeleteRows(pos)
 
     def _OnInsert(self):
-        if not self.table.CanInsertRow():
+        if not self.CanInsertRows():
             return
         self.InsertRows()
 
     def _OnInsertFromClipboard(self):
-        if not self.table.CanInsertRow():
+        if not self.table.CanInsertRows():
             return
         self.PasteFromClipboard(insert = True)
 
@@ -156,6 +159,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if defaultWidth is not None:
             self.SetColSize(columnIndex, defaultWidth)
         return column
+
+    def CanDeleteItems(self, items):
+        return True
+
+    def CanInsertItems(self):
+        return True
 
     def Clear(self):
         self.ClearGrid()
@@ -424,13 +433,6 @@ class GridTable(wx.grid.PyGridTableBase):
         for rowNum in range(numRows):
             handle, row = self.dataSet.InsertRow()
             self.rowHandles.append(handle)
-
-    def CanDeleteRow(self, row):
-        handle = self.rowHandles[row]
-        return self.dataSet.CanDeleteRow(handle)
-
-    def CanInsertRow(self):
-        return self.dataSet.CanInsertRow()
 
     def Clear(self):
         self.rowHandles = []
