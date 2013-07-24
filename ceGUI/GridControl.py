@@ -298,14 +298,6 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
         self.ProcessTableMessage(msg)
-        if self.checkRowsReadOnly:
-            attr = wx.grid.GridCellAttr()
-            attr.SetReadOnly()
-            rowIndex = 0
-            for row in self.table.GetAllRows():
-                if row.readOnly:
-                    self.SetRowAttr(rowIndex, attr)
-                rowIndex += 1
 
     def PasteFromClipboard(self, insert = False):
         dataObject = wx.TextDataObject()
@@ -451,6 +443,17 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def GetAllRows(self):
         return [self.dataSet.rows[h] for h in self.rowHandles]
+
+    def GetAttr(self, rowIndex, columnIndex, extraParameter):
+        grid = self.GetView()
+        column = self.columns[columnIndex]
+        attr = column.attr.Clone()
+        if grid.checkRowsReadOnly and rowIndex < len(self.rowHandles):
+            handle = self.rowHandles[rowIndex]
+            row = self.dataSet.rows[handle]
+            if row.readOnly:
+                attr.SetReadOnly()
+        return attr
 
     def GetColLabelValue(self, col):
         if col < len(self.columns):
