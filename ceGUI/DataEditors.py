@@ -226,6 +226,10 @@ class DataMultipleRowPanel(DataPanel):
     createRetrieveButton = False
     filterColumnsPerRow = 5
 
+    @property
+    def rowControl(self):
+        return getattr(self, self.multipleRowControlAttrName)
+
     def _AddToSizer(self, sizer, labelControl, fieldControl, labelBorder):
         baseFlag = flag = wx.ALIGN_CENTER_VERTICAL
         for child in sizer.GetChildren():
@@ -242,6 +246,12 @@ class DataMultipleRowPanel(DataPanel):
             self.BindEvent(fieldControl, bindEvent, self.Retrieve,
                     passEvent = False)
         return fieldControl
+
+    def CanDeleteItems(self, items = []):
+        return self.rowControl.CanDeleteItems(items)
+
+    def CanInsertItems(self):
+        return self.rowControl.CanInsertItems()
 
     def GetBaseRows(self):
         return [] 
@@ -265,8 +275,7 @@ class DataMultipleRowPanel(DataPanel):
             wx.CallAfter(self.Retrieve, refresh = True)
         super(DataMultipleRowPanel, self).OnCreate()
         if self.dataSet is None:
-            control = getattr(self, self.multipleRowControlAttrName)
-            self.dataSet = control.dataSet
+            self.dataSet = self.rowControl.dataSet
 
     def OnCreateFilterColumns(self):
         pass
@@ -275,8 +284,7 @@ class DataMultipleRowPanel(DataPanel):
         topSizer = wx.BoxSizer(wx.VERTICAL)
         if self.filterColumns:
             self.OnLayoutFilterColumns(topSizer)
-        control = getattr(self, self.multipleRowControlAttrName)
-        topSizer.Add(control, proportion = 1, flag = wx.EXPAND)
+        topSizer.Add(self.rowControl, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
     def OnLayoutFilterColumns(self, topSizer):
@@ -305,18 +313,17 @@ class DataMultipleRowPanel(DataPanel):
 
     def Retrieve(self, refresh = False):
         args = self.GetRetrievalArgs()
-        control = getattr(self, self.multipleRowControlAttrName)
         if refresh and not self.ContinueQuery():
             return
         if self.createRetrieveButton or not self.filterColumns:
-            control.Retrieve(*args)
+            self.rowControl.Retrieve(*args)
         else:
             if refresh:
                 self.rows = self.GetBaseRows()
             if self.rows is None:
-                control.Retrieve(*args)
+                self.rowControl.Retrieve(*args)
             else:
-                control.Retrieve(self.rows, *args)
+                self.rowControl.Retrieve(self.rows, *args)
         self.OnRetrieve()
 
 
@@ -347,7 +354,14 @@ class DataGridPanel(DataMultipleRowPanel):
         parent = self.GetParent().GetParent()
         parent.SetPageText(self, "%s (%s)" % (self.label, numRows))
 
+    def InsertItems(self):
+        if self.CanInsertItems():
+            self.grid.InsertRows()
+
     def DeleteSelectedItems(self):
+        items = self.grid.GetSelectedRows()
+        if not self.CanDeleteItems(items):
+            return
         topLeft = self.grid.GetSelectionBlockTopLeft()
         bottomRight = self.grid.GetSelectionBlockBottomRight()
         if not topLeft:
@@ -496,6 +510,8 @@ class DataListPanel(DataMultipleRowPanel):
             return parent.OpenWindow(self.editDialogName, parentItem = item)
 
     def InsertItems(self):
+        if not self.CanInsertItems():
+            return
         dialog = self.GetEditWindow()
         if dialog is None:
             return
