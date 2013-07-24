@@ -83,7 +83,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         insertEnabled = self.CanInsertItems()
         self.insertMenuItem.Enable(insertEnabled)
         self.insertFromClipboardMenuItem.Enable(insertEnabled)
-        deleteEnabled = self.contxtItem is not None \
+        deleteEnabled = self.contextItem is not None \
                 and self.CanDeleteItems([self.contextItem])
         self.deleteMenuItem.Enable(deleteEnabled)
         self.OnContextMenu()
@@ -111,12 +111,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.DeleteRows(pos)
 
     def _OnInsert(self):
-        if not self.CanInsertRows():
+        if not self.CanInsertItems():
             return
         self.InsertRows()
 
     def _OnInsertFromClipboard(self):
-        if not self.table.CanInsertRows():
+        if not self.CanInsertItems():
             return
         self.PasteFromClipboard(insert = True)
 
