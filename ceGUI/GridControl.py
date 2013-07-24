@@ -210,6 +210,21 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if pos != wx.NOT_FOUND:
             return self.table.GetRow(pos)
 
+    def GetSelectedRows(self):
+        topLeft = self.GetSelectionBlockTopLeft()
+        bottomRight = self.GetSelectionBlockBottomRight()
+        if not topLeft:
+            return self.table.GetAllRows()
+        rows = []
+        topLeft.sort()
+        bottomRight.sort()
+        blockIndex = 0
+        for top, left in topLeft:
+            bottom, right = bottomRight[blockIndex]
+            blockIndex += 1
+            rows.extend(self.table.GetRows(top, bottom - top + 1))
+        return rows
+
     def InsertRows(self, pos = None, numRows = 1, choices = None):
         if pos is None:
             if len(self.table.rowHandles) == 0:
@@ -441,6 +456,10 @@ class GridTable(wx.grid.PyGridTableBase):
         if row < len(self.rowHandles):
             handle = self.rowHandles[row]
             return self.dataSet.rows[handle]
+
+    def GetRows(self, startingRow, numRows):
+        return [self.dataSet.rows[h] \
+                for h in self.rowHandles[startingRow:startingRow + numRows]]
 
     def GetValue(self, row, col):
         column = self.columns[col]
