@@ -16,6 +16,7 @@ __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
     settingsName = "ColumnWidths"
     dataSetClassName = "DataSet"
+    checkRowsReadOnly = False
     stripSpacesOnPaste = True
     sortOnRetrieve = True
 
@@ -169,6 +170,13 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self.ProcessTableMessage(msg)
         self.table.ClearAll()
 
+    def ClearRows(self):
+        numRows = self.table.GetNumberRows()
+        if numRows > 0:
+            msg = wx.grid.GridTableMessage(self.table,
+                    wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, numRows, numRows)
+            self.ProcessTableMessage(msg)
+
     def CopyToClipboard(self):
         topLeft = self.GetSelectionBlockTopLeft()
         bottomRight = self.GetSelectionBlockBottomRight()
@@ -271,6 +279,22 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def OnLabelClicked(self, event):
         self.SortItems(event.GetCol())
 
+    def OnRetrieve(self):
+        if self.sortOnRetrieve:
+            self.table.SortItems()
+        numRows = self.table.GetNumberRows()
+        msg = wx.grid.GridTableMessage(self.table,
+                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
+        self.ProcessTableMessage(msg)
+        if self.checkRowsReadOnly:
+            attr = wx.grid.GridCellAttr()
+            attr.SetReadOnly()
+            rowIndex = 0
+            for row in self.table.GetAllRows():
+                if row.readOnly:
+                    self.SetRowAttr(rowIndex, attr)
+                rowIndex += 1
+
     def PasteFromClipboard(self, insert = False):
         dataObject = wx.TextDataObject()
         clipboard = wx.Clipboard()
@@ -326,18 +350,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 column.RefreshChoices()
 
     def RefreshFromDataSet(self):
-        numRows = self.table.GetNumberRows()
-        if numRows > 0:
-            msg = wx.grid.GridTableMessage(self.table,
-                    wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, numRows, numRows)
-            self.ProcessTableMessage(msg)
+        self.ClearRows()
         self.table.RefreshFromDataSet()
-        if self.sortOnRetrieve:
-            self.table.SortItems()
-        numRows = self.table.GetNumberRows()
-        msg = wx.grid.GridTableMessage(self.table,
-                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
-        self.ProcessTableMessage(msg)
+        self.OnRetrieve()
 
     def RestoreColumnWidths(self):
         widths = self.ReadSetting(self.settingsName, converter = eval)
@@ -347,18 +362,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self._Resize()
 
     def Retrieve(self, *args):
-        numRows = self.table.GetNumberRows()
-        if numRows > 0:
-            msg = wx.grid.GridTableMessage(self.table,
-                    wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, numRows, numRows)
-            self.ProcessTableMessage(msg)
+        self.ClearRows()
         self.table.Retrieve(*args)
-        if self.sortOnRetrieve:
-            self.table.SortItems()
-        numRows = self.table.GetNumberRows()
-        msg = wx.grid.GridTableMessage(self.table,
-                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
-        self.ProcessTableMessage(msg)
+        self.OnRetrieve()
 
     def SaveColumnWidths(self):
         numColumns = self.GetNumberCols()
