@@ -222,7 +222,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         topLeft = self.GetSelectionBlockTopLeft()
         bottomRight = self.GetSelectionBlockBottomRight()
         if not topLeft:
-            return self.table.GetAllRows()
+            row = self.GetRow()
+            if row is not None:
+                return [row]
+            return []
         rows = []
         topLeft.sort()
         bottomRight.sort()
