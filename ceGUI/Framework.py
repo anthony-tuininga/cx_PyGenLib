@@ -50,6 +50,7 @@ class BusyCursorContext(object):
 
 class DataSet(ceDatabase.DataSet):
     updateSubCacheAttrName = None
+    selectCacheAttrName = None
 
     @property
     def cache(self):
@@ -60,6 +61,12 @@ class DataSet(ceDatabase.DataSet):
     def config(self):
         app = wx.GetApp()
         return app.config
+
+    def _GetRows(self, *args):
+        if self.selectCacheAttrName is not None:
+            method = getattr(self.cache, self.selectCacheAttrName)
+            return method(*args)
+        return super(DataSet, self)._GetRows(*args)
 
     def Update(self):
         if self.updateSubCacheAttrName is not None:
