@@ -9,8 +9,8 @@ import wx
 import wx.grid
 
 __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
-            "GridColumnDecimal", "GridColumnInt", "GridColumnStr", "GridTable",
-            "InvalidValueEntered" ]
+            "GridColumnDate", "GridColumnDecimal", "GridColumnInt",
+            "GridColumnStr", "GridTable", "InvalidValueEntered" ]
 
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
@@ -654,6 +654,22 @@ class GridColumnInt(GridColumn):
             message = "'%s' is not a valid integer." % rawValue
             raise InvalidValueEntered(message)
 
+
+
+class GridColumnDate(GridColumn):
+    defaultHorizontalAlignment = wx.ALIGN_RIGHT
+    storeAsString = False
+
+    def ExtendedInitialize(self, dateFormat = None):
+        if dateFormat is None:
+            dateFormat = self.config.dateFormat
+        self.dateFormat = dateFormat
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is None:
+            return ""
+        return value.strftime(self.dateFormat)
 
 
 class GridColumnDecimal(GridColumn):
