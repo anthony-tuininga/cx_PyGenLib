@@ -171,6 +171,9 @@ def OpenWindow(name, parent = None, forceNewInstance = False,
             for child in parent.GetChildren():
                 if isinstance(child, cls) \
                         and child.instanceName == instanceName:
+                    if not child.createdSuccessfully:
+                        child.Destroy()
+                        continue
                     child.SetFocus()
                     return child
         window = cls(parent, instanceName = instanceName, **kwargs)
