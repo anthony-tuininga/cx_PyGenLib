@@ -14,6 +14,7 @@ __all__ = ["BaseControl", "CalendarField", "Choice", "DateField",
            "UpperCaseTextField"]
 
 class BaseControl(object):
+    createdSuccessfully = False
     copyAppAttributes = True
     baseSettingsName = None
 

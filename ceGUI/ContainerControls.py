@@ -27,6 +27,7 @@ class BaseContainer(ceGUI.BaseControl):
         if self.minSize is not None:
             self.SetMinSize(self.minSize)
         super(BaseContainer, self)._Initialize()
+        self.createdSuccessfully = True
 
     def _OnClose(self, event):
         self.closing = True
