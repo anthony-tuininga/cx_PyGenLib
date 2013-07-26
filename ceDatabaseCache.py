@@ -126,10 +126,6 @@ class MultipleRowPath(Path):
         return list()
 
 
-class AllRowsPath(MultipleRowPath):
-    name = "AllRows"
-
-
 class SubCacheMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
@@ -289,6 +285,10 @@ class SubCache(object):
         for path in self.paths:
             path.Clear()
 
+    def GetAllRowsFromDataSource(self, cache):
+        return cache.dataSource.GetRows(self.rowClass.tableName,
+                self.rowClass.attrNames, self.rowClass)
+
     def Load(self, cache, pathName, *args):
         if self.tracePathLoads:
             cx_Logging.Debug("%s: loading rows by path %s with args %s",
@@ -309,8 +309,14 @@ class SubCache(object):
     def LoadAllRows(self, cache):
         if self.tracePathLoads:
             cx_Logging.Debug("%s: loading all rows", self.name)
-        path = AllRowsPath(cache, self)
-        self.allRows = path.Load(cache, self)
+        rows = self.GetAllRowsFromDataSource(cache)
+        if self.rowClass.sortByAttrNames:
+            cx_Logging.Debug("%s: sorting all rows", self.name)
+            rows.sort(key = self.rowClass.SortValue)
+            if self.rowClass.sortReversed:
+                rows.reverse()
+        self.OnLoadRows(cache, rows)
+        self.allRows = rows
         self.allRowsLoaded = True
         return self.allRows
 
