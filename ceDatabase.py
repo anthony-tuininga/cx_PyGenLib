@@ -399,9 +399,10 @@ class DataSet(object):
             childDataSet.MarkAllRowsAsNew()
 
     def MarkAsChanged(self, handle):
-        row = self.rows[handle]
         if handle not in self.insertedRows and handle not in self.updatedRows:
-            self.updatedRows[handle] = row.Copy()
+            origRow = self.rows[handle]
+            self.updatedRows[handle] = origRow
+            self.rows[handle] = origRow.Copy()
 
     def PendingChanges(self):
         if self.insertedRows or self.updatedRows or self.deletedRows:
@@ -442,6 +443,7 @@ class DataSet(object):
         origValue = getattr(row, attrName)
         if value != origValue:
             self.MarkAsChanged(handle)
+            row = self.rows[handle]
             cx_Logging.Debug("setting attr %s on row %s to %r (from %r)",
                     attrName, handle, value, origValue)
             self._OnSetValue(row, attrName, value, origValue)
@@ -512,6 +514,7 @@ class FilteredDataSet(DataSet):
         super(FilteredDataSet, self).Retrieve(allRows, *args)
 
     def SetValue(self, handle, attrName, value):
+        super(FilteredDataSet, self).SetValue(handle, attrName, value)
         self.parentDataSet.SetValue(handle, attrName, value)
 
     def Update(self):
