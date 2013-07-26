@@ -475,9 +475,9 @@ class GridTable(wx.grid.PyGridTableBase):
         return [self.dataSet.rows[h] \
                 for h in self.rowHandles[startingRow:startingRow + numRows]]
 
-    def GetValue(self, row, col):
-        column = self.columns[col]
-        handle = self.rowHandles[row]
+    def GetValue(self, rowIndex, colIndex):
+        column = self.columns[colIndex]
+        handle = self.rowHandles[rowIndex]
         row = self.dataSet.rows[handle]
         return column.GetValue(row)
 
