@@ -155,7 +155,8 @@ class DataSetMetaClass(type):
                     blobAttrNames = cls.blobAttrNames,
                     pkAttrNames = cls.pkAttrNames, useSlots = cls.useSlots,
                     sortByAttrNames = cls.sortByAttrNames,
-                    sortReversed = cls.sortReversed)
+                    sortReversed = cls.sortReversed,
+                    tableName = cls.tableName)
             cls.rowClass = RowMetaClass("%sRow" % name, (Row,), classDict)
         cls.attrNames = cls.rowClass.attrNames
         cls.pkAttrNames = cls.rowClass.pkAttrNames
