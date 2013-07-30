@@ -274,6 +274,9 @@ class DataSet(object):
     def _OnInsertRow(self, row, choice):
         pass
 
+    def _OnRowChanged(self, row, origRow):
+        pass
+
     def _OnSetValue(self, row, attrName, value, origValue):
         pass
 
@@ -403,7 +406,8 @@ class DataSet(object):
         if handle not in self.insertedRows and handle not in self.updatedRows:
             origRow = self.rows[handle]
             self.updatedRows[handle] = origRow
-            self.rows[handle] = origRow.Copy()
+            newRow = self.rows[handle] = origRow.Copy()
+            self._OnRowChanged(newRow, origRow)
 
     def PendingChanges(self):
         if self.insertedRows or self.updatedRows or self.deletedRows:
