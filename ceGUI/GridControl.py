@@ -598,7 +598,7 @@ class GridColumnBool(GridColumn):
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
-        return str(int(value))
+        return str(int(bool(value)))
 
     def VerifyValueOnChange(self, row, rawValue):
         return bool(int(rawValue))
