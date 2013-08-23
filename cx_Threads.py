@@ -2,7 +2,6 @@
 
 import cx_Exceptions
 import cx_Logging
-import sys
 import thread
 import time
 
@@ -37,6 +36,8 @@ class Thread(object):
 
     def _Run(self, loggingState):
         """Execute the function associated with the thread."""
+        cx_Logging.SetExceptionInfo(cx_Exceptions.BaseException,
+                cx_Exceptions.GetExceptionInfo)
         try:
             if loggingState is not None:
                 cx_Logging.SetLoggingState(loggingState)
@@ -44,8 +45,7 @@ class Thread(object):
             try:
                 self.function(*self.args, **self.keywordArgs)
             except:
-                self.errorObj = cx_Exceptions.GetExceptionInfo(*sys.exc_info())
-                cx_Logging.LogException(self.errorObj)
+                self.errorObj = cx_Logging.LogException(self.errorObj)
                 cx_Logging.Error("Thread %r terminating", self.name)
         finally:
             self.stopped = True
