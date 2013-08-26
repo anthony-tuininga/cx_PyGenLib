@@ -45,7 +45,7 @@ class Thread(object):
             try:
                 self.function(*self.args, **self.keywordArgs)
             except:
-                self.errorObj = cx_Logging.LogException(self.errorObj)
+                self.errorObj = cx_Logging.LogException()
                 cx_Logging.Error("Thread %r terminating", self.name)
         finally:
             self.stopped = True
