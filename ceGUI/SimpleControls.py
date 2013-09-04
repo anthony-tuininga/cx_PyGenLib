@@ -7,9 +7,12 @@ import cx_Exceptions
 import datetime
 import decimal
 import wx
-import wx.calendar
+try:
+    from wx.adv import DatePickerCtrl
+except ImportError:
+    DatePickerCtrl = wx.DatePickerCtrl
 
-__all__ = ["BaseControl", "CalendarField", "Choice", "DateField",
+__all__ = ["BaseControl", "Choice", "DateField",
            "DecimalField", "IntegerField", "Notebook", "TextField",
            "UpperCaseTextField"]
 
@@ -74,24 +77,6 @@ class BaseControl(object):
         self.config.WriteSetting(settingsName, value, isComplex, converter)
 
 
-class CalendarField(BaseControl, wx.calendar.CalendarCtrl):
-    style = wx.calendar.CAL_SHOW_HOLIDAYS | \
-            wx.calendar.CAL_SUNDAY_FIRST | \
-            wx.calendar.CAL_SEQUENTIAL_MONTH_SELECTION
-
-    def __init__(self, parent):
-        wx.calendar.CalendarCtrl.__init__(self, parent, -1, style = self.style)
-
-    def GetValue(self):
-        wxDate = self.GetDate()
-        return datetime.datetime(wxDate.GetYear(), wxDate.GetMonth() + 1,
-                wxDate.GetDay())
-
-    def SetValue(self, value):
-        wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
-        self.SetDate(wxDate)
-
-
 class Choice(BaseControl, wx.Choice):
 
     def __init__(self, parent, choices, size = (-1, -1)):
@@ -146,7 +131,7 @@ class Choice(BaseControl, wx.Choice):
         self.SetSelection(choiceIndex)
 
 
-class DateField(BaseControl, wx.DatePickerCtrl):
+class DateField(BaseControl, DatePickerCtrl):
     copyAppAttributes = False
 
     def __init__(self, parent, allowNone = False, showDropDown = False):
@@ -157,11 +142,10 @@ class DateField(BaseControl, wx.DatePickerCtrl):
             style |= wx.DP_ALLOWNONE
         if showDropDown:
             style |= wx.DP_DROPDOWN
-        wx.DatePickerCtrl.__init__(self, parent, style = style,
-                size = (120, -1))
+        DatePickerCtrl.__init__(self, parent, style = style, size = (120, -1))
 
     def GetValue(self):
-        wxDate = wx.DatePickerCtrl.GetValue(self)
+        wxDate = DatePickerCtrl.GetValue(self)
         if wxDate.IsValid():
             return datetime.datetime(wxDate.GetYear(), wxDate.GetMonth() + 1,
                     wxDate.GetDay())
@@ -169,10 +153,10 @@ class DateField(BaseControl, wx.DatePickerCtrl):
     def SetValue(self, value):
         if value is not None:
             wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
-            wx.DatePickerCtrl.SetValue(self, wxDate)
+            DatePickerCtrl.SetValue(self, wxDate)
         elif self.allowNone:
             wxDate = wx.DateTime()
-            wx.DatePickerCtrl.SetValue(self, wxDate)
+            DatePickerCtrl.SetValue(self, wxDate)
 
 
 class Notebook(BaseControl, wx.Notebook):
