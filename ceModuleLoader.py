@@ -31,7 +31,7 @@ class Loader(object):
         sys.modules[self.name] = self.module
         self.module.__dict__.update(self.scriptGlobals)
         code = compile(self.scriptText, "<generated>", "exec")
-        exec code in self.module.__dict__
+        exec(code, self.module.__dict__)
         if self.attrName is not None:
             self.cls = self.module.__dict__.get(self.attrName)
             if self.cls is None:
@@ -86,7 +86,7 @@ class NamespaceLoader(object):
         self.cache[name] = module = imp.new_module(name)
         code = compile(moduleOrScript, "<generated>", "exec")
         module.__dict__.update(self.moduleGlobals)
-        exec code in module.__dict__
+        exec(code, module.__dict__)
         return module
 
 

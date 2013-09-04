@@ -507,7 +507,7 @@ class GridTable(wx.grid.PyGridTableBase):
             else:
                 value = column.VerifyValueOnChange(row, rawValue)
             column.SetValue(grid, self.dataSet, handle, row, value)
-        except InvalidValueEntered, e:
+        except InvalidValueEntered as e:
             dialog = wx.MessageDialog(grid.GetParent(), e.messageToDisplay,
                     "Invalid Value", style = wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()

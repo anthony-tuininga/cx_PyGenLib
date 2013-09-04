@@ -2,8 +2,12 @@
 
 import cx_Exceptions
 import cx_Logging
-import thread
 import time
+
+try:
+    import _thread as thread
+except ImportError:
+    import thread
 
 class Thread(object):
     """Base class for threads which is a little more lightweight than the
