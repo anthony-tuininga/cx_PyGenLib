@@ -3,8 +3,12 @@ Defines clases for images used within the ceGUI package.
 """
 
 import base64
-import cStringIO
 import wx
+
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
 
 __all__ = [ "Image" ]
 
@@ -18,7 +22,7 @@ class Image(object):
 
     def GetImage(self):
         data = base64.b64decode(self.data)
-        stream = cStringIO.StringIO(data)
+        stream = StringIO(data)
         return wx.ImageFromStream(stream)
 
 

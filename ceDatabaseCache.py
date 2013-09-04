@@ -227,7 +227,7 @@ class SubCache(object):
         cx_Logging.Debug("%s: GENERATED CODE\n%s", cls.name, codeString)
         code = compile(codeString, "SubCacheGeneratedCode.py", "exec")
         temp = {}
-        exec code in dict(), temp
+        exec(code, dict(), temp)
         setattr(targetClass, methodName, temp[methodName])
 
     @classmethod

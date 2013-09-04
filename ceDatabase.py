@@ -64,7 +64,7 @@ class RowMetaClass(type):
             codeString = "def __init__(self, %s):\n%s" % \
                     (", ".join(initArgs), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
-            exec code in dict(decimal = decimal), classDict
+            exec(code, dict(decimal = decimal), classDict)
         return type.__new__(cls, name, bases, classDict)
 
     def New(cls):
