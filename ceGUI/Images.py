@@ -6,9 +6,9 @@ import base64
 import wx
 
 try:
-    from io import StringIO
-except ImportError:
     from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 __all__ = [ "Image" ]
 
