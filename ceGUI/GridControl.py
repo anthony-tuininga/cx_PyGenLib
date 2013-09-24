@@ -655,7 +655,6 @@ class GridColumnInt(GridColumn):
             raise InvalidValueEntered(message)
 
 
-
 class GridColumnDate(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_RIGHT
     storeAsString = False
@@ -670,6 +669,13 @@ class GridColumnDate(GridColumn):
         if value is None:
             return ""
         return value.strftime(self.dateFormat)
+
+    def VerifyValueOnChange(self, row, rawValue):
+        try:
+            return datetime.datetime.strptime(rawValue, self.dateFormat)
+        except ValueError:
+            message = "'%s' is not a valid date." % rawValue
+            raise InvalidValueEntered(message)
 
 
 class GridColumnDecimal(GridColumn):
