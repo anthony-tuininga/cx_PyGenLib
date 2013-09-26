@@ -8,6 +8,7 @@ application configuration and settings objects.
 import ceGUI
 import cx_Exceptions
 import cx_Logging
+import datetime
 import os
 import wx
 import sys
@@ -38,6 +39,10 @@ class Application(wx.App):
     def _ExceptionHandler(self, excType, excValue, excTraceback):
         exc = cx_Exceptions.GetExceptionInfo(excType, excValue, excTraceback)
         self.OnException(exc)
+
+    def GetConfig(self, dataSource = None):
+        cls = ceGUI.GetModuleItem(self.configClassName, associatedObj = self)
+        return cls(self, dataSource)
 
     def GetDefaultLoggingFileName(self):
         baseName = "%s.log" % self.GetAppName()
@@ -71,9 +76,8 @@ class Application(wx.App):
         self.StartLogging()
         sys.excepthook = self._ExceptionHandler
         self.copyAttributes = self.copyAttributes.split()
+        self.config = self.GetConfig()
         self.copyAttributes.append("settings")
-        cls = ceGUI.GetModuleItem(self.configClassName, associatedObj = self)
-        self.config = cls(self)
         self.copyAttributes.append("config")
         if self.OnStartup():
             self.topWindow = self.GetTopWindow()
@@ -108,28 +112,52 @@ class Config(object):
     dateFormat = "%Y/%m/%d"
     timestampFormat = "%Y/%m/%d %H:%M"
 
-    def __init__(self, app):
+    def __init__(self, app, dataSource = None):
         self.settings = app.settings
-        appName = app.__class__.__name__
-        self._OnCreate(app, appName)
-
-    def _OnCreate(self, app, appName):
-        self.dataSource = self.ConnectToDataSource(app, appName)
+        self.dataSource = dataSource
+        if dataSource is None:
+            appName = app.__class__.__name__
+            self.dataSource = self.ConnectToDataSource(app, appName)
         self.OnCreate()
 
+    def __ConvertDateToString(self, value):
+        return value.strftime(self.dateFormat)
+
+    def __ConvertStringToDate(self, value):
+        return datetime.datetime.strptime(value, self.dateFormat)
+
+    def __ConvertStringToTimestamp(self, value):
+        return datetime.datetime.strptime(value, self.timestampFormat)
+
+    def __ConvertTimestampToString(self, value):
+        return value.strftime(self.timestampFormat)
+
+    def Clone(self):
+        app = ceGUI.GetApp()
+        newConfig = self.__class__(app, self.dataSource)
+        newConfig.OnClone(self)
+        return newConfig
+
     def ConnectToDataSource(self, app, appName):
+        pass
+
+    def OnClone(self, otherConfig):
         pass
 
     def OnCreate(self):
         pass
 
     def ReadSetting(self, name, defaultValue = None, isComplex = False,
-            converter = None):
+            converter = None, isDate = False, isTimestamp = False):
         value = self.settings.Read(name, "")
         if not value:
             return defaultValue
         if isComplex:
             converter = eval
+        elif isDate:
+            converter = self.__ConvertStringToDate
+        elif isTimestamp:
+            converter = self.__ConvertStringToTimestamp
         if converter is not None:
             try:
                 value = converter(value)
@@ -138,12 +166,17 @@ class Config(object):
                 value = defaultValue
         return value
 
-    def WriteSetting(self, name, value, isComplex = False, converter = None):
+    def WriteSetting(self, name, value, isComplex = False, converter = None,
+            isDate = False, isTimestamp = False):
         if value is None:
             value = ""
         else:
             if isComplex:
                 converter = repr
+            elif isDate:
+                converter = self.__ConvertDateToString
+            elif isTimestamp:
+                converter = self.__ConvertTimestampToString
             elif converter is None:
                 converter = str
             value = converter(value)

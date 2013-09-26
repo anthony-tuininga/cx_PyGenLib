@@ -445,7 +445,6 @@ class TopLevelFrame(Frame):
         self.Close()
 
     def Recreate(self):
-        self._SaveSettings()
         app = ceGUI.GetApp()
         ceGUI.UnsubscribeAll()
         newFrame = app.GetTopWindow()
