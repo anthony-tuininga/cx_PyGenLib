@@ -446,6 +446,8 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def GetAttr(self, rowIndex, columnIndex, extraParameter):
         grid = self.GetView()
+        if grid is None:
+            return
         column = self.columns[columnIndex]
         attr = column.attr.Clone()
         if grid.checkRowsReadOnly and rowIndex < len(self.rowHandles):
