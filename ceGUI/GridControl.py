@@ -16,7 +16,7 @@ __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
     settingsName = "ColumnWidths"
     dataSetClassName = "DataSet"
-    checkRowsReadOnly = False
+    customCellAttributes = False
     stripSpacesOnPaste = True
     sortOnRetrieve = True
 
@@ -281,6 +281,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def OnContextMenu(self):
         self.menu.Popup(self)
 
+    def OnGetCustomCellAttributes(self, row, column, attr):
+        pass
+
     def OnInsertRow(self, row, choice):
         pass
 
@@ -446,15 +449,15 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def GetAttr(self, rowIndex, columnIndex, extraParameter):
         grid = self.GetView()
-        if grid is None:
-            return
+        if grid is None or not grid.customCellAttributes \
+                or rowIndex >= len(self.rowHandles):
+            return super(GridTable, self).GetAttr(rowIndex, columnIndex,
+                    extraParameter)
         column = self.columns[columnIndex]
         attr = column.attr.Clone()
-        if grid.checkRowsReadOnly and rowIndex < len(self.rowHandles):
-            handle = self.rowHandles[rowIndex]
-            row = self.dataSet.rows[handle]
-            if row.readOnly:
-                attr.SetReadOnly()
+        handle = self.rowHandles[rowIndex]
+        row = self.dataSet.rows[handle]
+        grid.OnGetCustomCellAttributes(row, column, attr)
         return attr
 
     def GetColLabelValue(self, col):
