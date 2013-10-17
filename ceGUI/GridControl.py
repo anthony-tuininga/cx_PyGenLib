@@ -687,11 +687,24 @@ class GridColumnDecimal(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_RIGHT
     storeAsString = False
 
+    def ExtendedInitialize(self, formatString = None, digitsAfterDecimal = 2):
+        self.digitsAfterDecimal = digitsAfterDecimal
+        if formatString is None:
+            formatString = "{0:,.%sf}" % digitsAfterDecimal
+        self.formatString = formatString
+
+    def GetValue(self, row):
+        value = getattr(row, self.attrName)
+        if value is None:
+            return ""
+        return self.formatString.format(value)
+
     def VerifyValueOnChange(self, row, rawValue):
         try:
-            value = decimal.Decimal(rawValue)
+            tweakedValue = rawValue.replace(",", "")
+            value = decimal.Decimal(tweakedValue)
             if self.storeAsString:
-                value = rawValue
+                value = tweakedValue
             return value
         except decimal.InvalidOperation:
             message = "'%s' is not a valid number." % rawValue
