@@ -327,7 +327,7 @@ class Panel(BaseContainer, wx.Panel):
         numItems = self._GetNumItems()
         if numItems is not None:
             topWindow = ceGUI.AppTopWindow()
-            if topWindow is not None:
+            if topWindow is not None and not topWindow.closing:
                 topWindow._DisplayNumItems(numItems, self.countFieldNum)
 
     def _GetNumItems(self):
