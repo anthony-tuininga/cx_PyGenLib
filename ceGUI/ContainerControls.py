@@ -446,10 +446,10 @@ class TopLevelFrame(Frame):
 
     def Recreate(self):
         app = ceGUI.GetApp()
+        app.topWindow.closing = True
         ceGUI.UnsubscribeAll()
-        newFrame = app.GetTopWindow()
+        newFrame = app.topWindow = app.GetTopWindow()
         self.Hide()
         newFrame.Show()
-        app.topWindow = newFrame
         wx.CallAfter(self.Destroy)
 
