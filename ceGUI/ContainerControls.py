@@ -301,7 +301,7 @@ class Frame(BaseContainer, wx.Frame):
         pass
 
     def OnSetIcon(self):
-        iconFile = sys.executable
+        iconFile = sys.argv[0]
         name, ext = os.path.splitext(iconFile)
         if ext == ".py":
             iconFile = name + ".ico"
