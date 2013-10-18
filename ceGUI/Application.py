@@ -63,6 +63,7 @@ class Application(wx.App):
 
     def OnInit(self):
         self.topWindow = None
+        self.SetAppName(self.__class__.__name__)
         if self.vendorName is not None:
             self.SetVendorName(self.vendorName)
         if sys.platform == "win32":
@@ -116,7 +117,7 @@ class Config(object):
         self.settings = app.settings
         self.dataSource = dataSource
         if dataSource is None:
-            appName = app.__class__.__name__
+            appName = app.GetAppName()
             self.dataSource = self.ConnectToDataSource(app, appName)
         self.OnCreate()
 
