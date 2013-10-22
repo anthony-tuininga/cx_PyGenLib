@@ -19,6 +19,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     customCellAttributes = False
     stripSpacesOnPaste = True
     sortOnRetrieve = True
+    hideRowLabels = True
 
     def __init__(self, parent):
         wx.grid.Grid.__init__(self, parent)
@@ -63,8 +64,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _Initialize(self, parent):
         """Note that the margins have to be set to negative pixels in order to
            eliminate the implicit margin that appears to be there otherwise."""
-        self.SetRowLabelSize(0)
-        self.SetMargins(-10, 0)
+        if self.hideRowLabels:
+            self.SetRowLabelSize(0)
+            self.SetMargins(-10, 0)
         self.DisableDragRowSize()
         self.BindEvent(self.GetGridWindow(), wx.EVT_RIGHT_DOWN,
                 self._OnContextMenu)
