@@ -18,6 +18,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     dataSetClassName = "DataSet"
     customCellAttributes = False
     stripSpacesOnPaste = True
+    highlightRowColor = None
     sortOnRetrieve = True
     hideRowLabels = True
 
@@ -457,6 +458,9 @@ class GridTable(wx.grid.PyGridTableBase):
                     extraParameter)
         column = self.columns[columnIndex]
         attr = column.attr.Clone()
+        if grid.highlightRowColor is not None \
+                and rowIndex == grid.GetGridCursorRow():
+            attr.SetBackgroundColour(grid.highlightRowColor)
         handle = self.rowHandles[rowIndex]
         row = self.dataSet.rows[handle]
         grid.OnGetCustomCellAttributes(row, column, attr)
@@ -464,7 +468,8 @@ class GridTable(wx.grid.PyGridTableBase):
 
     def GetColLabelValue(self, col):
         if col < len(self.columns):
-            return self.columns[col].heading
+            column = self.columns[col]
+            return column.GetLabelValue()
         return ""
 
     def GetNumberCols(self):
@@ -564,6 +569,9 @@ class GridColumn(ceGUI.BaseControl):
 
     def ExtendedInitialize(self, **args):
         pass
+
+    def GetLabelValue(self):
+        return self.heading
 
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
