@@ -53,7 +53,7 @@ class BaseContainer(ceGUI.BaseControl):
             width = self.ReadSetting("Width", self.defaultWidth,
                     converter = int)
             if width is not None:
-                origWidth, height = self.GetSizeTuple()
+                height = self.Size.height
                 self.SetSize((width, height))
         elif self.saveSize:
             size = self.ReadSetting("Size", self.defaultSize or self.minSize,
@@ -69,12 +69,14 @@ class BaseContainer(ceGUI.BaseControl):
     def _SaveSettings(self):
         if not hasattr(self, "IsIconized") or not self.IsIconized():
             if self.saveWidthOnly:
-                width, height = self.GetSizeTuple()
+                width = self.Size.width
                 self.WriteSetting("Width", width)
             elif self.saveSize:
-                self.WriteSetting("Size", self.GetSizeTuple())
+                width, height = self.Size
+                self.WriteSetting("Size", (width, height))
             if self.savePosition:
-                self.WriteSetting("Position", self.GetPositionTuple())
+                x, y = self.Position
+                self.WriteSetting("Position", (x, y))
         self.SaveSettings()
         self.settings.Flush()
 
