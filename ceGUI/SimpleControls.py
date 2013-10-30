@@ -8,9 +8,9 @@ import datetime
 import decimal
 import wx
 try:
-    from wx.adv import DatePickerCtrl
+    import wx.adv as DatePickerLib
 except ImportError:
-    DatePickerCtrl = wx.DatePickerCtrl
+    DatePickerLib = wx
 
 __all__ = ["BaseControl", "Choice", "DateField",
            "DecimalField", "IntegerField", "Notebook", "TextField",
@@ -84,28 +84,10 @@ class Choice(BaseControl, wx.Choice):
         self.SetChoices(choices)
         self._Initialize()
 
-    def __AddChoice(self, dataValue, choiceIndex):
-        self.indexesByDataValue[dataValue] = choiceIndex
-        self.dataValuesByIndex[choiceIndex] = dataValue
-
-    def Append(self, dataValue, displayValue = None):
-        if displayValue is None:
-            displayValue = dataValue
-        choiceIndex = super(Choice, self).Append(displayValue)
-        self.__AddChoice(dataValue, choiceIndex)
-        return choiceIndex
-
     def GetValue(self):
         choiceIndex = self.GetSelection()
         if choiceIndex != wx.NOT_FOUND:
             return self.dataValuesByIndex[choiceIndex]
-
-    def Insert(self, insertIndex, dataValue, displayValue = None):
-        if displayValue is None:
-            displayValue = dataValue
-        choiceIndex = super(Choice, self).Insert(displayValue, insertIndex)
-        self.__AddChoice(dataValue, choiceIndex)
-        return choiceIndex
 
     def SetChoices(self, choices):
         origValue = self.GetValue()
@@ -122,7 +104,8 @@ class Choice(BaseControl, wx.Choice):
             else:
                 dataValue = displayValue = choice
             displayValues.append(displayValue)
-            self.__AddChoice(dataValue, choiceIndex)
+            self.indexesByDataValue[dataValue] = choiceIndex
+            self.dataValuesByIndex[choiceIndex] = dataValue
         self.AppendItems(displayValues)
         self.SetValue(origValue)
 
@@ -131,21 +114,22 @@ class Choice(BaseControl, wx.Choice):
         self.SetSelection(choiceIndex)
 
 
-class DateField(BaseControl, DatePickerCtrl):
+class DateField(BaseControl, DatePickerLib.DatePickerCtrl):
     copyAppAttributes = False
 
     def __init__(self, parent, allowNone = False, showDropDown = False):
         self.allowNone = allowNone
         self.showDropDown = showDropDown
-        style = wx.DP_DEFAULT | wx.DP_SHOWCENTURY
+        style = DatePickerLib.DP_DEFAULT | DatePickerLib.DP_SHOWCENTURY
         if allowNone:
-            style |= wx.DP_ALLOWNONE
+            style |= DatePickerLib.DP_ALLOWNONE
         if showDropDown:
-            style |= wx.DP_DROPDOWN
-        DatePickerCtrl.__init__(self, parent, style = style, size = (120, -1))
+            style |= DatePickerLib.DP_DROPDOWN
+        DatePickerLib.DatePickerCtrl.__init__(self, parent, style = style,
+                size = (120, -1))
 
     def GetValue(self):
-        wxDate = DatePickerCtrl.GetValue(self)
+        wxDate = DatePickerLib.DatePickerCtrl.GetValue(self)
         if wxDate.IsValid():
             return datetime.datetime(wxDate.GetYear(), wxDate.GetMonth() + 1,
                     wxDate.GetDay())
@@ -153,10 +137,10 @@ class DateField(BaseControl, DatePickerCtrl):
     def SetValue(self, value):
         if value is not None:
             wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
-            DatePickerCtrl.SetValue(self, wxDate)
+            DatePickerLib.DatePickerCtrl.SetValue(self, wxDate)
         elif self.allowNone:
             wxDate = wx.DateTime()
-            DatePickerCtrl.SetValue(self, wxDate)
+            DatePickerLib.DatePickerCtrl.SetValue(self, wxDate)
 
 
 class Notebook(BaseControl, wx.Notebook):
