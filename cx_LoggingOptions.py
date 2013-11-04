@@ -7,6 +7,10 @@ import locale
 import os
 import sys
 
+LOG_ENCODING = cx_OptionParser.Option("--log-encoding",
+        default = locale.getpreferredencoding(),
+        metavar = "ENCODING", help = "the encoding to use for logging instead")
+
 LOG_FILE = cx_OptionParser.Option("--log-file",
         metavar = "FILE",
         default = os.environ.get(cx_Logging.ENV_NAME_FILE_NAME, "stderr"),
@@ -52,6 +56,7 @@ def AddOptions(parser, includeServerOptions = False):
     parser.AddOption(LOG_FILE)
     parser.AddOption(LOG_LEVEL)
     parser.AddOption(LOG_PREFIX)
+    parser.AddOption(LOG_ENCODING)
     if includeServerOptions:
         parser.AddOption(MAX_FILES)
         parser.AddOption(MAX_FILE_SIZE)
@@ -77,16 +82,15 @@ def ProcessOptions(options):
     if logLevel is None:
         logLevel = int(options.logLevel)
     logPrefix = options.logPrefix
-    encoding = locale.getpreferredencoding()
     if options.logFile.lower() == "stderr":
-        cx_Logging.StartLoggingStderr(logLevel, logPrefix, encoding)
+        cx_Logging.StartLoggingStderr(logLevel, logPrefix, options.logEncoding)
     elif options.logFile.lower() == "stdout":
-        cx_Logging.StartLoggingStdout(logLevel, logPrefix, encoding)
+        cx_Logging.StartLoggingStdout(logLevel, logPrefix, options.logEncoding)
     else:
         maxFiles = getattr(options, "maxFiles", 1)
         maxFileSize = getattr(options, "maxFileSize", 0)
         cx_Logging.StartLogging(options.logFile, logLevel, maxFiles,
-                maxFileSize, logPrefix, encoding)
+                maxFileSize, logPrefix, options.logEncoding)
         f = cx_Logging.GetLoggingFile()
         os.dup2(f.fileno(), 2)
     cx_Logging.SetExceptionInfo(cx_Exceptions.BaseException,
