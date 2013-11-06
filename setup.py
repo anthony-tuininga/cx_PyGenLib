@@ -25,7 +25,6 @@ modules = [
         "cx_OptionParser",
         "cx_Parser",
         "cx_ReadLine",
-        "cx_ServerFramework",
         "cx_Settings",
         "cx_ShellUtils",
         "cx_Threads",
