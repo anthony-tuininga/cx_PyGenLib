@@ -170,6 +170,7 @@ class DataEditPanel(DataPanel):
         for column in self.columns:
             if column.attrName == attrName:
                 return column
+        raise MissingColumn(attrName = attrName)
 
     def GetFieldsSizer(self):
         sizer = wx.FlexGridSizer(rows = len(self.columns), cols = 2, vgap = 5,
@@ -1193,4 +1194,8 @@ class SubWindow(object):
                 self.window.ShowModal()
             else:
                 self.window.Show()
+
+
+class MissingColumn(cx_Exceptions.BaseException):
+    message = 'Missing column with attribute named "%(attrName)s".'
 
