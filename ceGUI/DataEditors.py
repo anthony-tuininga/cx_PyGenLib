@@ -758,6 +758,7 @@ class EditDialogColumn(ceGUI.BaseControl):
         self.field.SetFocus()
 
     def ReplaceColumn(self, origColumn, sizer):
+        self.field.MoveAfterInTabOrder(origColumn.field)
         sizer.Replace(origColumn.label, self.label, recursive = True)
         sizer.Replace(origColumn.field, self.field, recursive = True)
 
@@ -823,6 +824,7 @@ class EllipsisEditDialogColumn(EditDialogColumn):
 
     def ReplaceColumn(self, origColumn, sizer):
         super(EllipsisEditDialogColumn, self).ReplaceColumn(origColumn, sizer)
+        self.button.MoveAfterInTabOrder(origColumn.button)
         sizer.Replace(origColumn.button, self.button, recursive = True)
 
 
