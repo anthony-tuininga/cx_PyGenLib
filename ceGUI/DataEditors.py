@@ -800,6 +800,10 @@ class EllipsisEditDialogColumn(EditDialogColumn):
                 method = self.OnChooseValue, passEvent = False,
                 enabled = editable)
 
+    def Destroy(self):
+        super(EllipsisEditDialogColumn, self).Destroy()
+        self.button.Destroy()
+
     def IsEditable(self):
         return self.button.IsEnabled()
 
@@ -816,6 +820,10 @@ class EllipsisEditDialogColumn(EditDialogColumn):
 
     def OnRequiredFieldHasNoValue(self):
         self.button.SetFocus()
+
+    def ReplaceColumn(self, origColumn, sizer):
+        super(EllipsisEditDialogColumn, self).ReplaceColumn(origColumn, sizer)
+        sizer.Replace(origColumn.button, self.button, recursive = True)
 
 
 class FileNameEditDialogColumn(EllipsisEditDialogColumn):
