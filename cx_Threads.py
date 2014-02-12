@@ -70,6 +70,7 @@ class Queue(object):
             if returnNoneIfEmpty:
                 return None
             self.queueEvent.wait()
+            self.queueEvent.clear()
             self.lock.acquire()
         item = self.items.pop(0)
         self.lock.release()
