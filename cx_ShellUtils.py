@@ -37,14 +37,14 @@ def Copy(source, target, includeTimes = False):
     CopyFile(source, target)
     CopyStat(source, target, includeTimes)
 
-def CopyTree(source, target, includeTimes = False):
+def CopyTree(source, target, includeTimes = False, log = True):
     """Recursively copy a directory tree."""
     for name in os.listdir(source):
         sourceName = os.path.join(source, name)
         targetName = os.path.join(target, name)
         if os.path.isdir(sourceName):
             if os.path.exists(targetName):
-                RemoveTree(targetName)
+                RemoveTree(targetName, log)
             os.mkdir(targetName)
             CopyTree(sourceName, targetName, includeTimes)
         else:
@@ -54,7 +54,7 @@ def CopyTree(source, target, includeTimes = False):
 def Remove(path, log = True):
     """Remove a file or a directory tree recursively."""
     if os.path.isdir(path):
-        RemoveTree(path)
+        RemoveTree(path, log)
     else:
         if log:
             cx_Logging.Info("removing file %s...", path)
