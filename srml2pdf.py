@@ -43,13 +43,27 @@ class Context(object):
         self.story = []
         self.tableRows = []
 
+    def __ConvertNumber(self, value):
+        if value.endswith("mm"):
+            num = float(value[:-2])
+            return num * units.mm
+        elif value.endswith("cm"):
+            num = float(value[:-2])
+            return num * units.cm
+        elif value.endswith("in"):
+            num = float(value[:-2])
+            return num * units.inch
+        elif value in ("splitfirst", "splitlast"):
+            return value
+        elif value.isdigit():
+            return int(value)
+        return float(value)
+
     def _ConvertNumber(self, element, attrName, defaultValue = None):
         value = element.get(attrName)
         if value is None:
             return defaultValue
-        if value.isdigit():
-            return int(value)
-        return float(value)
+        return self.__ConvertNumber(value)
 
     def _ConvertNumberList(self, element, attrName, defaultValue = None):
         value = element.get(attrName)
@@ -57,14 +71,7 @@ class Context(object):
             return defaultValue
         if value.startswith("(") and value.endswith(")"):
             value = value[1:-1]
-        result = []
-        for part in value.split(","):
-            if "." in part:
-                part = float(part)
-            elif part not in ("splitfirst", "splitlast"):
-                part = int(part)
-            result.append(part)
-        return result
+        return [self.__ConvertNumber(p) for p in value.split(",")]
 
     def AddStoryElement(self, element):
         if element.tag == "para":
