@@ -135,8 +135,15 @@ class Context(object):
                 commands.append(("ALIGN", start, stop, alignment.upper()))
             elif child.tag == "blockFont":
                 fontName = child.get("name", "Helvetica")
-                fontSize = self._ConvertNumber(child, "size", 10)
-                commands.append(("FONT", start, stop, fontName, fontSize))
+                fontSize = self._ConvertNumber(child, "size")
+                leading = self._ConvertNumber(child, "leading")
+                if leading:
+                    args = (fontName, fontSize or 10, leading)
+                elif fontSize:
+                    args = (fontName, fontSize)
+                else:
+                    args = (fontName,)
+                commands.append(("FONT", start, stop) + args)
             elif child.tag == "blockValign":
                 alignment = child.get("value", "BOTTOM")
                 commands.append(("VALIGN", start, stop, alignment.upper()))
