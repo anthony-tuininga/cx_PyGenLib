@@ -113,7 +113,8 @@ class Context(object):
                     if child.tag == "para":
                         styleName = child.get("style", "default")
                         style = self.paragraphStyles[styleName]
-                        text = child.text.strip()
+                        child.attrib.clear()
+                        text = cElementTree.tostring(child)
                         contents.append(Paragraph(text, style))
                 if not contents:
                     contents = cell.text and cell.text.strip()
