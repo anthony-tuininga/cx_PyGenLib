@@ -55,7 +55,7 @@ class Context(object):
             return num * units.inch
         elif value in ("splitfirst", "splitlast"):
             return value
-        elif value.isdigit():
+        elif value.lstrip("-").isdigit():
             return int(value)
         return float(value)
 
@@ -254,6 +254,7 @@ class Context(object):
                 rightIndent = rightIndent, firstLineIndent = firstLineIndent,
                 spaceBefore = spaceBefore, spaceAfter = spaceAfter,
                 alignment = alignment)
+        style.keepWithNext = self._ConvertNumber(element, "keepWithNext", 0)
         self.paragraphStyles[name] = style
         return style
 
