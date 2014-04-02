@@ -6,7 +6,7 @@
 
 import cStringIO
 
-from reportlab.platypus.doctemplate import BaseDocTemplate
+from reportlab.platypus.doctemplate import BaseDocTemplate, NextPageTemplate
 from reportlab.platypus.doctemplate import PageTemplate as BasePageTemplate
 from reportlab.platypus.frames import Frame
 from reportlab.platypus.flowables import PageBreak
@@ -82,6 +82,9 @@ class Context(object):
             self.story.append(para)
         elif element.tag == "nextPage":
             self.story.append(PageBreak())
+        elif element.tag == "setNextTemplate":
+            name = element.attrib["name"]
+            self.story.append(NextPageTemplate(name))
         elif element.tag == "blockTable":
             styleName = element.get("style", "default")
             style = self.tableStyles[styleName]
