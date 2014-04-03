@@ -181,6 +181,11 @@ class Context(object):
                 thickness = self._ConvertNumber(child, "thickness", 1)
                 color = getattr(colors, colorName)
                 commands.append((kind, start, stop, thickness, color))
+            elif child.tag in ("blockLeftPadding", "blockRightPadding",
+                    "blockBottomPadding", "blockTopPadding"):
+                length = self._ConvertNumber(child, "length", 6)
+                commandType = child.tag[5:].upper()
+                commands.append((commandType, start, stop, length))
         style = TableStyle(commands)
         self.tableStyles[ident] = style
         return style
@@ -282,13 +287,18 @@ class Context(object):
         firstLineIndent = self._ConvertNumber(element, "firstLineIndent", 0)
         spaceBefore = self._ConvertNumber(element, "spaceBefore", 0)
         spaceAfter = self._ConvertNumber(element, "spaceAfter", 0)
+        borderWidth = self._ConvertNumber(element, "borderWidth")
+        borderColorName = element.get("borderColor")
+        borderColor = getattr(colors, borderColorName) \
+                if borderColorName is not None else None
         rawAlignment = element.get("alignment", "left")
         alignment = getattr(enums, "TA_%s" % rawAlignment.upper())
         style = ParagraphStyle(name, fontName = fontName, fontSize = fontSize,
                 leading = leading, leftIndent = leftIndent,
                 rightIndent = rightIndent, firstLineIndent = firstLineIndent,
                 spaceBefore = spaceBefore, spaceAfter = spaceAfter,
-                alignment = alignment)
+                alignment = alignment, borderWidth = borderWidth,
+                borderColor = borderColor)
         style.keepWithNext = self._ConvertNumber(element, "keepWithNext", 0)
         self.paragraphStyles[name] = style
         return style
