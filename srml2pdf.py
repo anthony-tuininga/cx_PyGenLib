@@ -32,6 +32,18 @@ class PageTemplate(BasePageTemplate):
             method(*args)
 
 
+class RotatedParagraph(Paragraph):
+
+    def draw(self):
+        self.canv.rotate(90)
+        self.canv.translate(1, -self.height)
+        Paragraph.draw(self)
+
+    def wrap(self, availableWidth, availableHeight):
+        width, height = Paragraph.wrap(self, availableHeight, availableWidth)
+        return height, width
+
+
 class Context(object):
 
     def __init__(self, output):
@@ -42,6 +54,7 @@ class Context(object):
         self.tableStyles = {}
         self.story = []
         self.tableRows = []
+        self.tableRowHeights = []
 
     def __ConvertNumber(self, value):
         if value.endswith("mm"):
@@ -78,7 +91,9 @@ class Context(object):
             styleName = element.get("style", "default")
             style = self.paragraphStyles[styleName]
             text = element.text.strip()
-            para = Paragraph(text, style)
+            rotated = self._ConvertNumber(element, "rotate", 0)
+            cls = RotatedParagraph if rotated else Paragraph
+            para = cls(text, style)
             self.story.append(para)
         elif element.tag == "nextPage":
             self.story.append(PageBreak())
@@ -95,17 +110,21 @@ class Context(object):
             pageRows = self._ConvertNumber(element, "pageRows")
             if not pageRows:
                 self.story.append(LongTable(self.tableRows, columnWidths,
-                        style = style, hAlign = hAlign, vAlign = vAlign,
-                        repeatRows = repeatRows))
+                        self.tableRowHeights, style = style, hAlign = hAlign,
+                        vAlign = vAlign, repeatRows = repeatRows))
             else:
                 headerRows = self.tableRows[:repeatRows]
+                headerRowHeights = self.tableRowHeights[:repeatRows]
                 rows = self.tableRows[repeatRows:]
+                rowHeights = self.tableRowHeights[repeatRows:]
                 while rows:
                     table = LongTable(headerRows + rows[:pageRows],
-                            columnWidths, style = style, hAlign = hAlign,
-                            vAlign = vAlign)
+                            columnWidths,
+                            headerRowHeights + rowHeights[:pageRows],
+                            style = style, hAlign = hAlign, vAlign = vAlign)
                     self.story.append(table)
                     rows = rows[pageRows:]
+                    rowHeights = rowHeights[pageRows:]
 
     def AddTableRow(self, element):
         cells = []
@@ -115,14 +134,19 @@ class Context(object):
                 for child in cell:
                     if child.tag == "para":
                         styleName = child.get("style", "default")
+                        rotated = self._ConvertNumber(child, "rotate")
                         style = self.paragraphStyles[styleName]
                         child.attrib.clear()
                         text = cElementTree.tostring(child)
-                        contents.append(Paragraph(text, style))
+                        cls = RotatedParagraph if rotated else Paragraph
+                        para = cls(text, style)
+                        contents.append(para)
                 if not contents:
                     contents = cell.text and cell.text.strip()
                 cells.append(contents)
+        height = self._ConvertNumber(element, "height")
         self.tableRows.append(cells)
+        self.tableRowHeights.append(height)
 
     def Build(self):
         self.document.build(self.story)
