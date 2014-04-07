@@ -310,6 +310,10 @@ class Context(object):
             elif child.tag == "blockTableStyle":
                 self.CreateBlockTableStyle(child)
 
+    def StartTable(self):
+        self.tableRows = []
+        self.tableRowHeights = []
+
 
 def GeneratePDF(rmlInput, pdfOutput = None, inputIsString = True):
     if inputIsString:
@@ -327,7 +331,7 @@ def GeneratePDF(rmlInput, pdfOutput = None, inputIsString = True):
             if element.tag == "story":
                 inStory = True
             elif element.tag == "blockTable":
-                context.tableRows = []
+                context.StartTable()
                 inTable = True
         elif element.tag == "template":
             context.CreateDocumentTemplate(element)
