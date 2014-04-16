@@ -3,6 +3,7 @@ Defines classes used for manipulating grids.
 """
 
 import ceGUI
+import cx_Exceptions
 import datetime
 import decimal
 import wx
@@ -336,6 +337,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 colIndex = left
                 while colIndex <= right:
                     for value in row:
+                        attr = self.table.GetAttr(rowIndex, colIndex)
+                        if attr.IsReadOnly():
+                            raise ReadOnlyCells()
                         if self.stripSpacesOnPaste \
                                 and isinstance(value, basestring):
                             value = value.strip()
@@ -450,7 +454,7 @@ class GridTable(wx.grid.PyGridTableBase):
     def GetAllRows(self):
         return [self.dataSet.rows[h] for h in self.rowHandles]
 
-    def GetAttr(self, rowIndex, columnIndex, extraParameter):
+    def GetAttr(self, rowIndex, columnIndex, extraParameter = None):
         grid = self.GetView()
         if grid is None or not grid.customCellAttributes \
                 or rowIndex >= len(self.rowHandles):
@@ -729,4 +733,9 @@ class InvalidValueEntered(Exception):
 
     def __init__(self, messageToDisplay):
         self.messageToDisplay = messageToDisplay
+
+
+class ReadOnlyCells(cx_Exceptions.BaseException):
+    message = "At least some of the cells are read only and cannot be " \
+            "modified at this time."
 
