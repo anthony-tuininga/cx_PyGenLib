@@ -15,11 +15,15 @@ class Menu(object):
 
     def _AddEntry(self, parent, label = "", helpString = "",
             kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
-            id = None, skipEvent = False, passEvent = True, enabled = True):
+            id = None, skipEvent = False, passEvent = True, enabled = True,
+            pos = None):
         if id is None:
             id = wx.NewId()
         item = wx.MenuItem(self.menu, id, label, helpString, kind)
-        self.menu.AppendItem(item)
+        if pos is None:
+            self.menu.AppendItem(item)
+        else:
+            self.menu.InsertItem(pos, item)
         if not enabled:
             item.Enable(False)
         if method is not None:
@@ -29,7 +33,7 @@ class Menu(object):
 
     def AddEntry(self, parent, label, helpString = "", method = None,
             createBusyCursor = False, passEvent = True, radio = False,
-            checkable = False, windowName = None, enabled = True):
+            checkable = False, windowName = None, enabled = True, pos = None):
         if radio:
             kind = wx.ITEM_RADIO
         elif checkable:
@@ -40,7 +44,8 @@ class Menu(object):
             method = functools.partial(parent.SimpleOpenWindow, windowName)
             passEvent = False
         return self._AddEntry(parent, label, helpString, kind, method,
-                createBusyCursor, passEvent = passEvent, enabled = enabled)
+                createBusyCursor, passEvent = passEvent, enabled = enabled,
+                pos = pos)
 
     def AddSeparator(self):
         self.menu.AppendSeparator()
