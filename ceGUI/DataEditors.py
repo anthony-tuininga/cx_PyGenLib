@@ -255,7 +255,7 @@ class DataMultipleRowPanel(DataPanel):
         return self.rowControl.CanInsertItems()
 
     def GetBaseRows(self):
-        return [] 
+        pass
 
     def GetRetrievalArgs(self):
         args = []
@@ -313,10 +313,12 @@ class DataMultipleRowPanel(DataPanel):
             self._DisplayNumItems()
 
     def Retrieve(self, refresh = False):
+        if not self:
+            return
         args = self.GetRetrievalArgs()
         if refresh and not self.ContinueQuery():
             return
-        if self.createRetrieveButton or not self.filterColumns:
+        if self.createRetrieveButton:
             self.rowControl.Retrieve(*args)
         else:
             if refresh:
