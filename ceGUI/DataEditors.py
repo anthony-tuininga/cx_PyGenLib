@@ -340,6 +340,7 @@ class DataGridPanel(DataMultipleRowPanel):
     def _GetDataSet(self):
         dataSet = super(DataGridPanel, self)._GetDataSet()
         if self.filteredDataSetClassName is None:
+            self.primaryDataSet = None
             return dataSet
         self.primaryDataSet = dataSet
         cls = self._GetClass(self.filteredDataSetClassName)
@@ -379,7 +380,8 @@ class DataGridPanel(DataMultipleRowPanel):
         self.grid.ClearSelection()
 
     def GetBaseRows(self):
-        self.primaryDataSet.Retrieve()
+        if self.primaryDataSet is not None:
+            self.primaryDataSet.Retrieve()
 
     def OnCreate(self):
         self.SetWindowStyle(0)
