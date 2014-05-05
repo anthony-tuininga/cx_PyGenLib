@@ -9,7 +9,7 @@ import cStringIO
 from reportlab.platypus.doctemplate import BaseDocTemplate, NextPageTemplate
 from reportlab.platypus.doctemplate import PageTemplate as BasePageTemplate
 from reportlab.platypus.frames import Frame
-from reportlab.platypus.flowables import PageBreak
+from reportlab.platypus.flowables import PageBreak, Spacer
 from reportlab.platypus.paragraph import Paragraph
 from reportlab.platypus.tables import LongTable, TableStyle
 from reportlab.lib import colors, enums, pagesizes, units
@@ -97,6 +97,9 @@ class Context(object):
             self.story.append(para)
         elif element.tag == "nextPage":
             self.story.append(PageBreak())
+        elif element.tag == "spacer":
+            length = self._ConvertNumber(element, "length", 0)
+            self.story.append(Spacer(length, length))
         elif element.tag == "setNextTemplate":
             name = element.attrib["name"]
             self.story.append(NextPageTemplate(name))
