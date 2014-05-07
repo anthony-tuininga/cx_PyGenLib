@@ -418,7 +418,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         return self.table.columns
 
 
-class GridTable(wx.grid.PyGridTableBase):
+if "phoenix" in wx.version():
+    GridTableBase = wx.grid.GridTableBase
+else:
+    GridTableBase = wx.grid.PyGridTableBase
+
+class GridTable(GridTableBase):
 
     def __init__(self, dataSet):
         super(GridTable, self).__init__()
