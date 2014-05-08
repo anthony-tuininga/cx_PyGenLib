@@ -54,6 +54,7 @@ class Context(object):
         self.tableStyles = {}
         self.story = []
         self.tableRows = []
+        self.tableSpans = []
         self.tableRowHeights = []
 
     def __ConvertNumber(self, value):
@@ -106,6 +107,8 @@ class Context(object):
         elif element.tag == "blockTable":
             styleName = element.get("style", "default")
             style = self.tableStyles[styleName]
+            if self.tableSpans:
+                style = TableStyle(self.tableSpans, style)
             repeatRows = self._ConvertNumber(element, "repeatRows", 0)
             hAlign = element.get("hAlign", "CENTER")
             vAlign = element.get("vAlign", "MIDDLE")
@@ -133,6 +136,13 @@ class Context(object):
         cells = []
         for cell in element:
             if cell.tag == "td":
+                rowSpan = int(cell.get("rowspan", 1))
+                colSpan = int(cell.get("colspan", 1))
+                if rowSpan > 1 or colSpan > 1:
+                    start = (len(cells), len(self.tableRows))
+                    stop = (len(cells) + colSpan - 1,
+                            len(self.tableRows) + rowSpan - 1)
+                    self.tableSpans.append(("SPAN", start, stop))
                 contents = []
                 for child in cell:
                     if child.tag == "para":
@@ -315,6 +325,7 @@ class Context(object):
 
     def StartTable(self):
         self.tableRows = []
+        self.tableSpans = []
         self.tableRowHeights = []
 
 
