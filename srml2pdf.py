@@ -73,7 +73,7 @@ class Context(object):
             return int(value)
         return float(value)
 
-    def _ConvertColor(self, element, attrName):
+    def _ConvertColor(self, element, attrName, defaultColor = None):
         value = element.get(attrName)
         if value is not None:
             parts = [s.strip() for s in value.split(",")]
@@ -89,6 +89,7 @@ class Context(object):
                 components = [float(s) / 255.0 for s in parts]
                 return colors.toColor(components)
             return getattr(colors, value)
+        return defaultColor
 
     def _ConvertNumber(self, element, attrName, defaultValue = None):
         value = element.get(attrName)
@@ -284,9 +285,19 @@ class Context(object):
                 args = (x1, y1, x2, y2)
                 methodName = "line"
             elif child.tag == "setStrokeColor":
-                colorName = child.get("color", "black")
-                color = getattr(colors, colorName)
+                color = self._ConvertColor(child, "color", colors.black)
                 args = (color,)
+            elif child.tag == "setFillColor":
+                color = self._ConvertColor(child, "color", colors.black)
+                args = (color,)
+            elif child.tag == "rect":
+                x = self._ConvertNumber(child, "x", 0)
+                y = self._ConvertNumber(child, "y", 0)
+                width = self._ConvertNumber(child, "width", 100)
+                height = self._ConvertNumber(child, "height", 10)
+                stroke = self._ConvertNumber(child, "stroke", 1)
+                fill = self._ConvertNumber(child, "fill", 0)
+                args = (x, y, width, height, stroke, fill)
             elif child.tag == "image":
                 fileName = child.get("file", "unknown.png")
                 x = self._ConvertNumber(child, "x", 0)
