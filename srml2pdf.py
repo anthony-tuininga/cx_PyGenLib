@@ -271,7 +271,8 @@ class Context(object):
                 name = child.get("name", "Helvetica")
                 size = self._ConvertNumber(child, "size", 10)
                 args = (name, size)
-            elif child.tag in ("drawCentredString", "drawString"):
+            elif child.tag in ("drawCentredString", "drawRightString",
+                    "drawString"):
                 x = self._ConvertNumber(child, "x", 0)
                 y = self._ConvertNumber(child, "y", 0)
                 args = (x, y, child.text.strip())
