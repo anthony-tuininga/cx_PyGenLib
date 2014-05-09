@@ -54,7 +54,7 @@ class Context(object):
         self.tableStyles = {}
         self.story = []
         self.tableRows = []
-        self.tableSpans = []
+        self.tableCommands = []
         self.tableRowHeights = []
 
     def __ConvertNumber(self, value):
@@ -72,6 +72,23 @@ class Context(object):
         elif value.lstrip("-").isdigit():
             return int(value)
         return float(value)
+
+    def _ConvertColor(self, element, attrName):
+        value = element.get(attrName)
+        if value is not None:
+            parts = [s.strip() for s in value.split(",")]
+            if len(parts) == 1 and parts[0].isdigit():
+                colorNumber = int(parts[0])
+                red = (colorNumber % 256) / 255.0
+                colorNumber //= 256
+                green = (colorNumber % 256) / 255.0
+                colorNumber //= 256
+                blue = (colorNumber % 256) / 255.0
+                return colors.toColor((red, green, blue))
+            elif len(parts) in (3, 4):
+                components = [float(s) / 255.0 for s in parts]
+                return colors.toColor(components)
+            return getattr(colors, value)
 
     def _ConvertNumber(self, element, attrName, defaultValue = None):
         value = element.get(attrName)
@@ -107,8 +124,8 @@ class Context(object):
         elif element.tag == "blockTable":
             styleName = element.get("style", "default")
             style = self.tableStyles[styleName]
-            if self.tableSpans:
-                style = TableStyle(self.tableSpans, style)
+            if self.tableCommands:
+                style = TableStyle(self.tableCommands, style)
             repeatRows = self._ConvertNumber(element, "repeatRows", 0)
             hAlign = element.get("hAlign", "CENTER")
             vAlign = element.get("vAlign", "MIDDLE")
@@ -134,6 +151,11 @@ class Context(object):
 
     def AddTableRow(self, element):
         cells = []
+        color = self._ConvertColor(element, "background")
+        if color is not None:
+            start = (0, len(self.tableRows))
+            stop = (-1, len(self.tableRows))
+            self.tableCommands.append(("BACKGROUND", start, stop, color))
         for cell in element:
             if cell.tag == "td":
                 rowSpan = int(cell.get("rowspan", 1))
@@ -142,7 +164,7 @@ class Context(object):
                     start = (len(cells), len(self.tableRows))
                     stop = (len(cells) + colSpan - 1,
                             len(self.tableRows) + rowSpan - 1)
-                    self.tableSpans.append(("SPAN", start, stop))
+                    self.tableCommands.append(("SPAN", start, stop))
                 contents = []
                 for child in cell:
                     if child.tag == "para":
@@ -325,7 +347,7 @@ class Context(object):
 
     def StartTable(self):
         self.tableRows = []
-        self.tableSpans = []
+        self.tableCommands = []
         self.tableRowHeights = []
 
 
