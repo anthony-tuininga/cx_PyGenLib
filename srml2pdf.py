@@ -332,7 +332,7 @@ class Context(object):
 def GeneratePDF(rmlInput, pdfOutput = None, inputIsString = True):
     if inputIsString:
         f = cStringIO.StringIO()
-        f.write(rmlInput)
+        f.write(rmlInput.encode("utf-8"))
         f.seek(0)
         rmlInput = f
     if pdfOutput is None:
