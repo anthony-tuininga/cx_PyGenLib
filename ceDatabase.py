@@ -97,14 +97,29 @@ class Row(object):
         return "<%s>" % self.__class__.reprName
 
     @classmethod
+    def GetQueryInfo(cls, **conditions):
+        return (cls.tableName, cls.attrNames, conditions)
+
+    @classmethod
     def GetRow(cls, dataSource, **conditions):
-        return dataSource.GetRow(cls.tableName, cls.attrNames, cls,
-                **conditions)
+        tableName, selectNames, queryConditions = \
+                cls.GetQueryInfo(**conditions)
+        row = dataSource.GetRow(tableName, selectNames, cls, **queryConditions)
+        cls.SetExtraAttributes([row])
+        return row
 
     @classmethod
     def GetRows(cls, dataSource, **conditions):
-        return dataSource.GetRows(cls.tableName, cls.attrNames, cls,
-                **conditions)
+        tableName, selectNames, queryConditions = \
+                cls.GetQueryInfo(**conditions)
+        rows = dataSource.GetRows(tableName, selectNames, cls,
+                **queryConditions)
+        cls.SetExtraAttributes(rows)
+        return rows
+
+    @classmethod
+    def SetExtraAttributes(cls, rows):
+        pass
 
     def Copy(self):
         cls = self.__class__
