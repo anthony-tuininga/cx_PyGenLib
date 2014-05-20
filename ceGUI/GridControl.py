@@ -459,12 +459,11 @@ class GridTable(GridTableBase):
     def GetAllRows(self):
         return [self.dataSet.rows[h] for h in self.rowHandles]
 
-    def GetAttr(self, rowIndex, columnIndex, extraParameter = None):
+    def GetAttr(self, rowIndex, columnIndex, kind = 0):
         grid = self.GetView()
         if grid is None or not grid.customCellAttributes \
                 or rowIndex >= len(self.rowHandles):
-            return super(GridTable, self).GetAttr(rowIndex, columnIndex,
-                    extraParameter)
+            return super(GridTable, self).GetAttr(rowIndex, columnIndex, kind)
         column = self.columns[columnIndex]
         attr = column.attr.Clone()
         if grid.highlightRowColor is not None \
