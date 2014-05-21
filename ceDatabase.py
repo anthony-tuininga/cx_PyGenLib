@@ -6,7 +6,7 @@ import cx_Logging
 import datetime
 import decimal
 
-def _NormalizeValue(bases, classDict, name):
+def _NormalizeValue(bases, classDict, name, split = True):
     """Helper routine for row metaclass."""
     value = classDict.get(name)
     if value is None:
@@ -14,7 +14,7 @@ def _NormalizeValue(bases, classDict, name):
             value = getattr(base, name, None)
             if value is not None:
                 break
-    if isinstance(value, basestring):
+    if split and isinstance(value, basestring):
         value = value.split()
     classDict[name] = value
     return value
@@ -37,6 +37,12 @@ class RowMetaClass(type):
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
+        schemaName = _NormalizeValue(bases, classDict, "schemaName",
+                split = False)
+        tableName = classDict.get("tableName", name)
+        if schemaName is not None and "." not in tableName:
+            tableName = "%s.%s" % (schemaName, tableName)
+        classDict["tableName"] = tableName
         if useSlots:
             classDict["__slots__"] = attrNames + extraAttrNames
         if "reprName" not in classDict:
@@ -87,6 +93,7 @@ class Row(object):
     pkAttrNames = []
     useSlots = True
     sortReversed = False
+    schemaName = None
     tableName = None
 
     def __repr__(self):
