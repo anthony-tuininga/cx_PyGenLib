@@ -391,7 +391,7 @@ class StandardDialog(Dialog):
     def _OnLayout(self, topSizer):
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
         self._LayoutButtons(buttonSizer)
-        topSizer.Add(buttonSizer, flag = wx.EXPAND)
+        topSizer.Add(buttonSizer, flag = wx.EXPAND | wx.ALL, border = 5)
         super(StandardDialog, self)._OnLayout(topSizer)
 
     def IsEditingCanceled(self):
