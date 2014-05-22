@@ -382,19 +382,19 @@ class Transaction(object):
             setValues = dict(zip(dataSet.insertAttrNames, args))
             pkSequenceName = dataSet.pkSequenceName if dataSet.pkIsGenerated \
                     else None
-            pkAttrName = dataSet.pkAttrNames[0] if dataSet.pkIsGenerated \
+            pkAttrName = row.pkAttrNames[0] if dataSet.pkIsGenerated \
                     else None
             item = self.itemClass(tableName = dataSet.updateTableName,
                     setValues = setValues, pkSequenceName = pkSequenceName,
                     pkAttrName = pkAttrName, referencedItems = referencedItems)
         self.items.append(item)
         self.itemsByRow[row] = item
-        item._SetArgTypes(dataSet, row, dataSet.insertAttrNames)
+        item._SetArgTypes(row, dataSet.insertAttrNames)
         return item
 
     def ModifyRow(self, dataSet, row, origRow):
         if dataSet.updatePackageName is not None:
-            args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, origRow) + \
+            args = dataSet._GetArgsFromNames(row.pkAttrNames, origRow) + \
                     dataSet._GetArgsFromNames(dataSet.updateAttrNames, row)
             procedureName = "%s.%s" % \
                     (dataSet.updatePackageName, dataSet.updateProcedureName)
@@ -402,23 +402,22 @@ class Transaction(object):
         else:
             args = dataSet._GetArgsFromNames(dataSet.updateAttrNames, row)
             setValues = dict(zip(dataSet.updateAttrNames, args))
-            args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, origRow)
-            conditions = dict(zip(dataSet.pkAttrNames, args))
+            args = dataSet._GetArgsFromNames(row.pkAttrNames, origRow)
+            conditions = dict(zip(row.pkAttrNames, args))
             item = self.itemClass(tableName = dataSet.updateTableName,
                     setValues = setValues, conditions = conditions)
         self.items.append(item)
-        item._SetArgTypes(dataSet, row,
-                dataSet.pkAttrNames + dataSet.updateAttrNames)
+        item._SetArgTypes(row, row.pkAttrNames + dataSet.updateAttrNames)
         return item
 
     def RemoveRow(self, dataSet, row):
-        args = dataSet._GetArgsFromNames(dataSet.pkAttrNames, row)
+        args = dataSet._GetArgsFromNames(row.pkAttrNames, row)
         if dataSet.updatePackageName is not None:
             procedureName = "%s.%s" % \
                     (dataSet.updatePackageName, dataSet.deleteProcedureName)
             item = self.itemClass(procedureName = procedureName, args = args)
         else:
-            conditions = dict(zip(dataSet.pkAttrNames, args))
+            conditions = dict(zip(row.pkAttrNames, args))
             item = self.itemClass(tableName = dataSet.updateTableName,
                     conditions = conditions)
         self.items.append(item)
@@ -446,26 +445,26 @@ class Transaction(object):
             self.blobArgs = blobArgs or []
             self.fkArgs = fkArgs or []
 
-        def _SetArgType(self, dataSet, row, attrIndex, attrName, offset):
-            if attrName in dataSet.clobAttrNames:
+        def _SetArgType(self, row, attrIndex, attrName, offset):
+            if attrName in row.clobAttrNames:
                 if self.procedureName is not None:
                     self.clobArgs.append(attrIndex + offset)
                 else:
                     self.clobArgs.append(attrName)
-            elif attrName in dataSet.blobAttrNames:
+            elif attrName in row.blobAttrNames:
                 if self.procedureName is not None:
                     self.blobArgs.append(attrIndex + offset)
                 else:
                     self.blobArgs.append(attrName)
             elif self.referencedItems and not hasattr(row, attrName) \
-                    and hasattr(dataSet.contextItem, attrName):
+                    and hasattr(row.contextItem, attrName):
                 if self.procedureName is not None:
                     self.fkArgs.append(attrIndex)
                 else:
                     self.fkArgs.append(attrName)
 
-        def _SetArgTypes(self, dataSet, row, attrNames):
+        def _SetArgTypes(self, row, attrNames):
             offset = 1 if self.returnType is not None else 0
             for attrIndex, attrName in enumerate(attrNames):
-                self._SetArgType(dataSet, row, attrIndex, attrName, offset)
+                self._SetArgType(row, attrIndex, attrName, offset)
 
