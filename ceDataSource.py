@@ -389,7 +389,7 @@ class Transaction(object):
                     pkAttrName = pkAttrName, referencedItems = referencedItems)
         self.items.append(item)
         self.itemsByRow[row] = item
-        item._SetArgTypes(row, dataSet.insertAttrNames)
+        item._SetArgTypes(dataSet, row, dataSet.insertAttrNames)
         return item
 
     def ModifyRow(self, dataSet, row, origRow):
@@ -407,7 +407,8 @@ class Transaction(object):
             item = self.itemClass(tableName = dataSet.updateTableName,
                     setValues = setValues, conditions = conditions)
         self.items.append(item)
-        item._SetArgTypes(row, row.pkAttrNames + dataSet.updateAttrNames)
+        item._SetArgTypes(dataSet, row,
+                row.pkAttrNames + dataSet.updateAttrNames)
         return item
 
     def RemoveRow(self, dataSet, row):
@@ -445,7 +446,7 @@ class Transaction(object):
             self.blobArgs = blobArgs or []
             self.fkArgs = fkArgs or []
 
-        def _SetArgType(self, row, attrIndex, attrName, offset):
+        def _SetArgType(self, dataSet, row, attrIndex, attrName, offset):
             if attrName in row.clobAttrNames:
                 if self.procedureName is not None:
                     self.clobArgs.append(attrIndex + offset)
@@ -457,14 +458,14 @@ class Transaction(object):
                 else:
                     self.blobArgs.append(attrName)
             elif self.referencedItems and not hasattr(row, attrName) \
-                    and hasattr(row.contextItem, attrName):
+                    and hasattr(dataSet.contextItem, attrName):
                 if self.procedureName is not None:
                     self.fkArgs.append(attrIndex)
                 else:
                     self.fkArgs.append(attrName)
 
-        def _SetArgTypes(self, row, attrNames):
+        def _SetArgTypes(self, dataSet, row, attrNames):
             offset = 1 if self.returnType is not None else 0
             for attrIndex, attrName in enumerate(attrNames):
-                self._SetArgType(row, attrIndex, attrName, offset)
+                self._SetArgType(dataSet, row, attrIndex, attrName, offset)
 
