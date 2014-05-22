@@ -29,7 +29,6 @@ class Path(object):
     stringRetrievalAttrNames = []
     subCacheAttrName = None
     cacheAttrName = None
-    rowFactoryCacheMethodName = None
     ignoreRowNotCached = False
     name = None
 
@@ -81,14 +80,7 @@ class Path(object):
 
     def GetRowsFromDataSource(self, cache, *args):
         conditions = dict(zip(self.retrievalAttrNames, args))
-        if self.rowFactoryCacheMethodName is not None:
-            rowFactory = getattr(cache, self.rowFactoryCacheMethodName)
-            attrNames = self.attrNames
-        else:
-            rowFactory = self.rowClass
-            attrNames = self.rowClass.attrNames
-        return cache.dataSource.GetRows(self.rowClass.tableName, attrNames,
-                rowFactory, **conditions)
+        return self.rowClass.GetRows(cache.dataSource, **conditions)
 
     def Load(self, cache, subCache, *args):
         rows = self.GetRowsFromDataSource(cache, *args)
@@ -286,8 +278,7 @@ class SubCache(object):
             path.Clear()
 
     def GetAllRowsFromDataSource(self, cache):
-        return cache.dataSource.GetRows(self.rowClass.tableName,
-                self.rowClass.attrNames, self.rowClass)
+        return self.rowClass.GetRows(cache.dataSource)
 
     def Load(self, cache, pathName, *args):
         if self.tracePathLoads:
