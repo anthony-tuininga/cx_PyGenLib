@@ -480,6 +480,10 @@ class GridTable(GridTableBase):
             return column.GetLabelValue()
         return ""
 
+    def GetColumn(self, colIndex):
+        if colIndex >= 0 and colIndex < len(self.columns):
+            return self.columns[colIndex]
+
     def GetNumberCols(self):
         return len(self.columns)
 
@@ -686,6 +690,7 @@ class GridColumnDate(GridColumn):
         if dateFormat is None:
             dateFormat = self.config.dateFormat
         self.dateFormat = dateFormat
+        self.attr.SetEditor(GridColumnDateEditor(self.required))
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
@@ -731,6 +736,60 @@ class GridColumnDecimal(GridColumn):
 
 class GridColumnStr(GridColumn):
     pass
+
+
+class GridColumnDateEditor(wx.grid.PyGridCellEditor):
+
+    def __init__(self, requiredValue):
+        super(GridColumnDateEditor, self).__init__()
+        self.requiredValue = requiredValue
+
+    def Create(self, parent, id, evtHandler):
+        style = wx.DP_DEFAULT | wx.DP_SHOWCENTURY | wx.DP_DROPDOWN
+        if not self.requiredValue:
+            style |= wx.DP_ALLOWNONE
+        self.control = wx.DatePickerCtrl(parent, id, style = style)
+        self.SetControl(self.control)
+        self.initialValue = None
+ 
+    def SetSize(self, rect):
+        self.control.SetDimensions(rect.x, rect.y, rect.width + 2,
+                rect.height + 2, wx.SIZE_ALLOW_MINUS_ONE)
+ 
+    def BeginEdit(self, rowIndex, colIndex, grid):
+        self.initialValue = None
+        table = grid.GetTable()
+        column = table.GetColumn(colIndex)
+        initialValue = table.GetValue(rowIndex, colIndex)
+        if initialValue:
+            dateValue = datetime.datetime.strptime(initialValue,
+                    column.dateFormat)
+            self.initialValue = wx.DateTimeFromDMY(dateValue.day,
+                    dateValue.month - 1, dateValue.year)
+            self.control.SetValue(self.initialValue)
+        self.control.SetFocus()
+ 
+    def EndEdit(self, rowIndex, colIndex, grid):
+        changed = False
+        wxDate = self.control.GetValue()
+        if wxDate != self.initialValue:
+            changed = True
+            value = None
+            table = grid.GetTable()
+            column = table.GetColumn(colIndex)
+            if wxDate.IsValid():
+                dateValue = datetime.datetime(wxDate.GetYear(),
+                        wxDate.GetMonth() + 1, wxDate.GetDay())
+                value = dateValue.strftime(column.dateFormat)
+            table.SetValue(rowIndex, colIndex, value)
+        return changed
+ 
+    def Reset(self):
+        if self.initialValue is not None:
+            self.control.SetValue(self.initialValue)
+ 
+    def Clone(self):
+        return GridColumnDateEditor(self.requiredValue)
 
 
 class InvalidValueEntered(Exception):
