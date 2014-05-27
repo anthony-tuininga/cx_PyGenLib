@@ -278,8 +278,7 @@ class DataSet(object):
             return []
         conditions = dict(zip(self.retrievalAttrNames, args))
         self.retrievalArgs = args
-        rows = self.dataSource.GetRows(self.tableName, self.attrNames,
-                self.rowClass, **conditions)
+        rows = self.rowClass.GetRows(self.dataSource, **conditions)
         if self.rowClass.sortByAttrNames:
             rows.sort(key = self.rowClass.SortValue)
             if self.rowClass.sortReversed:
