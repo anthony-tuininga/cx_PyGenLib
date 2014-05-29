@@ -10,13 +10,13 @@ import os
 import sys
 import wx
 
-__all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn", "DataPanel",
-            "DataEditPanel", "DataGrid", "DataGridPanel", "DataList",
-            "DataListPanel", "DataNotebookPanel", "DateEditDialogColumn",
-            "DecimalEditDialogColumn", "DirNameEditDialogColumn", "EditDialog",
-            "EditDialogColumn", "EllipsisEditDialogColumn",
-            "FileNameEditDialogColumn", "GridEditWindow",
-            "RadioButtonEditDialogColumn", "SubWindow",
+__all__ = [ "BooleanEditDialogColumn", "ChoiceEditDialogColumn",
+            "ColorEditDialogColumn", "DataPanel", "DataEditPanel", "DataGrid",
+            "DataGridPanel", "DataList", "DataListPanel", "DataNotebookPanel",
+            "DateEditDialogColumn", "DecimalEditDialogColumn",
+            "DirNameEditDialogColumn", "EditDialog", "EditDialogColumn",
+            "EllipsisEditDialogColumn", "FileNameEditDialogColumn",
+            "GridEditWindow", "RadioButtonEditDialogColumn", "SubWindow",
             "TextEditDialogColumn" ]
 
 
@@ -1046,6 +1046,42 @@ class TextEditDialogColumn(EditDialogColumn):
                 multiLine = multiLine)
         super(TextEditDialogColumn, self).__init__(parent, attrName, labelText,
                 field, required = required, constantValue = constantValue)
+
+
+class ColorEditDialogColumn(TextEditDialogColumn):
+
+    def __init__(self, parent, attrName, labelText, style = 0,
+            editable = True, size = (-1, -1), buttonSize = (25, -1)):
+        super(ColorEditDialogColumn, self).__init__(parent, attrName,
+                labelText, maxLength = 8, size = size,
+                cls = ceGUI.IntegerField, editable = editable)
+        self.color = wx.Colour()
+        self.button = parent.AddButton(size = buttonSize,
+                method = self.OnChooseColor, enabled = editable,
+                passEvent = False)
+
+    def Layout(self, sizer):
+        colorSizer = wx.BoxSizer(wx.HORIZONTAL)
+        colorSizer.Add(self.field, flag = wx.RIGHT | wx.EXPAND, border = 5)
+        colorSizer.Add(self.button)
+        sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(colorSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+
+    def OnChooseColor(self):
+        colorData = wx.ColourData()
+        colorData.SetColour(self.color)
+        with wx.ColourDialog(self.button.GetParent(), colorData) as dialog:
+            if dialog.ShowModal() == wx.ID_OK:
+                self.color = dialog.GetColourData().GetColour()
+                self.button.SetBackgroundColour(self.color)
+                self.button.Refresh()
+                self.field.SetValue(self.color.GetRGB())
+
+    def SetValue(self, row):
+        self.field.SetValue(row.color)
+        self.color.SetRGB(row.color)
+        self.button.SetBackgroundColour(self.color)
+        self.button.Refresh()
 
 
 class GridEditWindow(ceGUI.Frame):
