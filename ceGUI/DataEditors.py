@@ -1078,8 +1078,9 @@ class ColorEditDialogColumn(TextEditDialogColumn):
                 self.field.SetValue(self.color.GetRGB())
 
     def SetValue(self, row):
-        self.field.SetValue(row.color)
-        self.color.SetRGB(row.color)
+        color = getattr(row, self.attrName)
+        self.field.SetValue(color)
+        self.color.SetRGB(color)
         self.button.SetBackgroundColour(self.color)
         self.button.Refresh()
 
