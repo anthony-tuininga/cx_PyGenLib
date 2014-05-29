@@ -735,7 +735,17 @@ class GridColumnDecimal(GridColumn):
 
 
 class GridColumnStr(GridColumn):
-    pass
+
+    def ExtendedInitialize(self, forceUpper = False, forceLower = False):
+        self.forceUpper = forceUpper
+        self.forceLower = forceLower
+
+    def VerifyValueOnChange(self, row, rawValue):
+        if rawValue and self.forceUpper:
+            return rawValue.upper()
+        elif rawValue and self.forceLower:
+            return rawValue.lower()
+        return rawValue
 
 
 class GridColumnDateEditor(wx.grid.PyGridCellEditor):
