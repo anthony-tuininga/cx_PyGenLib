@@ -29,6 +29,12 @@ class PageTemplate(BasePageTemplate):
     def beforeDrawPage(self, canvas, document):
         for methodName, args in self.directives:
             method = getattr(canvas, methodName)
+            if methodName in ("drawCentredString", "drawRightString",
+                    "drawString"):
+                x, y, text = args
+                text = text.replace("{pageNumber}",
+                        str(canvas.getPageNumber()))
+                args = (x, y, text)
             method(*args)
 
 
