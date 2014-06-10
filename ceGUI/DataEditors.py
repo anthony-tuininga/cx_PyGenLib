@@ -29,19 +29,16 @@ class EditDialog(ceGUI.StandardDialog):
         self.parentItem = parentItem
         self.dataSet = self._GetDataSet(parent)
         self.Retrieve(parent)
+        if clone:
+            self.dataSet.MarkAllRowsAsNew()
+            self.OnClone(parent, self.GetRow())
         super(EditDialog, self).__init__(parent, instanceName)
         self.OnPostCreate()
-        if clone:
-            wx.CallAfter(self.Clone, parent, self.GetRow())
 
     def _GetDataSet(self, parent):
         cls = self._GetClass(self.dataSetClassName)
         app = ceGUI.GetApp()
         return cls(app.config.dataSource, self.parentItem)
-
-    def Clone(self, parent, row):
-        self.dataSet.MarkAllRowsAsNew()
-        self.OnClone(parent, row)
 
     def GetRow(self):
         return self.dataSet.rows[0]
