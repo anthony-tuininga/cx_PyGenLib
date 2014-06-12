@@ -76,10 +76,10 @@ class Application(wx.App):
             wx.ConfigBase.Set(self.settings)
         self.StartLogging()
         sys.excepthook = self._ExceptionHandler
-        self.copyAttributes = self.copyAttributes.split()
+        self.copyAttributes = set(self.copyAttributes.split())
         self.config = self.GetConfig()
-        self.copyAttributes.append("settings")
-        self.copyAttributes.append("config")
+        self.copyAttributes.add("settings")
+        self.copyAttributes.add("config")
         if self.OnStartup():
             self.topWindow = self.GetTopWindow()
             if self.topWindow is not None:
