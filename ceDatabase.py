@@ -315,7 +315,8 @@ class DataSet(object):
             attrName = self.pkAttrNames[0]
             for row in self.insertedRows.itervalues():
                 item = transaction.itemsByRow.get(row)
-                setattr(row, attrName, item.generatedKey)
+                if item is not None:
+                    setattr(row, attrName, item.generatedKey)
         for dataSet in self.childDataSets:
             dataSet._GetPrimaryKeyValues(transaction)
 
