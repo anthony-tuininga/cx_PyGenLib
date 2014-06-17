@@ -240,6 +240,7 @@ class DataSet(object):
         self.retrievalArgs = [None] * len(self.retrievalAttrNames)
         if self.updateTableName is None:
             self.updateTableName = self.tableName
+        self.OnCreate()
         self.Clear()
 
     def _DeleteRowsInDatabase(self, transaction):
@@ -430,6 +431,9 @@ class DataSet(object):
             self.updatedRows[handle] = origRow
             newRow = self.rows[handle] = origRow.Copy()
             self._OnRowChanged(newRow, origRow)
+
+    def OnCreate(self):
+        pass
 
     def PendingChanges(self):
         if self.insertedRows or self.updatedRows or self.deletedRows:
