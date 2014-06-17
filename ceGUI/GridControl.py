@@ -462,7 +462,8 @@ class GridTable(GridTableBase):
     def GetAttr(self, rowIndex, columnIndex, kind = 0):
         grid = self.GetView()
         if grid is None or not grid.customCellAttributes \
-                or rowIndex >= len(self.rowHandles):
+                or rowIndex >= len(self.rowHandles) \
+                or columnIndex >= len(self.columns):
             return super(GridTable, self).GetAttr(rowIndex, columnIndex, kind)
         column = self.columns[columnIndex]
         attr = column.attr.Clone()
