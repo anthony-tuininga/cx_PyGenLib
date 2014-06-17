@@ -17,6 +17,7 @@ __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
     settingsName = "ColumnWidths"
     dataSetClassName = "DataSet"
+    enableInsertFromClipboard = True
     customCellAttributes = False
     stripSpacesOnPaste = True
     highlightRowColor = None
@@ -36,9 +37,10 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.menu.AddSeparator()
         self.insertMenuItem = self.menu.AddEntry(self, "Insert\tCtrl-I",
                 method = self._OnInsert, passEvent = False)
-        self.insertFromClipboardMenuItem = self.menu.AddEntry(self,
-                "Insert from clipboard", method = self._OnInsertFromClipboard,
-                passEvent = False)
+        if self.enableInsertFromClipboard:
+            self.insertFromClipboardMenuItem = self.menu.AddEntry(self,
+                    "Insert from clipboard",
+                    method = self._OnInsertFromClipboard, passEvent = False)
         self.deleteMenuItem = self.menu.AddEntry(self, "Delete\tCtrl-D",
                 method = self._OnDelete, passEvent = False)
         self.menu.AddSeparator()
@@ -86,7 +88,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.contextItem = self.GetRow(self.contextPos)
         insertEnabled = self.CanInsertItems()
         self.insertMenuItem.Enable(insertEnabled)
-        self.insertFromClipboardMenuItem.Enable(insertEnabled)
+        if self.enableInsertFromClipboard:
+            self.insertFromClipboardMenuItem.Enable(insertEnabled)
         deleteEnabled = self.contextItem is not None \
                 and self.CanDeleteItems([self.contextItem])
         self.deleteMenuItem.Enable(deleteEnabled)
