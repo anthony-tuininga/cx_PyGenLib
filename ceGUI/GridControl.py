@@ -420,6 +420,13 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def columns(self):
         return self.table.columns
 
+    @property
+    def dataSet(self):
+        return self.table.dataSet
+
+    GetItems = GetAllRows
+    GetSelectedItems = GetSelectedRows
+
 
 if "phoenix" in wx.version():
     GridTableBase = wx.grid.GridTableBase
@@ -582,6 +589,9 @@ class GridColumn(ceGUI.BaseControl):
             self.attr.SetReadOnly()
         self._Initialize()
         self.ExtendedInitialize(**args)
+
+    def __repr__(self):
+        return "<GridColumn %s>" % self.attrName
 
     def ExtendedInitialize(self, **args):
         pass
