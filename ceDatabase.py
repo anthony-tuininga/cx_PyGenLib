@@ -37,9 +37,14 @@ class RowMetaClass(type):
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
+        generateTableName = _NormalizeValue(bases, classDict,
+                "generateTableName")
         schemaName = _NormalizeValue(bases, classDict, "schemaName",
                 split = False)
-        tableName = classDict.get("tableName", name)
+        defaultTableName = name if generateTableName \
+                else _NormalizeValue(bases, classDict, "tableName",
+                        split = False)
+        tableName = classDict.get("tableName", defaultTableName)
         if schemaName is not None and "." not in tableName:
             tableName = "%s.%s" % (schemaName, tableName)
         classDict["tableName"] = tableName
@@ -92,6 +97,7 @@ class Row(object):
     reprAttrNames = []
     pkAttrNames = []
     useSlots = True
+    generateTableName = True
     sortReversed = False
     schemaName = None
     tableName = None
