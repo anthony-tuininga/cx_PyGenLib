@@ -106,12 +106,6 @@ class MultipleRowPath(Path):
     ignoreRowNotCached = True
 
     def _OnLoad(self, rows, *args):
-        if self.rowClass.sortByAttrNames:
-            cx_Logging.Debug("%s: sorting rows for path %s", self.subCacheName,
-                    self.name)
-            rows.sort(key = self.rowClass.SortValue)
-            if self.rowClass.sortReversed:
-                rows.reverse()
         return self._CacheValue(args, rows)
 
     def OnRowNotCached(self, args):
@@ -301,11 +295,6 @@ class SubCache(object):
         if self.tracePathLoads:
             cx_Logging.Debug("%s: loading all rows", self.name)
         rows = self.GetAllRowsFromDataSource(cache)
-        if self.rowClass.sortByAttrNames:
-            cx_Logging.Debug("%s: sorting all rows", self.name)
-            rows.sort(key = self.rowClass.SortValue)
-            if self.rowClass.sortReversed:
-                rows.reverse()
         self.OnLoadRows(cache, rows)
         self.allRows = rows
         self.allRowsLoaded = True
