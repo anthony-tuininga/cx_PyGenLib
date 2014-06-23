@@ -35,6 +35,7 @@ class RowMetaClass(type):
         blobAttrNames = _NormalizeValue(bases, classDict, "blobAttrNames")
         pkAttrNames = _NormalizeValue(bases, classDict, "pkAttrNames")
         sortByAttrNames = _NormalizeValue(bases, classDict, "sortByAttrNames")
+        sortReversed = _NormalizeValue(bases, classDict, "sortReversed")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
         generateTableName = _NormalizeValue(bases, classDict,
@@ -128,6 +129,10 @@ class Row(object):
         rows = dataSource.GetRows(tableName, selectNames, cls,
                 **queryConditions)
         cls.SetExtraAttributes(rows)
+        if cls.sortByAttrNames:
+            rows.sort(key = cls.SortValue)
+            if cls.sortReversed:
+                rows.reverse()
         return rows
 
     @classmethod
@@ -285,12 +290,7 @@ class DataSet(object):
             return []
         conditions = dict(zip(self.retrievalAttrNames, args))
         self.retrievalArgs = args
-        rows = self.rowClass.GetRows(self.dataSource, **conditions)
-        if self.rowClass.sortByAttrNames:
-            rows.sort(key = self.rowClass.SortValue)
-            if self.rowClass.sortReversed:
-                rows.reverse()
-        return rows
+        return self.rowClass.GetRows(self.dataSource, **conditions)
 
     def _InsertRowsInDatabase(self, transaction):
         for row in self.insertedRows.itervalues():
