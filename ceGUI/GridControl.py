@@ -80,6 +80,12 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 passEvent = False)
         parent.BindEvent(self, wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
                 self.OnLabelClicked, skipEvent = False)
+        parent.BindEvent(self, wx.grid.EVT_GRID_EDITOR_CREATED,
+                self._OnEditorCreated)
+        parent.BindEvent(self, wx.grid.EVT_GRID_EDITOR_SHOWN,
+                self._OnEditorShown)
+        parent.BindEvent(self, wx.grid.EVT_GRID_EDITOR_HIDDEN,
+                self._OnEditorHidden)
         super(Grid, self)._Initialize()
 
     def _OnContextMenu(self, event):
@@ -126,6 +132,23 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         if not self.CanInsertItems():
             return
         self.PasteFromClipboard(insert = True)
+
+    def _OnEditorCreated(self, event):
+        column = self.table.GetColumn(event.GetCol())
+        if column is not None:
+            column.OnEditorCreated(event.GetControl())
+
+    def _OnEditorHidden(self, event):
+        column = self.table.GetColumn(event.GetCol())
+        row = self.table.GetRow(event.GetRow())
+        if column is not None and row is not None:
+            column.OnEditorHidden(row)
+
+    def _OnEditorShown(self, event):
+        column = self.table.GetColumn(event.GetCol())
+        row = self.table.GetRow(event.GetRow())
+        if column is not None and row is not None:
+            wx.CallAfter(column.OnEditorShown, row)
 
     def _OnRefresh(self):
         self.Retrieve()
@@ -614,6 +637,15 @@ class GridColumn(ceGUI.BaseControl):
         elif isinstance(value, basestring):
             return value
         return str(value)
+
+    def OnEditorCreated(self, control):
+        self.editorControl = control
+
+    def OnEditorHidden(self, row):
+        pass
+
+    def OnEditorShown(self, row):
+        pass
 
     def SetValue(self, grid, dataSet, rowHandle, row, value):
         dataSet.SetValue(rowHandle, self.attrName, value)
