@@ -53,7 +53,9 @@ class Context(object):
             self.sheet.write_formula(self.rowIndex, self.columnIndex,
                     adjustedFormula, style)
         else:
-            value = element.text.strip()
+            value = element.text
+            if value is not None:
+                value = value.strip()
             defaultTypeName = "string" if value else "blank"
             typeName = element.get("type", defaultTypeName)
             methodName = "write_%s" % typeName
@@ -112,6 +114,7 @@ class Context(object):
         name = element.get("name")
         self.sheet = self.workbook.add_worksheet(name)
         self.rowIndex = -1
+        self.columnIndex = 0
 
     def Complete(self):
         self.workbook.close()
