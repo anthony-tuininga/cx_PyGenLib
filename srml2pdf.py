@@ -293,6 +293,9 @@ class Context(object):
             elif child.tag == "setStrokeColor":
                 color = self._ConvertColor(child, "color", colors.black)
                 args = (color,)
+            elif child.tag == "setLineWidth":
+                width = self._ConvertNumber(child, "width", 1)
+                args = (width,)
             elif child.tag == "setFillColor":
                 color = self._ConvertColor(child, "color", colors.black)
                 args = (color,)
