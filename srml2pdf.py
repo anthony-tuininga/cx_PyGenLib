@@ -172,6 +172,11 @@ class Context(object):
                     stop = (len(cells) + colSpan - 1,
                             len(self.tableRows) + rowSpan - 1)
                     self.tableCommands.append(("SPAN", start, stop))
+                color = self._ConvertColor(cell, "background")
+                if color is not None:
+                    start = stop = (len(cells), len(self.tableRows))
+                    self.tableCommands.append(("BACKGROUND", start, stop,
+                            color))
                 contents = []
                 for child in cell:
                     if child.tag == "para":
