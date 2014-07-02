@@ -51,6 +51,8 @@ class RotatedParagraph(Paragraph):
 
 
 class Context(object):
+    storyElementTags = """para nextPage spacer setNextTemplate
+            blockTable""".split()
 
     def __init__(self, output):
         self.output = output
@@ -115,7 +117,8 @@ class Context(object):
         if element.tag == "para":
             styleName = element.get("style", "default")
             style = self.paragraphStyles[styleName]
-            text = element.text.strip()
+            element.attrib.clear()
+            text = cElementTree.tostring(element)
             rotated = self._ConvertNumber(element, "rotate", 0)
             cls = RotatedParagraph if rotated else Paragraph
             para = cls(text, style)
@@ -407,7 +410,8 @@ def GeneratePDF(rmlInput, pdfOutput = None, inputIsString = True):
         elif element.tag == "tr":
             context.AddTableRow(element)
             element.clear()
-        elif inTable and element.tag != "blockTable":
+        elif inTable and element.tag != "blockTable" \
+                or inStory and element.tag not in context.storyElementTags:
             continue
         elif inStory:
             context.AddStoryElement(element)
