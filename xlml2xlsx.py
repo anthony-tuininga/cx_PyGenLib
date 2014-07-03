@@ -5,9 +5,9 @@
 # This conversion is done in memory to facilitate use by web servers.
 #------------------------------------------------------------------------------
 
-import cStringIO
 import datetime
 import decimal
+import io
 import re
 import xlsxwriter
 
@@ -122,12 +122,12 @@ class Context(object):
 
 def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
     if inputIsString:
-        f = cStringIO.StringIO()
+        f = io.BytesIO()
         f.write(xlmlInput.encode("utf-8"))
         f.seek(0)
         xlmlInput = f
     if xlOutput is None:
-        xlOutput = cStringIO.StringIO()
+        xlOutput = io.BytesIO()
     context = Context(xlOutput)
     for event, element in cElementTree.iterparse(xlmlInput,
             events = ("start", "end")):

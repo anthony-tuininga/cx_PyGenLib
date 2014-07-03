@@ -4,7 +4,7 @@
 # Language) defined by the folks at ReportLab into a PDF document (in memory).
 #------------------------------------------------------------------------------
 
-import cStringIO
+import io
 
 from reportlab.platypus.doctemplate import BaseDocTemplate, NextPageTemplate
 from reportlab.platypus.doctemplate import PageTemplate as BasePageTemplate
@@ -382,12 +382,12 @@ class Context(object):
 
 def GeneratePDF(rmlInput, pdfOutput = None, inputIsString = True):
     if inputIsString:
-        f = cStringIO.StringIO()
+        f = io.BytesIO()
         f.write(rmlInput.encode("utf-8"))
         f.seek(0)
         rmlInput = f
     if pdfOutput is None:
-        pdfOutput = cStringIO.StringIO()
+        pdfOutput = io.BytesIO()
     inStory = inTable = False
     context = Context(pdfOutput)
     for event, element in cElementTree.iterparse(rmlInput,
