@@ -58,6 +58,8 @@ class Context(object):
                 value = value.strip()
             defaultTypeName = "string" if value else "blank"
             typeName = element.get("type", defaultTypeName)
+            if value is None:
+                typeName = "blank"
             methodName = "write_%s" % typeName
             method = getattr(self.sheet, methodName)
             if typeName == "number":
