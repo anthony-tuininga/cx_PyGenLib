@@ -290,7 +290,8 @@ class Context(object):
                     "drawString"):
                 x = self._ConvertNumber(child, "x", 0)
                 y = self._ConvertNumber(child, "y", 0)
-                args = (x, y, child.text.strip())
+                text = child.text and child.text.strip() or ""
+                args = (x, y, text)
             elif child.tag == "drawLine":
                 x1 = self._ConvertNumber(child, "x1", 0)
                 y1 = self._ConvertNumber(child, "y1", 0)
