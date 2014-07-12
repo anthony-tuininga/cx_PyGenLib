@@ -19,7 +19,7 @@ class BaseException(Exception):
         self.traceback = []
         self.arguments = {}
         if arguments:
-            for name, value in arguments.iteritems():
+            for name, value in arguments.items():
                 self.arguments[name] = self._FormatValue(value)
             try:
                 self.message = self.message % arguments
@@ -106,15 +106,13 @@ class BaseException(Exception):
         """Return true if the exception matches the template and arguments."""
         if self.templateId != templateId:
             return False
-        for name, value in args.iteritems():
+        for name, value in args.items():
             if name not in self.arguments:
                 return False
             valueToMatch = self.arguments[name]
             try:
                 if isinstance(value, int):
                     valueToMatch = int(valueToMatch)
-                elif isinstance(value, long):
-                    valueToMatch = long(valueToMatch)
                 elif isinstance(value, float):
                     valueToMatch = float(valueToMatch)
                 elif value is None and valueToMatch == "":
@@ -129,17 +127,17 @@ class BaseException(Exception):
         """Print the exception to the given file."""
         if f is None:
             f = sys.stderr
-        print >> f, "Exception encountered:", self.message.rstrip()
-        print >> f, "Template Id:", self.templateId
-        print >> f, "Arguments:"
-        for name, value in self.arguments.iteritems():
-            print >> f, name, "->", repr(value)
-        print >> f, "Traceback:"
+        print("Exception encountered:", self.message.rstrip(), file = f)
+        print("Template Id:", self.templateId, file = f)
+        print("Arguments:", file = f)
+        for name, value in self.arguments.items():
+            print(name, "->", repr(value), file = f)
+        print("Traceback:", file = f)
         for line in self.traceback:
-            print >> f, line
-        print >> f, "Details:"
+            print(line, file = f)
+        print("Details:", file = f)
         for line in self.details:
-            print >> f, line
+            print(line, file = f)
 
 
 def ExceptionHandler(exceptionType, exceptionValue, traceback):

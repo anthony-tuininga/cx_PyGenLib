@@ -157,7 +157,7 @@ class DatabaseDataSource(DataSource):
         whereClause = None
         if conditions:
             whereClauses = []
-            for name, value in conditions.iteritems():
+            for name, value in conditions.items():
                 pos = name.find("__")
                 if pos < 0:
                     columnName = name
@@ -249,7 +249,7 @@ class OracleDataSource(DatabaseDataSource):
                 item.referencedItems)
         if item.pkSequenceName is not None:
             values[item.pkAttrName] = item.generatedKey
-        insertNames = values.keys()
+        insertNames = list(values.keys())
         insertValues = [":%s" % n for n in insertNames]
         sql = "insert into %s (%s) values (%s)" % \
                 (item.tableName, ",".join(insertNames), ",".join(insertValues))
@@ -259,7 +259,7 @@ class OracleDataSource(DatabaseDataSource):
         args = self._TransactionSetupKeywordArgs(cursor, item.setValues,
                 item.clobArgs, item.blobArgs)
         args.update(item.conditions)
-        conditionNames = item.conditions.keys()
+        conditionNames = list(item.conditions.keys())
         setClauses = ["%s = :%s" % (n, n) for n in args \
                 if n not in conditionNames]
         whereClauses = ["%s = :%s" % (n, n) for n in conditionNames]
@@ -316,7 +316,7 @@ class ODBCDataSource(DatabaseDataSource):
             cursor.execute(sql)
             item.generatedKey, = cursor.fetchone()
             item.setValues[item.pkAttrName] = item.generatedKey
-        insertNames = item.setValues.keys()
+        insertNames = list(item.setValues.keys())
         args = self._TransactionSetupArgs(cursor, item, insertNames)
         insertValues = ["?" for n in insertNames]
         sql = "insert into %s (%s) values (%s)" % \
@@ -340,8 +340,8 @@ class ODBCDataSource(DatabaseDataSource):
                 blobArgs, fkArgs, item.referencedItems)
 
     def _TransactionUpdateRow(self, cursor, item):
-        setNames = item.setValues.keys()
-        conditionNames = item.conditions.keys()
+        setNames = list(item.setValues.keys())
+        conditionNames = list(item.conditions.keys())
         args = self._TransactionSetupArgs(cursor, item, setNames)
         for name in conditionNames:
             args.append(item.conditions[name])

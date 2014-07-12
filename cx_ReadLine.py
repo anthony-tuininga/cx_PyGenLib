@@ -75,7 +75,7 @@ def ParseChoices(string, numValid):
     badChoices = [i for i in choices if i > numValid or i < 1]
     if badChoices:
         return "%d is an invalid choice" % badChoices[0]
-    choices = [i -1 for i in choices.keys()]
+    choices = [i - 1 for i in choices.keys()]
     choices.sort()
     return choices
 
@@ -96,9 +96,9 @@ def ReadLine(label, defaultValue = "", password = False):
                     msvcrt.putch(c)
                 result = sys.stdin.readline().strip()
             else:
-                result = raw_input(label).strip()
+                result = input(label).strip()
     else:
-        result = raw_input().strip()
+        result = input().strip()
     if not result:
         return defaultValue
     return result

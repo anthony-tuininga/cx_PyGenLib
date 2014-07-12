@@ -21,9 +21,9 @@ class Menu(object):
             id = wx.NewId()
         item = wx.MenuItem(self.menu, id, label, helpString, kind)
         if pos is None:
-            self.menu.AppendItem(item)
+            self.menu.Append(item)
         else:
-            self.menu.InsertItem(pos, item)
+            self.menu.Insert(pos, item)
         if not enabled:
             item.Enable(False)
         if method is not None:

@@ -2,7 +2,7 @@
 Handles communication of arbitrary objects across Win32 named pipes.
 """
 
-import cPickle
+import pickle
 import cx_Exceptions
 import cx_Logging
 import pywintypes
@@ -64,10 +64,10 @@ class NamedPipe(object):
                     min(self.maxSize, bytesToRead))
             parts.append(data)
             bytesToRead -= len(data)
-        return cPickle.loads("".join(parts))
+        return pickle.loads("".join(parts))
 
     def Write(self, obj):
-        data = cPickle.dumps(obj)
+        data = pickle.dumps(obj)
         length = str(len(data))
         maxSize = self.maxSize - self.maxLengthDigits
         if len(length) > self.maxLengthDigits:

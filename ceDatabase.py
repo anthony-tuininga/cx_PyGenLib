@@ -14,7 +14,7 @@ def _NormalizeValue(bases, classDict, name, split = True):
             value = getattr(base, name, None)
             if value is not None:
                 break
-    if split and isinstance(value, basestring):
+    if split and isinstance(value, str):
         value = value.split()
     classDict[name] = value
     return value
@@ -61,11 +61,11 @@ class RowMetaClass(type):
                 value = 'decimal.Decimal(%s) if %s is not None else None' % \
                         (attrName, attrName)
             elif attrName in clobAttrNames:
-                format = '%s if %s is None or isinstance(%s, basestring) ' \
+                format = '%s if %s is None or isinstance(%s, str) ' \
                          'else %s.read()'
                 value = format % (attrName, attrName, attrName, attrName)
             elif attrName in blobAttrNames:
-                format = '%s if %s is None or isinstance(%s, basestring) ' \
+                format = '%s if %s is None or isinstance(%s, bytes) ' \
                          'else %s.read()'
                 value = format % (attrName, attrName, attrName, attrName)
             else:
@@ -84,9 +84,8 @@ class RowMetaClass(type):
         return cls(*args)
 
 
-class Row(object):
+class Row(object, metaclass = RowMetaClass):
     """Base class for use with the row meta class (see above)."""
-    __metaclass__ = RowMetaClass
     __slots__ = []
     attrNames = []
     extraAttrNames = []
@@ -157,7 +156,7 @@ class Row(object):
     def SortValue(self):
         if len(self.sortByAttrNames) == 1:
             value = getattr(self, self.sortByAttrNames[0])
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 return value.upper()
             elif isinstance(value, (datetime.datetime, datetime.date)):
                 return str(value)
@@ -165,7 +164,7 @@ class Row(object):
         values = []
         for attrName in self.sortByAttrNames:
             value = getattr(self, attrName)
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 value = value.upper()
             elif isinstance(value, (datetime.datetime, datetime.date)):
                 value = str(value)
@@ -195,13 +194,13 @@ class DataSetMetaClass(type):
         cls.pkAttrNames = cls.rowClass.pkAttrNames
         if cls.tableName is None:
             cls.tableName = cls.rowClass.tableName
-        if isinstance(cls.uniqueAttrNames, basestring):
+        if isinstance(cls.uniqueAttrNames, str):
             cls.uniqueAttrNames = cls.uniqueAttrNames.split()
-        if isinstance(cls.insertAttrNames, basestring):
+        if isinstance(cls.insertAttrNames, str):
             cls.insertAttrNames = cls.insertAttrNames.split()
-        if isinstance(cls.updateAttrNames, basestring):
+        if isinstance(cls.updateAttrNames, str):
             cls.updateAttrNames = cls.updateAttrNames.split()
-        if isinstance(cls.retrievalAttrNames, basestring):
+        if isinstance(cls.retrievalAttrNames, str):
             cls.retrievalAttrNames = cls.retrievalAttrNames.split()
         cls.retrievalAttrIndexes = \
                 dict([(n, i) for i, n in enumerate(cls.retrievalAttrNames)])
@@ -217,10 +216,9 @@ class DataSetMetaClass(type):
                     if n not in cls.pkAttrNames]
 
 
-class DataSet(object):
+class DataSet(object, metaclass = DataSetMetaClass):
     """Base class for data sets which allows for retrieval, insert, update and
        deletion of rows in a database."""
-    __metaclass__ = DataSetMetaClass
     updatePackageName = None
     insertProcedureName = "New"
     updateProcedureName = "Modify"
@@ -255,7 +253,7 @@ class DataSet(object):
         self.Clear()
 
     def _DeleteRowsInDatabase(self, transaction):
-        for row in self.deletedRows.itervalues():
+        for row in self.deletedRows.values():
             self.DeleteRowInDatabase(transaction, row)
 
     def _GetArgsFromNames(self, names, row = None):
@@ -293,7 +291,7 @@ class DataSet(object):
         return self.rowClass.GetRows(self.dataSource, **conditions)
 
     def _InsertRowsInDatabase(self, transaction):
-        for row in self.insertedRows.itervalues():
+        for row in self.insertedRows.values():
             self.InsertRowInDatabase(transaction, row)
 
     def _OnDeleteRow(self, row):
@@ -311,7 +309,7 @@ class DataSet(object):
     def _GetPrimaryKeyValues(self, transaction):
         if self.pkIsGenerated and self.updatePackageName is None \
                 and self.pkSequenceName is None:
-            for row in self.insertedRows.itervalues():
+            for row in self.insertedRows.values():
                 args = self._GetArgsFromNames(self.uniqueAttrNames, row)
                 conditions = dict(zip(self.uniqueAttrNames, args))
                 pkValues, = self.dataSource.GetRows(self.tableName,
@@ -320,7 +318,7 @@ class DataSet(object):
                     setattr(row, self.pkAttrNames[attrIndex], value)
         elif self.pkIsGenerated:
             attrName = self.pkAttrNames[0]
-            for row in self.insertedRows.itervalues():
+            for row in self.insertedRows.values():
                 item = transaction.itemsByRow.get(row)
                 if item is not None:
                     setattr(row, attrName, item.generatedKey)
@@ -337,7 +335,7 @@ class DataSet(object):
         self.rows = dict(enumerate(rows))
 
     def _SortRep(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return value.upper()
         elif isinstance(value, (datetime.datetime, datetime.date)):
             return str(value)
@@ -354,7 +352,7 @@ class DataSet(object):
             dataSet._Update(transaction)
 
     def _UpdateRowsInDatabase(self, transaction):
-        for handle, origRow in self.updatedRows.iteritems():
+        for handle, origRow in self.updatedRows.items():
             row = self.rows[handle]
             self.UpdateRowInDatabase(transaction, row, origRow)
 
@@ -402,7 +400,7 @@ class DataSet(object):
         return KeyedDataSet(self, *attrNames)
 
     def GetRows(self):
-        return self.rows.values()
+        return list(self.rows.values())
 
     def GetSortedRows(self, *attrNames):
         handles = self.GetSortedRowHandles(*attrNames)
@@ -410,7 +408,7 @@ class DataSet(object):
 
     def GetSortedRowHandles(self, *attrNames):
         itemsToSort = [([self._SortRep(getattr(i, n)) for n in attrNames], h) \
-                for h, i in self.rows.iteritems()]
+                for h, i in self.rows.items()]
         itemsToSort.sort()
         return [i[1] for i in itemsToSort]
 
@@ -426,7 +424,7 @@ class DataSet(object):
         return transaction.CreateRow(self, row)
 
     def MarkAllRowsAsNew(self):
-        for handle, row in self.rows.iteritems():
+        for handle, row in self.rows.items():
             self.insertedRows[handle] = row
         for childDataSet in self.childDataSets:
             childDataSet.MarkAllRowsAsNew()
@@ -531,7 +529,7 @@ class FilteredDataSet(DataSet):
 
     def _SetRows(self, rows):
         handlesByRow = dict((r, h) \
-                for h, r in self.parentDataSet.rows.iteritems())
+                for h, r in self.parentDataSet.rows.items())
         self.rows = dict((handlesByRow[r], r) for r in rows)
 
     def DeleteRow(self, handle):
@@ -564,7 +562,7 @@ class KeyedDataSet(object):
     def __init__(self, dataSet, *attrNames):
         self.dataSet = dataSet
         self.rows = {}
-        for handle, row in dataSet.rows.iteritems():
+        for handle, row in dataSet.rows.items():
             key = tuple([getattr(row, n) for n in attrNames])
             self.rows[key] = handle
 

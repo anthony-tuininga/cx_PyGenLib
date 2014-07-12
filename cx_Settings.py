@@ -70,13 +70,13 @@ if sys.platform == "win32":
 
 else:
 
-    import gdbm
+    import dbm.gnu
 
     class Session:
         """Handles saving and restoring settings from a GDBM database."""
 
         def __init__(self, fileName, baseName):
-            self.database = gdbm.open(fileName, "cf")
+            self.database = dbm.gnu.open(fileName, "cf")
             self.baseName = baseName
 
         def GetValue(self, key, defaultValue = None):

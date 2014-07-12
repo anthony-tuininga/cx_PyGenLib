@@ -10,11 +10,11 @@ class PathMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
         super(PathMetaClass, cls).__init__(name, bases, classDict)
-        if isinstance(cls.attrNames, basestring):
+        if isinstance(cls.attrNames, str):
             cls.attrNames = cls.attrNames.split()
-        if isinstance(cls.retrievalAttrNames, basestring):
+        if isinstance(cls.retrievalAttrNames, str):
             cls.retrievalAttrNames = cls.retrievalAttrNames.split()
-        if isinstance(cls.stringRetrievalAttrNames, basestring):
+        if isinstance(cls.stringRetrievalAttrNames, str):
             cls.stringRetrievalAttrNames = cls.stringRetrievalAttrNames.split()
         if "name" not in classDict:
             cls.name = cls.__name__
@@ -22,8 +22,7 @@ class PathMetaClass(type):
             cls.subCacheAttrName = "rowsBy%s" % cls.name
 
 
-class Path(object):
-    __metaclass__ = PathMetaClass
+class Path(object, metaclass = PathMetaClass):
     attrNames = []
     retrievalAttrNames = []
     stringRetrievalAttrNames = []
@@ -116,7 +115,7 @@ class SubCacheMetaClass(type):
 
     def __init__(cls, name, bases, classDict):
         super(SubCacheMetaClass, cls).__init__(name, bases, classDict)
-        if isinstance(cls.onLoadRowExtraDirectives, basestring):
+        if isinstance(cls.onLoadRowExtraDirectives, str):
             directives = cls.onLoadRowExtraDirectives.split()
             cls.onLoadRowExtraDirectives = []
             for i, directive in enumerate(directives):
@@ -126,7 +125,7 @@ class SubCacheMetaClass(type):
                 cls.onLoadRowExtraDirectives.append(info)
         cls.pathClasses = list(cls.pathClasses)
         cls.pathClassesByName = cls.pathClassesByName.copy()
-        for value in classDict.itervalues():
+        for value in classDict.values():
             if isinstance(value, type) and issubclass(value, Path):
                 origValue = cls.pathClassesByName.get(value.name)
                 cls.pathClassesByName[value.name] = value
@@ -176,8 +175,7 @@ class SubCacheMetaClass(type):
                             onRemoveRowMethodLines, "cache", "row")
 
 
-class SubCache(object):
-    __metaclass__ = SubCacheMetaClass
+class SubCache(object, metaclass = SubCacheMetaClass):
     setExtraAttrValuesMethodName = "SetExtraAttrValues"
     onRemoveRowMethodName = "OnRemoveRow"
     onLoadRowMethodName = "OnLoadRow"
@@ -370,20 +368,19 @@ class CacheMetaClass(type):
     def __init__(cls, name, bases, classDict):
         super(CacheMetaClass, cls).__init__(name, bases, classDict)
         cls.subCacheClasses = cls.subCacheClasses.copy()
-        for value in classDict.itervalues():
+        for value in classDict.values():
             if isinstance(value, type) and issubclass(value, SubCache):
                 cls.subCacheClasses[value.name] = value
                 value._GenerateCacheMethods(cls)
 
 
-class Cache(object):
-    __metaclass__ = CacheMetaClass
+class Cache(object, metaclass = CacheMetaClass):
     subCacheClasses = {}
 
     def __init__(self, dataSource):
         self.dataSource = dataSource
         self.subCaches = []
-        for cls in self.subCacheClasses.itervalues():
+        for cls in self.subCacheClasses.values():
             subCache = cls(self)
             self.subCaches.append(subCache)
             if cls.cacheAttrName is not None:

@@ -125,7 +125,7 @@ class DictArray:
 
     def SortedKeys(self, *args):
         """Return the keys at the specified level."""
-        keys = self.__GetSubDict(args).keys()
+        keys = list(self.__GetSubDict(args).keys())
         keys.sort()
         return keys
 
@@ -150,7 +150,8 @@ class PythonConfigFile(object):
         message = "Reading configuration from %s..." % fileName
         print(message)
         self.__scriptGlobals = self.ScriptGlobals()
-        execfile(fileName, self.__scriptGlobals)
+        exec(compile(open(fileName).read(), fileName, 'exec'),
+                self.__scriptGlobals)
 
     def ScriptGlobals(self):
         """Intended to be replaced by subclasses as needed."""
@@ -176,7 +177,7 @@ class ClassFactory(object):
             codeString = "def __init__(self, %s):\n%s" % \
                     (", ".join(initArgNames), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
-            exec code in dict(), classDict
+            exec(code, dict(), classDict)
         return type(className, (baseClass,), classDict)
 
     def GetClass(self, key):

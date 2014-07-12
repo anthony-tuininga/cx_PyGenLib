@@ -1,14 +1,14 @@
 """Defines class that manages handles."""
 
 import cx_Exceptions
-import thread
+import _thread
 
 class HandleManager(object):
     """Manages handles which are simple integers associated with objects; a
        hierarchal relationship between handles is also managed."""
 
     __handle = 0
-    __handleLock = thread.allocate_lock()
+    __handleLock = _thread.allocate_lock()
 
     def __GetHandle(cls):
         cls.__handleLock.acquire()
@@ -44,7 +44,7 @@ class HandleManager(object):
     def DumpState(self):
         """Return the internal state of the manager, for debugging."""
         lines = []
-        for handle, obj in self.__objectsByHandle.iteritems():
+        for handle, obj in self.__objectsByHandle.items():
             descriptor = self.__handleDescriptors.get(handle)
             if descriptor:
                 lines.append("%i [%s]: %s" % (handle, descriptor, obj))

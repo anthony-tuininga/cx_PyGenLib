@@ -168,10 +168,10 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
     def ExportItems(self, outputFile, exportHeaders = False):
         if exportHeaders:
             exportValues = self.GetItemExportHeadings()
-            print >> outputFile, ",".join(exportValues)
+            print(",".join(exportValues), file = outputFile)
         for item in self.GetItems():
             exportValues = self.GetItemExportValues(item)
-            print >> outputFile, ",".join(exportValues)
+            print(",".join(exportValues), file = outputFile)
 
     def GetInsertChoicesDialog(self, parent):
         pass
@@ -228,7 +228,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         return self.dataSet.PendingChanges()
 
     def RefreshFromDataSet(self):
-        self.rowHandles = self.dataSet.rows.keys()
+        self.rowHandles = list(self.dataSet.rows.keys())
         self.SetItemCount(len(self.rowHandles))
         self.Refresh()
         if self.sortOnRetrieve:
@@ -246,7 +246,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         with ceGUI.BusyCursorContext(parent = self.GetParent()):
             self.DeleteAllItems()
             self.dataSet.Retrieve(*args)
-            self.rowHandles = self.dataSet.rows.keys()
+            self.rowHandles = list(self.dataSet.rows.keys())
             self.SetItemCount(len(self.rowHandles))
             if self.sortOnRetrieve:
                 self.SortItems()
@@ -282,7 +282,7 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         for itemIndex, handle in enumerate(self.rowHandles):
             item = self.dataSet.rows[handle]
             itemMatches = True
-            for name, value in values.iteritems():
+            for name, value in values.items():
                 itemValue = getattr(item, name)
                 if itemValue != value:
                     itemMatches = False
@@ -432,7 +432,7 @@ class ListColumn(ceGUI.BaseControl):
 
     def GetExportValue(self, row):
         value = getattr(row, self.attrName)
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return '"%s"' % value.replace('"', '""')
         elif value is not None:
             return str(value)
@@ -442,7 +442,7 @@ class ListColumn(ceGUI.BaseControl):
         if self.attrName is None:
             return row
         value = getattr(row, self.attrName)
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return value.upper()
         elif isinstance(value, (datetime.datetime, datetime.date)):
             return str(value)
@@ -451,7 +451,7 @@ class ListColumn(ceGUI.BaseControl):
     def GetValue(self, row):
         if self.attrName is not None:
             value = getattr(row, self.attrName)
-            if value is not None and not isinstance(value, basestring):
+            if value is not None and not isinstance(value, str):
                 return str(value)
             return value
         return row
