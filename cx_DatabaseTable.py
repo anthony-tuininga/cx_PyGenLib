@@ -10,7 +10,7 @@ class Table(object):
         self.owner = owner
         self.name = name
         self.columnNames = columnNames
-        self.derivedAttrNames = derivedAttrs.keys()
+        self.derivedAttrNames = list(derivedAttrs.keys())
         self.derivedDefaults = [derivedAttrs[n] for n in self.derivedAttrNames]
         self.sql = "select\n  %s\nfrom %s.%s" % \
                 (",\n  ".join(columnNames), owner, name)
@@ -45,7 +45,7 @@ class Table(object):
         if args:
             whereClauses = []
             actualArgs = {}
-            for name, value in args.iteritems():
+            for name, value in args.items():
                 if value is None:
                     whereClauses.append("%s is null" % name)
                 elif isinstance(value, str) and "%" in value:
@@ -86,8 +86,8 @@ class Row(object):
 
     def __init__(self, *args):
         if len(self.__slots__) != len(args):
-            raise TypeError, "%s() takes exactly %d arguments (%d given)" % \
-                    (self.__class__.__name__, len(self.__slots__), len(args))
+            raise TypeError("%s() takes exactly %d arguments (%d given)" % \
+                    (self.__class__.__name__, len(self.__slots__), len(args)))
         for name, value in zip(self.__slots__, args):
             setattr(self, name, value)
 

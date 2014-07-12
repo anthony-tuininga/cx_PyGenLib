@@ -118,7 +118,7 @@ class ResourcePool(object):
                 elif len(self.busyResources) < self.maxResources:
                     resource = self.newResourceFunc()
                 elif not self.maxResources:
-                    raise "No resources not available."
+                    raise Exception("No resources not available.")
                 else:
                     self.lock.release()
                     self.poolEvent.wait()

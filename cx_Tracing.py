@@ -40,14 +40,14 @@ class TraceManager(object):
     def GetDomains(self):
         """Return the distinct list of domain names for the modules currently
            managed."""
-        domains = self.modules.values() + self.dynamicDomains.keys()
-        domains = dict.fromkeys(domains).keys()
+        domains = list(self.modules.values()) + list(self.dynamicDomains.keys())
+        domains = list(dict.fromkeys(domains).keys())
         domains.sort()
         return domains
 
     def ScanImportedModules(self):
         """Scan all of the imported modules looking for tracing domains."""
-        for module in sys.modules.itervalues():
+        for module in sys.modules.values():
             self.AddModule(module)
 
     def StartTracing(self, domains, maxLength = 1000, traceLines = False):

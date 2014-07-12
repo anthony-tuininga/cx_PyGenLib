@@ -11,14 +11,14 @@ import wx
 
 for argIndex, inputFileName in enumerate(sys.argv[1:]):
     data = base64.b64encode(file(inputFileName, "rb").read())
-    print "# image from %s" % inputFileName
-    print "image%s = ceGUI.Image(" % (argIndex + 1)
+    print("# image from %s" % inputFileName)
+    print("image%s = ceGUI.Image(" % (argIndex + 1))
     while data:
         part = data[:68]
         data = data[68:]
         output = '        "%s"' % part
         if not data:
             output += ")"
-        print output
-    print
+        print(output)
+    print()
 

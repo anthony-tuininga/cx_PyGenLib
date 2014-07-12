@@ -216,7 +216,7 @@ class TextField(BaseControl, wx.TextCtrl):
     def SetValue(self, value):
         if value is None:
             value = ""
-        elif not isinstance(value, basestring):
+        elif not isinstance(value, str):
             value = str(value)
         wx.TextCtrl.SetValue(self, value)
 

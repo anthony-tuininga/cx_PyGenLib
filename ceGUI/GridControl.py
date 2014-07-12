@@ -367,7 +367,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                         if attr.IsReadOnly():
                             raise ReadOnlyCells()
                         if self.stripSpacesOnPaste \
-                                and isinstance(value, basestring):
+                                and isinstance(value, str):
                             value = value.strip()
                         self.SetCellValue(rowIndex, colIndex, value)
                         colIndex += 1
@@ -548,11 +548,11 @@ class GridTable(GridTableBase):
         return self.dataSet.PendingChanges()
 
     def RefreshFromDataSet(self):
-        self.rowHandles = self.dataSet.rows.keys()
+        self.rowHandles = list(self.dataSet.rows.keys())
 
     def Retrieve(self, *args):
         self.dataSet.Retrieve(*args)
-        self.rowHandles = self.dataSet.rows.keys()
+        self.rowHandles = list(self.dataSet.rows.keys())
 
     def SetValue(self, rowIndex, colIndex, rawValue):
         column = self.columns[colIndex]
@@ -624,7 +624,7 @@ class GridColumn(ceGUI.BaseControl):
 
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return value.upper()
         elif isinstance(value, (datetime.datetime, datetime.date)):
             return str(value)
@@ -634,7 +634,7 @@ class GridColumn(ceGUI.BaseControl):
         value = getattr(row, self.attrName)
         if value is None:
             return ""
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             return value
         return str(value)
 

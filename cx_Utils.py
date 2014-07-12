@@ -6,6 +6,7 @@ import glob
 import imp
 import os
 import sys
+from functools import reduce
 
 class AttributeNotFound(cx_Exceptions.BaseException):
     message = 'Attribute named "%(name)s" not found in script text.'
@@ -28,7 +29,7 @@ def CreateModuleFromScript(name, scriptText, **scriptGlobals):
     sys.modules[name] = module
     module.__dict__.update(scriptGlobals)
     code = compile(scriptText, name + ".py", "exec")
-    exec code in module.__dict__
+    exec(code, module.__dict__)
     return module
 
 

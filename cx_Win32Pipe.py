@@ -6,16 +6,16 @@
 
 import os
 import sys
-import thread
+import _thread
 
 class Popen4:
     """Replacement for popen4 which works when writing to stdin."""
 
     def __init__(self, command):
         self.__childStdin, self.__childStdout = os.popen4(command)
-        self.__lock = thread.allocate_lock()
+        self.__lock = _thread.allocate_lock()
         self.__lock.acquire()
-        thread.start_new_thread(self.__DuplicateStdout, ())
+        _thread.start_new_thread(self.__DuplicateStdout, ())
         self.write = self.__childStdin.write
 
     def __DuplicateStdout(self):

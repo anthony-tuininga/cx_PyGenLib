@@ -37,9 +37,8 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
                 self.SetItemHasChildren(itemId, False)
 
     def _PopulateBranch(self, parent, items):
-        itemsToSort = [(i.GetSortValue(), i) for i in items]
-        itemsToSort.sort()
-        for sortValue, item in itemsToSort:
+        items.sort(key = lambda x: x.GetSortValue())
+        for item in items:
             self.AppendItem(parent, item)
 
     def _PopulateRootItems(self):
@@ -53,7 +52,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         text = item.GetTextValue()
         itemId = wx.TreeCtrl.AppendItem(self, parentItemId, text, item.image)
         self.idsByItem[item.data] = itemId
-        self.SetPyData(itemId, item)
+        self.SetItemData(itemId, item)
         if item.HasChildItems():
             self.SetItemHasChildren(itemId)
 
@@ -72,7 +71,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         itemId = self.idsByItem[item]
         childItemId, cookie = self.GetFirstChild(itemId)
         while childItemId.IsOk():
-            childItem = self.GetPyData(childItemId)
+            childItem = self.GetItemData(childItemId)
             childItems.append(childItem.data)
             childItemId, cookie = self.GetNextChild(itemId, cookie)
         return childItems
@@ -80,7 +79,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
     def GetItemParent(self, item):
         itemId = self.idsByItem[item]
         parentItemId = super(Tree, self).GetItemParent(itemId)
-        parentItem = self.GetPyData(parentItemId)
+        parentItem = self.GetItemData(parentItemId)
         if parentItem is not None:
             return parentItem.data
 
@@ -98,7 +97,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
     def GetSelectedItem(self):
         itemId = self.GetSelection()
         if itemId.IsOk():
-            item = self.GetPyData(itemId)
+            item = self.GetItemData(itemId)
             return item.data
 
     def HasItem(self, item):
@@ -110,7 +109,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
         parentItemId = self.idsByItem[parent]
         childItemId, cookie = self.GetFirstChild(parentItemId)
         while childItemId.IsOk():
-            childItem = self.GetPyData(childItemId)
+            childItem = self.GetItemData(childItemId)
             if childItem.GetSortValue() > sortValue:
                 break
             childItemId, cookie = self.GetNextChild(parentItemId, cookie)
@@ -122,25 +121,25 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
             itemId = self.InsertItemBefore(parentItemId, itemIndex, text,
                     item.image)
         self.idsByItem[item.data] = itemId
-        self.SetPyData(itemId, item)
+        self.SetItemData(itemId, item)
         if item.HasChildItems():
             self.SetItemHasChildren(itemId)
 
     def OnExpandItem(self, event):
         itemId = event.GetItem()
-        item = self.GetPyData(itemId)
+        item = self.GetItemData(itemId)
         if not item.expanded:
             self._ExpandItem(item)
 
     def RefreshItem(self, item):
         itemId = self.idsByItem[item]
-        treeItem = self.GetPyData(itemId)
+        treeItem = self.GetItemData(itemId)
         text = treeItem.GetTextValue()
         self.SetItemText(itemId, text)
 
     def RefreshItemChildren(self, item, forceExpansion = False):
         itemId = self.idsByItem[item]
-        treeItem = self.GetPyData(itemId)
+        treeItem = self.GetItemData(itemId)
         if treeItem is None or treeItem.expanded or forceExpansion:
             for childItem in self.GetChildItems(item):
                 self.DeleteItem(childItem)
@@ -168,7 +167,7 @@ class TreeItem(object):
 
     def GetSortValue(self):
         value = getattr(self.data, self.sortAttrName)
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return value.upper()
         elif isinstance(value, (datetime.datetime, datetime.date)):
             return str(value)
