@@ -243,8 +243,7 @@ class Context(object):
     def CreateDocumentTemplate(self, element):
         rawPageSize = element.get("pageSize", "LETTER")
         if rawPageSize.startswith("(") and rawPageSize.endswith(")"):
-            pageSize = tuple(float(s.strip()) \
-                    for s in rawPageSize[1:-1].split(","))
+            pageSize = self._ConvertNumberList(element, "pageSize", [])
         else:
             pageSize = getattr(pagesizes, rawPageSize)
         leftMargin = self._ConvertNumber(element, "leftMargin", units.inch)
