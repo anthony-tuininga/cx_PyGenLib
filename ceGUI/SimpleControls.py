@@ -136,7 +136,8 @@ class DateField(BaseControl, DatePickerLib.DatePickerCtrl):
 
     def SetValue(self, value):
         if value is not None:
-            wxDate = wx.DateTimeFromDMY(value.day, value.month - 1, value.year)
+            wxDate = wx.DateTime.FromDMY(value.day, value.month - 1,
+                    value.year)
             DatePickerLib.DatePickerCtrl.SetValue(self, wxDate)
         elif self.allowNone:
             wxDate = wx.DateTime()
