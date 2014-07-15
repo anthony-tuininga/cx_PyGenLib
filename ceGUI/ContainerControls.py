@@ -290,8 +290,7 @@ class Frame(BaseContainer, wx.Frame):
             enabled = True):
         bitmap = wx.ArtProvider.GetBitmap(bitmapId, wx.ART_TOOLBAR,
                 self.toolbar.GetToolBitmapSize())
-        item = self.toolbar.AddLabelTool(-1, label, bitmap,
-                shortHelp = shortHelp, longHelp = longHelp)
+        item = self.toolbar.AddTool(-1, label, bitmap, shortHelp)
         if not enabled:
             item.Enable(False)
         if method is not None:
