@@ -26,6 +26,7 @@ class Printout(wx.Printout):
     def OnPrintPage(self, pageNum):
         dc = self.GetDC()
         self.body.OnPrintPage(dc, pageNum)
+        return True
 
 
 class Report(object):
