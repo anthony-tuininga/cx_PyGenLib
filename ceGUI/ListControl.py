@@ -408,6 +408,7 @@ class OrderedList(List):
 
 class ListColumn(ceGUI.BaseControl):
     defaultJustification = wx.LIST_FORMAT_LEFT
+    defaultSortValue = ""
     defaultHeading = ""
     defaultNumberFormat = "@"
     defaultWidth = -1
@@ -442,10 +443,10 @@ class ListColumn(ceGUI.BaseControl):
         if self.attrName is None:
             return row
         value = getattr(row, self.attrName)
-        if isinstance(value, str):
+        if value is None:
+            return self.defaultSortValue
+        elif isinstance(value, str):
             return value.upper()
-        elif isinstance(value, (datetime.datetime, datetime.date)):
-            return str(value)
         return value
 
     def GetValue(self, row):
@@ -459,6 +460,7 @@ class ListColumn(ceGUI.BaseControl):
 
 class ListBooleanColumn(ListColumn):
     defaultJustification = wx.LIST_FORMAT_CENTER
+    defaultSortValue = False
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
@@ -468,6 +470,7 @@ class ListBooleanColumn(ListColumn):
 
 
 class ListDateColumn(ListColumn):
+    defaultSortValue = datetime.datetime.min
     dateFormatAttrName = "dateFormat"
     dateFormat = None
 
@@ -482,6 +485,7 @@ class ListDateColumn(ListColumn):
 
 class ListDecimalColumn(ListColumn):
     defaultJustification = wx.LIST_FORMAT_RIGHT
+    defaultSortValue = 0
 
     def __init__(self, attrName, heading, defaultWidth, justification,
             numberFormat, format = None, digitsAfterDecimal = 2):
