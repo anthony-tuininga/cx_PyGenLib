@@ -592,6 +592,7 @@ class GridColumn(ceGUI.BaseControl):
     defaultHorizontalAlignment = wx.ALIGN_LEFT
     defaultVerticalAlignment = wx.ALIGN_CENTRE
     defaultNumberFormat = "@"
+    defaultSortValue = ""
 
     def __init__(self, attrName, heading, horizontalAlignment,
             verticalAlignment, readOnly, required, contextItem,
@@ -619,10 +620,10 @@ class GridColumn(ceGUI.BaseControl):
 
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
-        if isinstance(value, str):
+        if value is None:
+            return self.defaultSortValue
+        elif isinstance(value, str):
             return value.upper()
-        elif isinstance(value, (datetime.datetime, datetime.date)):
-            return str(value)
         return value
 
     def GetValue(self, row):
@@ -657,6 +658,7 @@ class GridColumn(ceGUI.BaseControl):
 
 class GridColumnBool(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_CENTRE
+    defaultSortValue = False
 
     def OnCreate(self):
         editor = wx.grid.GridCellBoolEditor()
@@ -711,6 +713,7 @@ class GridColumnChoice(GridColumn):
 
 class GridColumnInt(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_RIGHT
+    defaultSortValue = 0
 
     def OnCreate(self):
         self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
@@ -725,6 +728,7 @@ class GridColumnInt(GridColumn):
 
 class GridColumnDate(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_RIGHT
+    defaultSortValue = datetime.datetime.min
     storeAsString = False
 
     def ExtendedInitialize(self, dateFormat = None):
@@ -750,6 +754,7 @@ class GridColumnDate(GridColumn):
 class GridColumnDecimal(GridColumn):
     defaultHorizontalAlignment = wx.ALIGN_RIGHT
     storeAsString = False
+    defaultSortValue = 0
 
     def ExtendedInitialize(self, formatString = None, digitsAfterDecimal = 2):
         self.digitsAfterDecimal = digitsAfterDecimal
