@@ -104,7 +104,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def _OnCreate(self):
         self.table = self._GetTable()
-        self.SetTable(self.table)
+        self.SetTable(self.table, True)
         self._CreateContextMenu()
         accelerators = self._GetAccelerators()
         self.acceleratorTable = wx.AcceleratorTable(accelerators)
@@ -451,12 +451,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     GetSelectedItems = GetSelectedRows
 
 
-if "phoenix" in wx.version():
-    GridTableBase = wx.grid.GridTableBase
-else:
-    GridTableBase = wx.grid.PyGridTableBase
-
-class GridTable(GridTableBase):
+class GridTable(wx.grid.GridTableBase):
 
     def __init__(self, dataSet):
         super(GridTable, self).__init__()
@@ -794,7 +789,7 @@ class GridColumnStr(GridColumn):
         return rawValue
 
 
-class GridColumnDateEditor(wx.grid.PyGridCellEditor):
+class GridColumnDateEditor(wx.grid.GridCellEditor):
 
     def __init__(self, requiredValue):
         super(GridColumnDateEditor, self).__init__()
