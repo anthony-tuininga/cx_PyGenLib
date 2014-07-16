@@ -26,6 +26,17 @@ class Loader(object):
     def __exit__(self, excType, excValue, excTraceback):
         self.Unload()
 
+    def GetAttribute(self, attrName, requiredClass = None,
+            raiseException = True):
+        value = self.module.__dict__.get(attrName)
+        if value is None and raiseException:
+            raise AttributeNotFound(name = attrName)
+        if value is not None and requiredClass is not None \
+                and not issubclass(value, requiredClass):
+            raise AttributeIsOfWrongClass(name = attrName,
+                    requiredClass = requiredClass.__name__)
+        return value
+
     def Load(self):
         self.module = imp.new_module(self.name)
         sys.modules[self.name] = self.module
@@ -33,13 +44,7 @@ class Loader(object):
         code = compile(self.scriptText, "<generated>", "exec")
         exec(code, self.module.__dict__)
         if self.attrName is not None:
-            self.cls = self.module.__dict__.get(self.attrName)
-            if self.cls is None:
-                raise AttributeNotFound(name = self.attrName)
-            if self.requiredClass is not None \
-                    and not issubclass(self.cls, self.requiredClass):
-                raise AttributeIsOfWrongClass(name = self.attrName,
-                        requiredClass = self.requiredClass.__name__)
+            self.cls = self.GetAttribute(self.attrName, self.requiredClass)
             return self.cls
         return self.module
 
