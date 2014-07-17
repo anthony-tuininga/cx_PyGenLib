@@ -93,7 +93,7 @@ def ReadLine(label, defaultValue = "", password = False):
             if sys.platform == "win32":
                 import msvcrt
                 for c in label:
-                    msvcrt.putch(c)
+                    msvcrt.putch(c.encode())
                 result = sys.stdin.readline().strip()
             else:
                 result = input(label).strip()
