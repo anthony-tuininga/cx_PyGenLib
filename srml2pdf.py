@@ -66,20 +66,23 @@ class Context(object):
         self.tableRowHeights = []
 
     def __ConvertNumber(self, value):
-        if value.endswith("mm"):
-            num = float(value[:-2])
-            return num * units.mm
-        elif value.endswith("cm"):
-            num = float(value[:-2])
-            return num * units.cm
-        elif value.endswith("in"):
-            num = float(value[:-2])
-            return num * units.inch
-        elif value in ("splitfirst", "splitlast"):
-            return value
-        elif value.lstrip("-").isdigit():
-            return int(value)
-        return float(value)
+        try:
+            if value.endswith("mm"):
+                num = float(value[:-2])
+                return num * units.mm
+            elif value.endswith("cm"):
+                num = float(value[:-2])
+                return num * units.cm
+            elif value.endswith("in"):
+                num = float(value[:-2])
+                return num * units.inch
+            elif value in ("splitfirst", "splitlast"):
+                return value
+            elif value.lstrip("-").isdigit():
+                return int(value)
+            return float(value)
+        except ValueError:
+            raise Exception("Invalid number: '%s'" % value)
 
     def _ConvertColor(self, element, attrName, defaultColor = None):
         value = element.get(attrName)
