@@ -233,7 +233,10 @@ class Context(object):
                 colorName = child.get("colorName", "black")
                 thickness = self._ConvertNumber(child, "thickness", 1)
                 color = getattr(colors, colorName)
-                commands.append((kind, start, stop, thickness, color))
+                cap = self._ConvertNumber(child, "cap", 1)
+                dashes = self._ConvertNumberList(child, "dashes")
+                commands.append((kind, start, stop, thickness, color, cap,
+                        dashes))
             elif child.tag in ("blockLeftPadding", "blockRightPadding",
                     "blockBottomPadding", "blockTopPadding"):
                 length = self._ConvertNumber(child, "length", 6)
@@ -355,9 +358,8 @@ class Context(object):
         spaceBefore = self._ConvertNumber(element, "spaceBefore", 0)
         spaceAfter = self._ConvertNumber(element, "spaceAfter", 0)
         borderWidth = self._ConvertNumber(element, "borderWidth")
-        borderColorName = element.get("borderColor")
-        borderColor = getattr(colors, borderColorName) \
-                if borderColorName is not None else None
+        borderColor = self._ConvertColor(element, "borderColor")
+        textColor = self._ConvertColor(element, "textColor", colors.black)
         rawAlignment = element.get("alignment", "left")
         alignment = getattr(enums, "TA_%s" % rawAlignment.upper())
         style = ParagraphStyle(name, fontName = fontName, fontSize = fontSize,
@@ -365,7 +367,7 @@ class Context(object):
                 rightIndent = rightIndent, firstLineIndent = firstLineIndent,
                 spaceBefore = spaceBefore, spaceAfter = spaceAfter,
                 alignment = alignment, borderWidth = borderWidth,
-                borderColor = borderColor)
+                borderColor = borderColor, textColor = textColor)
         style.keepWithNext = self._ConvertNumber(element, "keepWithNext", 0)
         self.paragraphStyles[name] = style
         return style
