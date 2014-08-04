@@ -64,16 +64,16 @@ class NamedPipe(object):
                     min(self.maxSize, bytesToRead))
             parts.append(data)
             bytesToRead -= len(data)
-        return pickle.loads("".join(parts))
+        return pickle.loads(b"".join(parts))
 
     def Write(self, obj):
-        data = pickle.dumps(obj)
+        data = pickle.dumps(obj, 2)
         length = str(len(data))
         maxSize = self.maxSize - self.maxLengthDigits
         if len(length) > self.maxLengthDigits:
             raise ValueTooLong()
         win32file.WriteFile(self.handle,
-                length.rjust(self.maxLengthDigits, "0"))
+                length.rjust(self.maxLengthDigits, "0").encode())
         while data:
             dataToWrite = data[:maxSize]
             data = data[maxSize:]
