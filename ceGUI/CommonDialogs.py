@@ -259,14 +259,14 @@ class SelectionTreeDialog(ceGUI.StandardDialog):
 
     def _OnItemActivated(self, event):
         itemId = event.GetItem()
-        item = self.selectionTree.GetPyData(itemId)
+        item = self.selectionTree.GetItemData(itemId)
         if self.CanSelectItem(item.data):
             self.EndModal(wx.ID_OK)
 
     def _OnSelectionChanged(self, event):
         if self.okButton and self.selectionTree:
             itemId = event.GetItem()
-            item = self.selectionTree.GetPyData(itemId)
+            item = self.selectionTree.GetItemData(itemId)
             self.okButton.Enable(self.CanSelectItem(item.data))
 
     def CanSelectItem(self, item):
