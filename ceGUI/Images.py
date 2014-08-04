@@ -14,12 +14,12 @@ class Image(object):
         self.data = data
 
     def GetBitmap(self):
-        return wx.BitmapFromImage(self.GetImage())
+        return wx.Bitmap(self.GetImage())
 
     def GetImage(self):
         data = base64.b64decode(self.data)
         stream = io.BytesIO(data)
-        return wx.ImageFromStream(stream)
+        return wx.Image(stream)
 
 
 # borrowed from the custom tree control in wx.lib
