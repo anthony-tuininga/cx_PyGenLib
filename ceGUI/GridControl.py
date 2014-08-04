@@ -4,6 +4,7 @@ Defines classes used for manipulating grids.
 
 import ceGUI
 import cx_Exceptions
+import cx_Logging
 import datetime
 import decimal
 import wx
@@ -60,6 +61,15 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     def _GetDataSet(self):
         cls = self._GetClass(self.dataSetClassName)
         return cls(self.config.dataSource)
+
+    def _GetSelectionBlocks(self):
+        topLeft = [(c.GetRow(), c.GetCol()) 
+                for c in self.GetSelectionBlockTopLeft()]
+        bottomRight = [(c.GetRow(), c.GetCol()) \
+                for c in self.GetSelectionBlockBottomRight()]
+        blocks = list(zip(topLeft, bottomRight))
+        blocks.sort()
+        return blocks
 
     def _GetTable(self):
         dataSet = self._GetDataSet()
@@ -217,11 +227,9 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self.ProcessTableMessage(msg)
 
     def CopyToClipboard(self):
-        topLeft = self.GetSelectionBlockTopLeft()
-        bottomRight = self.GetSelectionBlockBottomRight()
-        if topLeft and bottomRight:
-            top, left = topLeft[0]
-            bottom, right = bottomRight[0]
+        blocks = self._GetSelectionBlocks()
+        if blocks:
+            (top, left), (bottom, right) = blocks[0]
         else:
             top = bottom = self.GetGridCursorRow()
             left = right = self.GetGridCursorCol()
@@ -244,6 +252,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         msg = wx.grid.GridTableMessage(self.table,
                 wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, currentNumRows, numRows)
         self.ProcessTableMessage(msg)
+        return True
 
     def GetAllRows(self):
         return self.table.GetAllRows()
@@ -258,20 +267,14 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             return self.table.GetRow(pos)
 
     def GetSelectedRows(self):
-        topLeft = self.GetSelectionBlockTopLeft()
-        bottomRight = self.GetSelectionBlockBottomRight()
-        if not topLeft:
+        blocks = self._GetSelectionBlocks()
+        if not blocks:
             row = self.GetRow()
             if row is not None:
                 return [row]
             return []
         rows = []
-        topLeft.sort()
-        bottomRight.sort()
-        blockIndex = 0
-        for top, left in topLeft:
-            bottom, right = bottomRight[blockIndex]
-            blockIndex += 1
+        for (top, left), (bottom, right) in blocks:
             rows.extend(self.table.GetRows(top, bottom - top + 1))
         return rows
 
@@ -343,15 +346,13 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         data = [line.split("\t") for line in dataObject.GetText().splitlines()]
         if not data:
             data = [[""]]
-        topLeft = self.GetSelectionBlockTopLeft()
-        bottomRight = self.GetSelectionBlockBottomRight()
-        selection = bool(topLeft and bottomRight)
+        blocks = self._GetSelectionBlocks()
+        selection = bool(blocks)
         if insert:
             self.InsertRows(numRows = len(data))
             selection = False
         if selection:
-            top, left = topLeft[0]
-            bottom, right = bottomRight[0]
+            (top, left), (bottom, right) = blocks[0]
         else:
             left = self.GetGridCursorCol()
             top = self.GetGridCursorRow()
@@ -483,6 +484,7 @@ class GridTable(wx.grid.GridTableBase):
             self.dataSet.DeleteRow(handle)
             self.rowHandles.pop(pos)
             numRows -= 1
+        return True
 
     def GetAllRows(self):
         return [self.dataSet.rows[h] for h in self.rowHandles]
