@@ -363,16 +363,10 @@ class DataGridPanel(DataMultipleRowPanel):
         items = self.grid.GetSelectedRows()
         if not self.CanDeleteItems(items):
             return
-        topLeft = self.grid.GetSelectionBlockTopLeft()
-        bottomRight = self.grid.GetSelectionBlockBottomRight()
-        if not topLeft:
+        blocks = self.grid._GetSelectionBlocks()
+        if not blocks:
             self.grid.DeleteRows()
-        topLeft.sort()
-        bottomRight.sort()
-        blockIndex = -1
-        for top, left in reversed(topLeft):
-            bottom, right = bottomRight[blockIndex]
-            blockIndex -= 1
+        for (top, left), (bottom, right) in reversed(blocks):
             self.grid.DeleteRows(top, numRows = bottom - top + 1)
         self.grid.ClearSelection()
 
