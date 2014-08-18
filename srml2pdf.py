@@ -360,6 +360,7 @@ class Context(object):
         borderWidth = self._ConvertNumber(element, "borderWidth")
         borderColor = self._ConvertColor(element, "borderColor")
         textColor = self._ConvertColor(element, "textColor", colors.black)
+        backColor = self._ConvertColor(element, "backColor")
         rawAlignment = element.get("alignment", "left")
         alignment = getattr(enums, "TA_%s" % rawAlignment.upper())
         style = ParagraphStyle(name, fontName = fontName, fontSize = fontSize,
@@ -367,7 +368,8 @@ class Context(object):
                 rightIndent = rightIndent, firstLineIndent = firstLineIndent,
                 spaceBefore = spaceBefore, spaceAfter = spaceAfter,
                 alignment = alignment, borderWidth = borderWidth,
-                borderColor = borderColor, textColor = textColor)
+                borderColor = borderColor, textColor = textColor,
+                backColor = backColor)
         style.keepWithNext = self._ConvertNumber(element, "keepWithNext", 0)
         self.paragraphStyles[name] = style
         return style
