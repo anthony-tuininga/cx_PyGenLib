@@ -758,10 +758,14 @@ class GridColumnDecimal(GridColumn):
     storeAsString = False
     defaultSortValue = 0
 
-    def ExtendedInitialize(self, formatString = None, digitsAfterDecimal = 2):
+    def ExtendedInitialize(self, formatString = None, digitsAfterDecimal = 2,
+            prefix = "", suffix = ""):
         self.digitsAfterDecimal = digitsAfterDecimal
+        self.prefix = prefix
+        self.suffix = suffix
         if formatString is None:
-            formatString = "{0:,.%sf}" % digitsAfterDecimal
+            formatString = "%s{0:,.%sf}%s" % \
+                    (prefix, digitsAfterDecimal, suffix)
         self.formatString = formatString
 
     def GetValue(self, row):
@@ -773,6 +777,10 @@ class GridColumnDecimal(GridColumn):
     def VerifyValueOnChange(self, row, rawValue):
         try:
             tweakedValue = rawValue.replace(",", "")
+            if self.prefix:
+                tweakedValue = tweakedValue.replace(self.prefix, "")
+            if self.suffix:
+                tweakedValue = tweakedValue.replace(self.suffix, "")
             value = decimal.Decimal(tweakedValue)
             if self.storeAsString:
                 value = tweakedValue
