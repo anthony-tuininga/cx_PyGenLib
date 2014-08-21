@@ -581,10 +581,8 @@ class GridTable(wx.grid.GridTableBase):
         sortByColumns.extend([c for c in self.columns \
                 if c not in sortByColumns])
         rowDict = self.dataSet.rows
-        itemsToSort = [(self._GetSortKey(rowDict[h], sortByColumns), h) \
-                for h in self.rowHandles]
-        itemsToSort.sort()
-        self.rowHandles = [i[1] for i in itemsToSort]
+        self.rowHandles.sort(key = \
+                lambda h: self._GetSortKey(rowDict[h], sortByColumns))
         if rowIndex is not None and rowIndex < len(self.rowHandles):
             rowIndex = self.rowHandles.index(handle)
         return rowIndex
