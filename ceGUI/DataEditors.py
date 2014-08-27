@@ -928,7 +928,8 @@ class ChoiceEditDialogColumn(EditDialogColumn):
 class RadioButtonEditDialogColumn(EditDialogColumn):
 
     def __init__(self, parent, attrName, labelText, choices, editable = True,
-            horizontal = True, method = None, passEvent = True):
+            horizontal = True, method = None, passEvent = True,
+            required = False):
         self.choices = dict(choices)
         self.editable = editable
         self.horizontal = horizontal
@@ -951,7 +952,7 @@ class RadioButtonEditDialogColumn(EditDialogColumn):
         else:
             field = parent.AddTextField(editable = False)
         super(RadioButtonEditDialogColumn, self).__init__(parent, attrName,
-                labelText, field)
+                labelText, field, required = required)
 
     def GetControlForFocus(self):
         for button in self.radioButtonsByValue.values():
