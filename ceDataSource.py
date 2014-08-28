@@ -322,6 +322,8 @@ class ODBCDataSource(DatabaseDataSource):
         sql = "insert into %s (%s) values (%s)" % \
                 (item.tableName, ",".join(insertNames), ",".join(insertValues))
         cursor.execute(sql, args)
+        if hasattr(cursor, "lastrowid"):
+            item.generatedKey = cursor.lastrowid
 
     def _TransactionSetupArgs(self, cursor, item, setValueNames):
         clobArgs = []
