@@ -322,13 +322,13 @@ class ODBCDataSource(DatabaseDataSource):
         sql = "insert into %s (%s) values (%s)" % \
                 (item.tableName, ",".join(insertNames), ",".join(insertValues))
         cursor.execute(sql, args)
-        if hasattr(cursor, "lastrowid"):
+        if hasattr(cursor, "lastrowid") and item.pkAttrName is not None:
             item.generatedKey = cursor.lastrowid
 
     def _TransactionSetupArgs(self, cursor, item, setValueNames):
         clobArgs = []
         blobArgs = []
-        fkArgs = []
+        fkArgs = [None] * len(item.fkArgs)
         args = []
         for attrIndex, name in enumerate(setValueNames):
             if name in item.clobArgs:
@@ -336,7 +336,7 @@ class ODBCDataSource(DatabaseDataSource):
             elif name in item.blobArgs:
                 blobArgs.append(attrIndex)
             elif name in item.fkArgs:
-                fkArgs.append(attrIndex)
+                fkArgs[item.fkArgs.index(name)] = attrIndex
             args.append(item.setValues[name])
         return self._TransactionSetupPositionalArgs(cursor, args, clobArgs,
                 blobArgs, fkArgs, item.referencedItems)
