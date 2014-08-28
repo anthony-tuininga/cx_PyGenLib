@@ -204,8 +204,6 @@ class DataSetMetaClass(type):
         cls.pkAttrNames = cls.rowClass.pkAttrNames
         if cls.tableName is None:
             cls.tableName = cls.rowClass.tableName
-        if isinstance(cls.uniqueAttrNames, str):
-            cls.uniqueAttrNames = cls.uniqueAttrNames.split()
         if isinstance(cls.insertAttrNames, str):
             cls.insertAttrNames = cls.insertAttrNames.split()
         if isinstance(cls.updateAttrNames, str):
@@ -247,7 +245,6 @@ class DataSet(object, metaclass = DataSetMetaClass):
     sortReversed = False
     insertAttrNames = []
     updateAttrNames = []
-    uniqueAttrNames = []
     pkIsGenerated = False
     pkSequenceName = None
     useSlots = True
@@ -317,16 +314,7 @@ class DataSet(object, metaclass = DataSetMetaClass):
         pass
 
     def _GetPrimaryKeyValues(self, transaction):
-        if self.pkIsGenerated and self.updatePackageName is None \
-                and self.pkSequenceName is None:
-            for row in self.insertedRows.values():
-                args = self._GetArgsFromNames(self.uniqueAttrNames, row)
-                conditions = dict(zip(self.uniqueAttrNames, args))
-                pkValues, = self.dataSource.GetRows(self.tableName,
-                        self.pkAttrNames, **conditions)
-                for attrIndex, value in enumerate(pkValues):
-                    setattr(row, self.pkAttrNames[attrIndex], value)
-        elif self.pkIsGenerated:
+        if self.pkIsGenerated:
             attrName = self.pkAttrNames[0]
             for row in self.insertedRows.values():
                 item = transaction.itemsByRow.get(row)
