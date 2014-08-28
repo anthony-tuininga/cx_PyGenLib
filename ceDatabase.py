@@ -29,6 +29,8 @@ class RowMetaClass(type):
         extraAttrNames = _NormalizeValue(bases, classDict, "extraAttrNames")
         charBooleanAttrNames = \
                 _NormalizeValue(bases, classDict, "charBooleanAttrNames")
+        charDateAttrNames = \
+                _NormalizeValue(bases, classDict, "charDateAttrNames")
         decimalAttrNames = \
                 _NormalizeValue(bases, classDict, "decimalAttrNames")
         clobAttrNames = _NormalizeValue(bases, classDict, "clobAttrNames")
@@ -38,6 +40,8 @@ class RowMetaClass(type):
         sortReversed = _NormalizeValue(bases, classDict, "sortReversed")
         reprAttrNames = _NormalizeValue(bases, classDict, "reprAttrNames")
         useSlots = _NormalizeValue(bases, classDict, "useSlots")
+        charDateFormat = _NormalizeValue(bases, classDict, "charDateFormat",
+                split = False)
         generateTableName = _NormalizeValue(bases, classDict,
                 "generateTableName")
         schemaName = _NormalizeValue(bases, classDict, "schemaName",
@@ -57,6 +61,10 @@ class RowMetaClass(type):
         for attrName in attrNames + extraAttrNames:
             if attrName in charBooleanAttrNames:
                 value = '%s in ("Y", "1", True)' % attrName
+            elif attrName in charDateAttrNames:
+                value = 'datetime.datetime.strptime(%s, "%s") ' \
+                        'if %s is not None else None' % \
+                        (attrName, charDateFormat, attrName)
             elif attrName in decimalAttrNames:
                 value = 'decimal.Decimal(%s) if %s is not None else None' % \
                         (attrName, attrName)
@@ -76,7 +84,7 @@ class RowMetaClass(type):
             codeString = "def __init__(self, %s):\n%s" % \
                     (", ".join(initArgs), "".join(initLines))
             code = compile(codeString, "GeneratedClass.py", "exec")
-            exec(code, dict(decimal = decimal), classDict)
+            exec(code, dict(datetime = datetime, decimal = decimal), classDict)
         return type.__new__(cls, name, bases, classDict)
 
     def New(cls):
@@ -90,6 +98,8 @@ class Row(object, metaclass = RowMetaClass):
     attrNames = []
     extraAttrNames = []
     charBooleanAttrNames = []
+    charDateFormat = "%Y-%m-%d %H:%M:%S"
+    charDateAttrNames = []
     decimalAttrNames = []
     clobAttrNames = []
     blobAttrNames = []
