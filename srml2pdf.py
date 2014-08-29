@@ -8,6 +8,7 @@ import io
 
 from reportlab.platypus.doctemplate import BaseDocTemplate, NextPageTemplate
 from reportlab.platypus.doctemplate import PageTemplate as BasePageTemplate
+from reportlab.platypus.doctemplate import FrameBreak
 from reportlab.platypus.frames import Frame
 from reportlab.platypus.flowables import PageBreak, Spacer
 from reportlab.platypus.paragraph import Paragraph
@@ -51,7 +52,7 @@ class RotatedParagraph(Paragraph):
 
 
 class Context(object):
-    storyElementTags = """para nextPage spacer setNextTemplate
+    storyElementTags = """para nextFrame nextPage spacer setNextTemplate
             blockTable""".split()
 
     def __init__(self, output):
@@ -128,6 +129,8 @@ class Context(object):
             self.story.append(para)
         elif element.tag == "nextPage":
             self.story.append(PageBreak())
+        elif element.tag == "nextFrame":
+            self.story.append(FrameBreak())
         elif element.tag == "spacer":
             length = self._ConvertNumber(element, "length", 0)
             self.story.append(Spacer(length, length))
