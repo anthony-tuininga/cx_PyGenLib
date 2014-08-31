@@ -63,8 +63,8 @@ class RowMetaClass(type):
                 value = '%s in ("Y", "1", True)' % attrName
             elif attrName in charDateAttrNames:
                 value = 'datetime.datetime.strptime(%s, "%s") ' \
-                        'if %s is not None else None' % \
-                        (attrName, charDateFormat, attrName)
+                        'if isinstance(%s, str) else %s' % \
+                        (attrName, charDateFormat, attrName, attrName)
             elif attrName in decimalAttrNames:
                 value = 'decimal.Decimal(%s) if %s is not None else None' % \
                         (attrName, attrName)
