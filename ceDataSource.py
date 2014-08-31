@@ -379,7 +379,7 @@ class Transaction(object):
             procedureName = "%s.%s" % \
                     (dataSet.updatePackageName, dataSet.insertProcedureName)
             returnType = int if dataSet.pkIsGenerated else None
-            item = self.itemClass(procedureName = procedureName, args = args,
+            item = self.AddItem(procedureName = procedureName, args = args,
                     returnType = returnType, referencedItems = referencedItems)
         else:
             setValues = dict(zip(dataSet.insertAttrNames, args))
@@ -387,10 +387,9 @@ class Transaction(object):
                     else None
             pkAttrName = row.pkAttrNames[0] if dataSet.pkIsGenerated \
                     else None
-            item = self.itemClass(tableName = dataSet.updateTableName,
+            item = self.AddItem(tableName = dataSet.updateTableName,
                     setValues = setValues, pkSequenceName = pkSequenceName,
                     pkAttrName = pkAttrName, referencedItems = referencedItems)
-        self.items.append(item)
         self.itemsByRow[row] = item
         item._SetArgTypes(dataSet, row, dataSet.insertAttrNames)
         return item
@@ -401,15 +400,14 @@ class Transaction(object):
                     dataSet._GetArgsFromNames(dataSet.updateAttrNames, row)
             procedureName = "%s.%s" % \
                     (dataSet.updatePackageName, dataSet.updateProcedureName)
-            item = self.itemClass(procedureName = procedureName, args = args)
+            item = self.AddItem(procedureName = procedureName, args = args)
         else:
             args = dataSet._GetArgsFromNames(dataSet.updateAttrNames, row)
             setValues = dict(zip(dataSet.updateAttrNames, args))
             args = dataSet._GetArgsFromNames(row.pkAttrNames, origRow)
             conditions = dict(zip(row.pkAttrNames, args))
-            item = self.itemClass(tableName = dataSet.updateTableName,
+            item = self.AddItem(tableName = dataSet.updateTableName,
                     setValues = setValues, conditions = conditions)
-        self.items.append(item)
         item._SetArgTypes(dataSet, row,
                 row.pkAttrNames + dataSet.updateAttrNames)
         return item
@@ -419,12 +417,11 @@ class Transaction(object):
         if dataSet.updatePackageName is not None:
             procedureName = "%s.%s" % \
                     (dataSet.updatePackageName, dataSet.deleteProcedureName)
-            item = self.itemClass(procedureName = procedureName, args = args)
+            item = self.AddItem(procedureName = procedureName, args = args)
         else:
             conditions = dict(zip(row.pkAttrNames, args))
-            item = self.itemClass(tableName = dataSet.updateTableName,
+            item = self.AddItem(tableName = dataSet.updateTableName,
                     conditions = conditions)
-        self.items.append(item)
         return item
 
     class itemClass(object):
