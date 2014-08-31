@@ -364,6 +364,7 @@ class Transaction(object):
     def AddItem(self, **args):
         item = self.itemClass(**args)
         self.items.append(item)
+        item.position = len(self.items)
         return item
 
     def CreateRow(self, dataSet, row):
@@ -427,6 +428,7 @@ class Transaction(object):
         return item
 
     class itemClass(object):
+        position = None
 
         def __init__(self, procedureName = None, args = None,
                 returnType = None, tableName = None, setValues = None,
@@ -447,6 +449,9 @@ class Transaction(object):
             self.clobArgs = clobArgs or []
             self.blobArgs = blobArgs or []
             self.fkArgs = fkArgs or []
+
+        def __repr__(self):
+            return "<TransactionItem: position=%s>" % self.position
 
         def _SetArgType(self, dataSet, row, attrIndex, attrName, offset):
             if attrName in row.clobAttrNames:
