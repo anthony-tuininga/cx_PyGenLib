@@ -41,7 +41,7 @@ class Loader(object):
         self.module = imp.new_module(self.name)
         sys.modules[self.name] = self.module
         self.module.__dict__.update(self.scriptGlobals)
-        code = compile(self.scriptText, "<generated>", "exec")
+        code = compile(self.scriptText, "<generated: %s>" % self.name, "exec")
         exec(code, self.module.__dict__)
         if self.attrName is not None:
             self.cls = self.GetAttribute(self.attrName, self.requiredClass)
