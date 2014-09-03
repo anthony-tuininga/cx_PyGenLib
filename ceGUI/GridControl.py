@@ -683,7 +683,7 @@ class GridColumnChoice(GridColumn):
 
     def GetSortValue(self, row):
         value = getattr(row, self.attrName)
-        return self.displayValuesByDataValue.get(value, value)
+        return self.displayValuesByDataValue.get(value, self.defaultSortValue)
 
     def GetValue(self, row):
         value = getattr(row, self.attrName)
