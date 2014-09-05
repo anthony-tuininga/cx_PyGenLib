@@ -25,6 +25,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
     highlightRowColor = None
     sortOnRetrieve = True
     hideRowLabels = True
+    enablePaste = True
+    enableCopy = True
 
     def __init__(self, parent):
         wx.grid.Grid.__init__(self, parent)
@@ -110,6 +112,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         deleteEnabled = self.contextItem is not None \
                 and self.CanDeleteItems([self.contextItem])
         self.deleteMenuItem.Enable(deleteEnabled)
+        self.copyMenuItem.Enable(self.enableCopy)
+        self.pasteMenuItem.Enable(self.enablePaste)
         self.OnContextMenu()
         self.contextPos = self.contextItem = None
 
@@ -228,6 +232,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self.ProcessTableMessage(msg)
 
     def CopyToClipboard(self):
+        if not self.enableCopy:
+            return
         blocks = self._GetSelectionBlocks()
         if blocks:
             (top, left), (bottom, right) = blocks[0]
@@ -337,6 +343,8 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         self.ProcessTableMessage(msg)
 
     def PasteFromClipboard(self, insert = False):
+        if not self.enablePaste:
+            return
         dataObject = wx.TextDataObject()
         clipboard = wx.Clipboard()
         clipboard.Open()
