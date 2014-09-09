@@ -112,6 +112,8 @@ class Application(wx.App):
 class Config(object):
     dateFormat = "%Y/%m/%d"
     timestampFormat = "%Y/%m/%d %H:%M"
+    dateNumberFormat = "yyyy/mm/dd"
+    timestampNumberFormat = "yyyy/mm/dd hh:mm:ss"
 
     def __init__(self, app, dataSource = None):
         self.settings = app.settings

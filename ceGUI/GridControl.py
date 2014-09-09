@@ -13,8 +13,15 @@ import wx.grid
 
 __all__ = [ "Grid", "GridColumn", "GridColumnBool", "GridColumnChoice",
             "GridColumnDate", "GridColumnDecimal", "GridColumnInt",
-            "GridColumnStr", "GridTable", "InvalidValueEntered" ]
+            "GridColumnStr", "GridTable" ]
 
+# keep old names for classes for backwards compatibility
+GridColumn = ceGUI.Column
+GridColumnBool = ceGUI.ColumnBool
+GridColumnDate = ceGUI.ColumnDate
+GridColumnDecimal = ceGUI.ColumnDecimal
+GridColumnInt = ceGUI.ColumnInt
+GridColumnStr = ceGUI.ColumnStr
 
 class Grid(ceGUI.BaseControl, wx.grid.Grid):
     settingsName = "ColumnWidths"
@@ -183,18 +190,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def AddColumn(self, attrName, heading, defaultWidth = None,
             horizontalAlignment = None, verticalAlignment = None,
-            readOnly = False, cls = None, required = False,
-            contextItem = None, **args):
-        if cls is None:
-            cls = GridColumn
-        if horizontalAlignment is None:
-            horizontalAlignment = cls.defaultHorizontalAlignment
-        if verticalAlignment is None:
-            verticalAlignment = cls.defaultVerticalAlignment
-        if contextItem is None:
-            contextItem = self.table.dataSet.contextItem
-        column = cls(attrName, heading, horizontalAlignment, verticalAlignment,
-                readOnly, required, contextItem, **args)
+            readOnly = False, cls = ceGUI.Column, required = False,
+            numberFormat = None, **args):
+        column = cls(attrName, heading, defaultWidth, horizontalAlignment,
+                verticalAlignment, numberFormat, required, **args)
+        column._OnAddToGrid(self, readOnly)
         columnIndex = self.table.GetNumberCols()
         self.table.AddColumn(column)
         self.SetColAttr(columnIndex, column.attr)
@@ -571,7 +571,7 @@ class GridTable(wx.grid.GridTableBase):
             else:
                 value = column.VerifyValueOnChange(row, rawValue)
             column.SetValue(grid, self.dataSet, handle, row, value)
-        except InvalidValueEntered as e:
+        except ceGUI.InvalidValueEntered as e:
             dialog = wx.MessageDialog(grid.GetParent(), e.messageToDisplay,
                     "Invalid Value", style = wx.OK | wx.ICON_ERROR)
             dialog.ShowModal()
@@ -597,108 +597,19 @@ class GridTable(wx.grid.GridTableBase):
         return rowIndex
 
 
-class GridColumn(ceGUI.BaseControl):
-    defaultHorizontalAlignment = wx.ALIGN_LEFT
-    defaultVerticalAlignment = wx.ALIGN_CENTRE
-    defaultNumberFormat = "@"
-    defaultSortValue = ""
-
-    def __init__(self, attrName, heading, horizontalAlignment,
-            verticalAlignment, readOnly, required, contextItem,
-            numberFormat = None, **args):
-        self.attrName = attrName
-        self.heading = heading
-        self.required = required
-        self.attr = wx.grid.GridCellAttr()
-        self.attr.SetAlignment(horizontalAlignment, verticalAlignment)
-        self.contextItem = contextItem
-        self.numberFormat = numberFormat or self.defaultNumberFormat
-        if readOnly:
-            self.attr.SetReadOnly()
-        self._Initialize()
-        self.ExtendedInitialize(**args)
-
-    def __repr__(self):
-        return "<GridColumn %s>" % self.attrName
-
-    def ExtendedInitialize(self, **args):
-        pass
-
-    def GetLabelValue(self):
-        return self.heading
-
-    def GetSortValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is None:
-            return self.defaultSortValue
-        elif isinstance(value, str):
-            return value.upper()
-        return value
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is None:
-            return ""
-        elif isinstance(value, str):
-            return value
-        return str(value)
-
-    def OnEditorCreated(self, control):
-        self.editorControl = control
-
-    def OnEditorHidden(self, row):
-        pass
-
-    def OnEditorShown(self, row):
-        pass
-
-    def SetValue(self, grid, dataSet, rowHandle, row, value):
-        dataSet.SetValue(rowHandle, self.attrName, value)
-
-    def VerifyValue(self, row):
-        if self.required:
-            value = getattr(row, self.attrName)
-            if value is None:
-                return ceGUI.RequiredFieldHasNoValue()
-
-    def VerifyValueOnChange(self, row, rawValue):
-        return rawValue
-
-
-class GridColumnBool(GridColumn):
-    defaultHorizontalAlignment = wx.ALIGN_CENTRE
-    defaultSortValue = False
-
-    def OnCreate(self):
-        editor = wx.grid.GridCellBoolEditor()
-        editor.UseStringValues("1", "0")
-        self.attr.SetEditor(editor)
-        self.attr.SetRenderer(wx.grid.GridCellBoolRenderer())
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        return str(int(bool(value)))
-
-    def VerifyValueOnChange(self, row, rawValue):
-        return bool(int(rawValue))
-
-
-class GridColumnChoice(GridColumn):
+class GridColumnChoice(ceGUI.Column):
     allowOthers = False
 
-    def OnCreate(self):
-        self.RefreshChoices()
-
     def GetSortValue(self, row):
-        value = getattr(row, self.attrName)
+        value = self.GetNativeValue(row)
         return self.displayValuesByDataValue.get(value, self.defaultSortValue)
 
     def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        displayValue = self.displayValuesByDataValue.get(value, value)
-        if displayValue is None:
-            return ""
-        return displayValue
+        value = self.GetNativeValue(row)
+        return self.displayValuesByDataValue.get(value, value or "")
+
+    def OnAddToGrid(self, grid):
+        self.RefreshChoices()
 
     def RefreshChoices(self):
         displayValues = []
@@ -718,166 +629,6 @@ class GridColumnChoice(GridColumn):
 
     def VerifyValueOnChange(self, row, rawValue):
         return self.dataValuesByDisplayValue.get(rawValue, rawValue)
-
-
-class GridColumnInt(GridColumn):
-    defaultHorizontalAlignment = wx.ALIGN_RIGHT
-    defaultSortValue = 0
-
-    def OnCreate(self):
-        self.attr.SetRenderer(wx.grid.GridCellNumberRenderer())
-
-    def VerifyValueOnChange(self, row, rawValue):
-        try:
-            return int(rawValue)
-        except ValueError:
-            message = "'%s' is not a valid integer." % rawValue
-            raise InvalidValueEntered(message)
-
-
-class GridColumnDate(GridColumn):
-    defaultHorizontalAlignment = wx.ALIGN_RIGHT
-    defaultSortValue = datetime.datetime.min
-    storeAsString = False
-
-    def ExtendedInitialize(self, dateFormat = None):
-        if dateFormat is None:
-            dateFormat = self.config.dateFormat
-        self.dateFormat = dateFormat
-        self.attr.SetEditor(GridColumnDateEditor(self.required))
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is None:
-            return ""
-        return value.strftime(self.dateFormat)
-
-    def VerifyValueOnChange(self, row, rawValue):
-        try:
-            return datetime.datetime.strptime(rawValue, self.dateFormat)
-        except ValueError:
-            message = "'%s' is not a valid date." % rawValue
-            raise InvalidValueEntered(message)
-
-
-class GridColumnDecimal(GridColumn):
-    defaultHorizontalAlignment = wx.ALIGN_RIGHT
-    storeAsString = False
-    defaultSortValue = 0
-
-    def ExtendedInitialize(self, formatString = None, digitsAfterDecimal = 2,
-            prefix = "", suffix = ""):
-        self.digitsAfterDecimal = digitsAfterDecimal
-        self.prefix = prefix
-        self.suffix = suffix
-        if formatString is None:
-            formatString = "%s{0:,.%sf}%s" % \
-                    (prefix, digitsAfterDecimal, suffix)
-        self.formatString = formatString
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is None:
-            return ""
-        return self.formatString.format(value)
-
-    def VerifyValueOnChange(self, row, rawValue):
-        try:
-            tweakedValue = rawValue.replace(",", "")
-            if self.prefix:
-                tweakedValue = tweakedValue.replace(self.prefix, "")
-            if self.suffix:
-                tweakedValue = tweakedValue.replace(self.suffix, "")
-            value = decimal.Decimal(tweakedValue)
-            if self.storeAsString:
-                value = tweakedValue
-            return value
-        except decimal.InvalidOperation:
-            message = "'%s' is not a valid number." % rawValue
-            raise InvalidValueEntered(message)
-
-
-class GridColumnStr(GridColumn):
-
-    def ExtendedInitialize(self, forceUpper = False, forceLower = False):
-        self.forceUpper = forceUpper
-        self.forceLower = forceLower
-
-    def VerifyValueOnChange(self, row, rawValue):
-        if rawValue and self.forceUpper:
-            return rawValue.upper()
-        elif rawValue and self.forceLower:
-            return rawValue.lower()
-        return rawValue
-
-
-class GridColumnDateEditor(wx.grid.GridCellEditor):
-
-    def __init__(self, requiredValue):
-        wx.grid.GridCellEditor.__init__(self)
-        self.requiredValue = requiredValue
-
-    def ApplyEdit(self, rowIndex, colIndex, grid):
-        value = None
-        table = grid.GetTable()
-        column = table.GetColumn(colIndex)
-        wxDate = self.control.GetValue()
-        if wxDate.IsValid():
-            dateValue = datetime.datetime(wxDate.GetYear(),
-                    wxDate.GetMonth() + 1, wxDate.GetDay())
-            value = dateValue.strftime(column.dateFormat)
-        table.SetValue(rowIndex, colIndex, value)
-
-    def BeginEdit(self, rowIndex, colIndex, grid):
-        self.initialValue = None
-        table = grid.GetTable()
-        column = table.GetColumn(colIndex)
-        initialValue = table.GetValue(rowIndex, colIndex)
-        if initialValue:
-            dateValue = datetime.datetime.strptime(initialValue,
-                    column.dateFormat)
-            self.initialValue = wx.DateTime.FromDMY(dateValue.day,
-                    dateValue.month - 1, dateValue.year)
-            self.control.SetValue(self.initialValue)
-        self.control.SetFocus()
- 
-    def Clone(self):
-        return GridColumnDateEditor(self.requiredValue)
-
-    def Create(self, parent, id, evtHandler):
-        style = wx.adv.DP_DEFAULT | wx.adv.DP_SHOWCENTURY | wx.adv.DP_DROPDOWN
-        if not self.requiredValue:
-            style |= wx.adv.DP_ALLOWNONE
-        self.control = wx.adv.DatePickerCtrl(parent, id, style = style)
-        self.SetControl(self.control)
-        self.initialValue = None
-        if evtHandler:
-            self.control.PushEventHandler(evtHandler)
- 
-    def EndEdit(self, rowIndex, colIndex, grid, initialValue):
-        changed = False
-        wxDate = self.control.GetValue()
-        if not wxDate.IsValid():
-            return self.initialValue is not None
-        elif self.initialValue is None:
-            return True
-        return wxDate.year != self.initialValue.year \
-                or wxDate.month != self.initialValue.month \
-                or wxDate.day != self.initialValue.day
- 
-    def Reset(self):
-        if self.initialValue is not None:
-            self.control.SetValue(self.initialValue)
- 
-    def SetSize(self, rect):
-        self.control.SetSize(rect.x, rect.y, rect.width + 2, rect.height + 2,
-                wx.SIZE_ALLOW_MINUS_ONE)
- 
-
-class InvalidValueEntered(Exception):
-
-    def __init__(self, messageToDisplay):
-        self.messageToDisplay = messageToDisplay
 
 
 class ReadOnlyCells(cx_Exceptions.BaseException):

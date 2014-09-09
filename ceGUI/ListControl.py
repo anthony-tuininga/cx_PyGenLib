@@ -4,13 +4,19 @@ Defines classes used for manipulating lists.
 
 import ceGUI
 import cx_Exceptions
-import datetime
 import wx
 
-__all__ = [ "CheckList", "List", "ListBooleanColumn", "ListColumn",
+__all__ = [ "CheckList", "List", "ListColumn", "ListBooleanColumn",
             "ListDateColumn", "ListDecimalColumn", "ListMoneyColumn",
             "ListTimestampColumn", "OrderedList" ]
 
+# keep old names for classes for backwards compatibility
+ListColumn = ceGUI.Column
+ListBooleanColumn = ceGUI.ColumnBool
+ListDateColumn = ceGUI.ColumnDate
+ListDecimalColumn = ceGUI.ColumnDecimal
+ListMoneyColumn = ceGUI.ColumnMoney
+ListTimestampColumn = ceGUI.ColumnTimestamp
 
 class List(ceGUI.BaseControl, wx.ListCtrl):
     settingsName = "ColumnWidths"
@@ -32,21 +38,6 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         self.ClearAll()
         self._Initialize()
         self._Resize()
-
-    def _AddColumn(self, column):
-        """Add a column to the control; note that if the column is right
-           justified and the first column in the control, a dummy column is
-           added and removed because on Windows, the first column is assumed to
-           be left justified, no matter what format is specified."""
-        columnIndex = len(self.columns)
-        self.columns.append(column)
-        self.columnsByAttrName[column.attrName] = column
-        self.InsertColumn(columnIndex, column.heading, column.justification,
-                column.defaultWidth)
-        if columnIndex == 0 and column.justification == wx.LIST_FORMAT_RIGHT:
-            self.InsertColumn(columnIndex + 1, column.heading,
-                    column.justification, column.defaultWidth)
-            self.DeleteColumn(columnIndex)
 
     def _GetDataSet(self):
         if self.dataSetClassName is not None:
@@ -120,19 +111,20 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
             rowHandles.append(self.rowHandles[itemIndex])
         return rowHandles
 
-    def AddColumn(self, attrName, heading = "", defaultWidth = -1,
-            justification = wx.LIST_FORMAT_LEFT, cls = None,
-            rightJustified = False, centered = False, numberFormat = None,
-            **args):
-        if cls is None:
-            cls = ListColumn
+    def AddColumn(self, attrName, heading = None, defaultWidth = None,
+            cls = ceGUI.Column, rightJustified = False, centered = False,
+            numberFormat = None, **args):
+        horizontalAlignment = None
         if rightJustified:
-            justification = wx.LIST_FORMAT_RIGHT
+            horizontalAlignment = "right"
         elif centered:
-            justification = wx.LIST_FORMAT_CENTRE
-        column = cls(attrName, heading, defaultWidth, justification,
-                numberFormat, **args)
-        self._AddColumn(column)
+            horizontalAlignment = "center"
+        column = cls(attrName, heading, defaultWidth, horizontalAlignment,
+                numberFormat = numberFormat, **args)
+        columnIndex = len(self.columns)
+        self.columns.append(column)
+        self.columnsByAttrName[column.attrName] = column
+        column._OnAddToList(self, columnIndex)
         return column
 
     def AppendItem(self, choice = None, refresh = True, item = None,
@@ -404,129 +396,6 @@ class OrderedList(List):
     def Update(self):
         self.SetSeqNumValues()
         super(OrderedList, self).Update()
-
-
-class ListColumn(ceGUI.BaseControl):
-    defaultJustification = wx.LIST_FORMAT_LEFT
-    defaultSortValue = ""
-    defaultHeading = ""
-    defaultNumberFormat = "@"
-    defaultWidth = -1
-
-    def __init__(self, attrName, heading = None, defaultWidth = None,
-            justification = None, numberFormat = None):
-        self.attrName = attrName
-        self.heading = heading or self.defaultHeading
-        self.defaultWidth = defaultWidth or self.defaultWidth
-        self.justification = justification or self.defaultJustification
-        self.numberFormat = numberFormat or self.defaultNumberFormat
-        self._Initialize()
-
-    def __repr__(self):
-        return "<%s attrName=%r heading=%r>" % \
-                (self.__class__.__name__, self.attrName, self.heading)
-
-    def GetExportHeading(self):
-        if self.heading:
-            return '"%s"' % self.heading.replace('"', '""')
-        return ""
-
-    def GetExportValue(self, row):
-        value = getattr(row, self.attrName)
-        if isinstance(value, str):
-            return '"%s"' % value.replace('"', '""')
-        elif value is not None:
-            return str(value)
-        return ""
-
-    def GetSortValue(self, row):
-        if self.attrName is None:
-            return row
-        value = getattr(row, self.attrName)
-        if value is None:
-            return self.defaultSortValue
-        elif isinstance(value, str):
-            return value.upper()
-        return value
-
-    def GetValue(self, row):
-        if self.attrName is not None:
-            value = getattr(row, self.attrName)
-            if value is not None and not isinstance(value, str):
-                return str(value)
-            return value
-        return row
-
-
-class ListBooleanColumn(ListColumn):
-    defaultJustification = wx.LIST_FORMAT_CENTER
-    defaultSortValue = False
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value:
-            return "Yes"
-        return "No"
-
-
-class ListDateColumn(ListColumn):
-    defaultSortValue = datetime.datetime.min
-    dateFormatAttrName = "dateFormat"
-    dateFormat = None
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is not None:
-            dateFormat = self.dateFormat
-            if dateFormat is None:
-                dateFormat = getattr(self.config, self.dateFormatAttrName)
-            return value.strftime(dateFormat)
-
-
-class ListDecimalColumn(ListColumn):
-    defaultJustification = wx.LIST_FORMAT_RIGHT
-    defaultSortValue = 0
-
-    def __init__(self, attrName, heading, defaultWidth, justification,
-            numberFormat, format = None, digitsAfterDecimal = 2):
-        if numberFormat is None:
-            if digitsAfterDecimal == 0:
-                numberFormat = "#,##0"
-            else:
-                numberFormat = "#,##0." + "0" * digitsAfterDecimal
-        if format is None:
-            format = "{0:,.%sf}" % digitsAfterDecimal
-        self.digitsAfterDecimal = digitsAfterDecimal
-        self.format = format
-        super(ListDecimalColumn, self).__init__(attrName, heading,
-                defaultWidth, justification, numberFormat)
-
-    def GetExportValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is not None:
-            return self.format.format(value)
-        return "" 
-
-    def GetValue(self, row):
-        value = getattr(row, self.attrName)
-        if value is not None:
-            return self.format.format(value)
-
-
-class ListMoneyColumn(ListDecimalColumn):
-
-    def __init__(self, attrName, heading, defaultWidth, justification,
-            numberFormat, format = None):
-        if numberFormat is None:
-            numberFormat = "$#,##0.00"
-        if format is None:
-            format = "${0:,.2f}"
-        super(ListMoneyColumn, self).__init__(attrName, heading,
-                defaultWidth, justification, numberFormat, format = format)
-
-
-class ListTimestampColumn(ListDateColumn):
-    dateFormatAttrName = "timestampFormat"
 
 
 class WrongNumberOfRowsSelected(cx_Exceptions.BaseException):
