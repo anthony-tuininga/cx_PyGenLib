@@ -73,9 +73,9 @@ class Column(ceGUI.BaseControl):
         listControl.InsertColumn(columnIndex, self.heading, justification,
                 self.defaultWidth or -1)
         if columnIndex == 0 and justification == wx.LIST_FORMAT_RIGHT:
-            self.InsertColumn(columnIndex + 1, self.heading,
-                    justification, self.defaultWidth)
-            self.DeleteColumn(columnIndex)
+            listControl.InsertColumn(columnIndex + 1, self.heading,
+                    justification, self.defaultWidth or -1)
+            listControl.DeleteColumn(columnIndex)
         self.OnAddToList(listControl)
 
     def ExtendedInitialize(self, **args):
