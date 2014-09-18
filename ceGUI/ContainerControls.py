@@ -140,26 +140,26 @@ class BaseContainer(ceGUI.BaseControl):
             style |= wx.TE_MULTILINE
         return cls(self, style, maxLength, size)
 
-    def ContinueQuery(self, allowCancel = True):
+    def ContinueQuery(self, allowCancel = True, parent = None):
         if self.PendingChanges():
             flag = wx.YES_NO | wx.ICON_EXCLAMATION
             if allowCancel:
                 flag |= wx.CANCEL
-            dialog = wx.MessageDialog(self, self.continueQueryMessage,
-                    self.continueQueryTitle, flag)
-            response = dialog.ShowModal()
-            dialog.Destroy()
-            if response == wx.ID_YES:
-                self.UpdateChanges()
-            elif response == wx.ID_CANCEL:
-                return False
-        return self.ContinueQueryChildren(allowCancel)
+            with wx.MessageDialog(parent or self,
+                    self.continueQueryMessage, self.continueQueryTitle,
+                    flag) as dialog:
+                response = dialog.ShowModal()
+                if response == wx.ID_YES:
+                    self.UpdateChanges()
+                elif response == wx.ID_CANCEL:
+                    return False
+        return self.ContinueQueryChildren(allowCancel, parent)
 
-    def ContinueQueryChildren(self, allowCancel = True):
+    def ContinueQueryChildren(self, allowCancel = True, parent = None):
         for window in self.GetChildren():
             if not isinstance(window, ceGUI.BaseControl):
                 continue
-            if not window.ContinueQuery(allowCancel):
+            if not window.ContinueQuery(allowCancel, parent):
                 return False
         return True
 

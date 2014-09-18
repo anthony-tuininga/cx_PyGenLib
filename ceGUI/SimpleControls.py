@@ -48,7 +48,7 @@ class BaseControl(object):
                 createBusyCursor = createBusyCursor, skipEvent = skipEvent,
                 passEvent = passEvent)
 
-    def ContinueQuery(self, allowCancel = True):
+    def ContinueQuery(self, allowCancel = True, parent = None):
         return True
 
     def FlushSettings(self):
@@ -169,12 +169,12 @@ class Notebook(BaseControl, wx.Notebook):
         newPage.RestoreSettings()
         return newPage
 
-    def ContinueQuery(self, allowCancel = True):
+    def ContinueQuery(self, allowCancel = True, parent = None):
         pageIndex = 0
         for page in self.IterPages():
             if page.PendingChanges():
                 self.SetSelection(pageIndex)
-                if not page.ContinueQuery(allowCancel):
+                if not page.ContinueQuery(allowCancel, parent):
                     return False
             pageIndex += 1
         return True
