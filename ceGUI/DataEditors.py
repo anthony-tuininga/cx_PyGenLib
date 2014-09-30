@@ -385,6 +385,8 @@ class DataGridPanel(DataMultipleRowPanel):
             self._UpdateLabelWithCount()
 
     def PendingChanges(self):
+        if not self.grid:
+            return False
         self.grid.SaveEditControlValue()
         return self.grid.PendingChanges()
 
