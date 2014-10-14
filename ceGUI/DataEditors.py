@@ -222,28 +222,11 @@ class DataEditPanel(DataPanel):
 
 class DataMultipleRowPanel(DataPanel):
     createRetrieveButton = False
-    filterColumnsPerRow = 5
+    filterArgsPerRow = 5
 
     @property
     def rowControl(self):
         return getattr(self, self.multipleRowControlAttrName)
-
-    def _AddToSizer(self, sizer, labelControl, fieldControl, labelBorder):
-        baseFlag = flag = wx.ALIGN_CENTER_VERTICAL
-        for child in sizer.GetChildren():
-            flag |= wx.LEFT
-            break
-        sizer.Add(labelControl, flag = flag, border = labelBorder)
-        sizer.Add(fieldControl, flag = baseFlag | wx.LEFT, border = 5)
-
-    def AddFilterColumn(self, label, fieldControl, bindEvent = None,
-            labelBorder = 10):
-        labelControl = self.AddLabel(label)
-        self.filterColumns.append((labelControl, fieldControl, labelBorder))
-        if bindEvent is not None:
-            self.BindEvent(fieldControl, bindEvent, self.Retrieve,
-                    passEvent = False)
-        return fieldControl
 
     def CanDeleteItems(self, items = []):
         return self.rowControl.CanDeleteItems(items)
@@ -254,18 +237,21 @@ class DataMultipleRowPanel(DataPanel):
     def GetBaseRows(self):
         pass
 
+    def GetFilterArgForName(self, name):
+        for filterArg in self.filterArgs:
+            if filterArg.name == name:
+                return filterArg
+        raise MissingFilterArg(name = name)
+
     def GetRetrievalArgs(self):
-        args = []
-        for labelControl, fieldControl, labelBorder in self.filterColumns:
-            args.append(fieldControl.GetValue())
-        return args
+        return [a.GetValue() for a in self.filterArgs]
 
     def IsUpdatedIndependently(self):
         return self._GetEditDialog() is None
 
     def OnCreate(self):
-        self.filterColumns = []
-        self.OnCreateFilterColumns()
+        self.filterArgs = []
+        self.OnCreateFilterArgs()
         if self.createRetrieveButton:
             self.retrieveButton = self.AddButton("Retrieve", self.Retrieve,
                     passEvent = False)
@@ -275,26 +261,26 @@ class DataMultipleRowPanel(DataPanel):
         if self.dataSet is None:
             self.dataSet = self.rowControl.dataSet
 
-    def OnCreateFilterColumns(self):
+    def OnCreateFilterArgs(self):
         pass
 
     def OnLayout(self):
         topSizer = wx.BoxSizer(wx.VERTICAL)
-        if self.filterColumns:
-            self.OnLayoutFilterColumns(topSizer)
+        if self.filterArgs:
+            self.OnLayoutFilterArgs(topSizer)
         topSizer.Add(self.rowControl, proportion = 1, flag = wx.EXPAND)
         return topSizer
 
-    def OnLayoutFilterColumns(self, topSizer):
+    def OnLayoutFilterArgs(self, topSizer):
         sizers = []
-        columnsThisSizer = self.filterColumnsPerRow
-        for labelControl, fieldControl, labelBorder in self.filterColumns:
-            if columnsThisSizer == self.filterColumnsPerRow:
+        argsThisSizer = self.filterArgsPerRow
+        for filterArg in self.filterArgs:
+            if argsThisSizer == self.filterArgsPerRow:
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 sizers.append(sizer)
-                columnsThisSizer = 0
-            self._AddToSizer(sizer, labelControl, fieldControl, labelBorder)
-            columnsThisSizer += 1
+                argsThisSizer = 0
+            filterArg.Layout(sizer)
+            argsThisSizer += 1
         flag = wx.ALL
         for sizer in sizers:
             topSizer.Add(sizer, flag = wx.EXPAND | flag, border = 5)
@@ -1243,4 +1229,8 @@ class SubWindow(object):
 
 class MissingColumn(cx_Exceptions.BaseException):
     message = 'Missing column with attribute named "%(attrName)s".'
+
+
+class MissingFilterArg(cx_Exceptions.BaseException):
+    message = 'Missing filter argument named "%(name)s".'
 
