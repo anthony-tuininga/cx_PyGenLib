@@ -144,11 +144,21 @@ class Config(object):
     def ConnectToDataSource(self, app, appName):
         pass
 
+    def GetBaseSettingsName(self):
+        return "Database/%s/%s" % (self.dataSource.dsn, self.configId)
+
     def OnClone(self, otherConfig):
         pass
 
     def OnCreate(self):
         pass
+
+    def ReadDatabaseSetting(self, name, defaultValue = None, isComplex = False,
+                converter = None, isDate = False, isTimestamp = False):
+        settingsName = "%s/%s" % (self.GetBaseSettingsName(), name)
+        return self.ReadSetting(settingsName, defaultValue = defaultValue,
+                isComplex = isComplex, converter = converter, isDate = isDate,
+                isTimestamp = isTimestamp)
 
     def ReadSetting(self, name, defaultValue = None, isComplex = False,
             converter = None, isDate = False, isTimestamp = False):
@@ -168,6 +178,21 @@ class Config(object):
                 self.settings.DeleteEntry(name)
                 value = defaultValue
         return value
+
+    def RestoreConfigId(self):
+        settingsName = "Database/%s/ConfigId" % self.dataSource.dsn
+        return self.ReadSetting(settingsName, converter = int)
+
+    def SaveConfigId(self, configId):
+        settingsName = "Database/%s/ConfigId" % self.dataSource.dsn
+        self.WriteSetting(settingsName, configId)
+
+    def WriteDatabaseSetting(self, name, value, isComplex = False,
+            converter = None, isDate = False, isTimestamp = False):
+        settingsName = "%s/%s" % (self.GetBaseSettingsName(), name)
+        self.WriteSetting(settingsName, value, isComplex = isComplex,
+                converter = converter, isDate = isDate,
+                isTimestamp = isTimestamp)
 
     def WriteSetting(self, name, value, isComplex = False, converter = None,
             isDate = False, isTimestamp = False):

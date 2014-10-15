@@ -312,6 +312,16 @@ class DataMultipleRowPanel(DataPanel):
                 self.rowControl.Retrieve(self.rows, *args)
         self.OnRetrieve()
 
+    def RestoreFilterArgs(self):
+        for filterArg in self.filterArgs:
+            if filterArg.saveValue:
+                filterArg.RestoreSetting()
+
+    def SaveFilterArgs(self):
+        for filterArg in self.filterArgs:
+            if filterArg.saveValue:
+                filterArg.SaveSetting()
+
 
 class DataGridPanel(DataMultipleRowPanel):
     multipleRowControlAttrName = "grid"
@@ -377,9 +387,11 @@ class DataGridPanel(DataMultipleRowPanel):
         return self.grid.PendingChanges()
 
     def RestoreSettings(self):
+        self.RestoreFilterArgs()
         self.grid.RestoreColumnWidths()
 
     def SaveSettings(self):
+        self.SaveFilterArgs()
         self.grid.SaveColumnWidths()
 
     def UpdateChanges(self):
@@ -523,9 +535,11 @@ class DataListPanel(DataMultipleRowPanel):
             self._UpdateLabelWithCount()
 
     def RestoreSettings(self):
+        self.RestoreFilterArgs()
         self.list.RestoreColumnWidths()
 
     def SaveSettings(self):
+        self.SaveFilterArgs()
         self.list.SaveColumnWidths()
 
 
