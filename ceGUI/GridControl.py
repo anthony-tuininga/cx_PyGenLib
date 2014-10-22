@@ -632,7 +632,11 @@ class GridColumnChoice(ceGUI.Column):
         self.attr.SetEditor(editor)
 
     def VerifyValueOnChange(self, row, rawValue):
-        return self.dataValuesByDisplayValue.get(rawValue, rawValue)
+        try:
+            return self.dataValuesByDisplayValue[rawValue]
+        except KeyError:
+            message = "'%s' is not a valid option." % rawValue
+            raise ceGUI.InvalidValueEntered(message)
 
 
 class ReadOnlyCells(cx_Exceptions.BaseException):
