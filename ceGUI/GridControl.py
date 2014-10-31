@@ -212,24 +212,21 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
         return True
 
     def Clear(self):
-        self.ClearGrid()
-        self.table.Clear()
+        numRows = self.table.GetNumberRows()
+        if numRows > 0:
+            msg = wx.grid.GridTableMessage(self.table,
+                    wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, 0, numRows)
+            self.ProcessTableMessage(msg)
+            self.table.Clear()
 
     def ClearAll(self):
-        self.ClearGrid()
+        self.Clear()
         numCols = self.table.GetNumberCols()
         if numCols > 0:
             msg = wx.grid.GridTableMessage(self.table,
                     wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, numCols)
             self.ProcessTableMessage(msg)
-        self.table.ClearAll()
-
-    def ClearRows(self):
-        numRows = self.table.GetNumberRows()
-        if numRows > 0:
-            msg = wx.grid.GridTableMessage(self.table,
-                    wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, numRows, numRows)
-            self.ProcessTableMessage(msg)
+            self.table.ClearColumns()
 
     def CopyToClipboard(self):
         if not self.enableCopy:
@@ -400,7 +397,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 column.RefreshChoices()
 
     def RefreshFromDataSet(self):
-        self.ClearRows()
+        self.Clear()
         self.table.RefreshFromDataSet()
         self.OnRetrieve()
 
@@ -414,7 +411,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             self._Resize()
 
     def Retrieve(self, *args):
-        self.ClearRows()
+        self.Clear()
         self.table.Retrieve(*args)
         self.OnRetrieve()
 
@@ -470,7 +467,8 @@ class GridTable(wx.grid.GridTableBase):
     def __init__(self, dataSet):
         super(GridTable, self).__init__()
         self.dataSet = dataSet
-        self.ClearAll()
+        self.Clear()
+        self.ClearColumns()
 
     def _GetSortKey(self, item, sortByColumns):
         return [c.GetSortValue(item) for c in sortByColumns]
@@ -486,9 +484,8 @@ class GridTable(wx.grid.GridTableBase):
     def Clear(self):
         self.rowHandles = []
 
-    def ClearAll(self):
+    def ClearColumns(self):
         self.columns = []
-        self.rowHandles = []
         self.sortByColumnIndexes = []
 
     def DeleteRows(self, pos = 0, numRows = 1):
