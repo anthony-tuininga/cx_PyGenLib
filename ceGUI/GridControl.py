@@ -433,6 +433,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
 
     def Update(self):
         self.SaveEditControlValue()
+        self.EnableCellEditControl(False)
         self.VerifyData()
         self.table.dataSet.Update()
         self.Refresh()
