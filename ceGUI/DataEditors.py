@@ -289,6 +289,9 @@ class DataMultipleRowPanel(DataPanel):
             sizers[-1].Add(self.retrieveButton,
                     flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 10)
 
+    def OnPopulateBaseRows(self, rows):
+        pass
+
     def OnRetrieve(self):
         if self.updateLabelWithCount:
             self._UpdateLabelWithCount()
@@ -305,7 +308,9 @@ class DataMultipleRowPanel(DataPanel):
             self.rowControl.Retrieve(*args)
         else:
             if refresh:
-                self.rows = self.GetBaseRows()
+                rows = self.GetBaseRows()
+                self.OnPopulateBaseRows(rows)
+                self.rows = rows
             if self.rows is None:
                 self.rowControl.Retrieve(*args)
             else:
@@ -369,6 +374,7 @@ class DataGridPanel(DataMultipleRowPanel):
     def GetBaseRows(self):
         if self.primaryDataSet is not None:
             self.primaryDataSet.Retrieve()
+            return self.primaryDataSet.GetRows()
 
     def OnCreate(self):
         self.SetWindowStyle(0)
