@@ -600,6 +600,7 @@ class GridTable(wx.grid.GridTableBase):
 
 
 class GridColumnChoice(ceGUI.Column):
+    displayNativeValue = False
     allowOthers = False
 
     def GetSortValue(self, row):
