@@ -16,6 +16,7 @@ __all__ = [ "Column", "ColumnBool", "ColumnDate", "ColumnDecimal", "ColumnInt",
 class Column(ceGUI.BaseControl):
     defaultHorizontalAlignment = "left"
     defaultVerticalAlignment = "middle"
+    displayNativeValue = True
     defaultNumberFormat = "@"
     defaultSortValue = ""
     defaultHeading = ""
@@ -23,8 +24,12 @@ class Column(ceGUI.BaseControl):
 
     def __init__(self, attrName, heading = None, defaultWidth = None,
             horizontalAlignment = None, verticalAlignment = None,
-            numberFormat = None, required = False, **otherArgs):
+            numberFormat = None, required = False, displayAttrName = None,
+            **otherArgs):
         self.attrName = attrName
+        self.displayAttrName = displayAttrName
+        if displayAttrName is not None:
+            self.displayNativeValue = False
         self.required = required
         self.heading = heading or self.defaultHeading
         self.defaultWidth = defaultWidth or self.defaultWidth
@@ -97,13 +102,19 @@ class Column(ceGUI.BaseControl):
     def GetLabelValue(self):
         return self.heading
 
+    def GetKeyValueForDisplayValue(self, displayValue):
+        return displayValue
+
     def GetNativeValue(self, row):
         if self.attrName is None:
             return row
         return getattr(row, self.attrName)
 
     def GetSortValue(self, row):
-        value = self.GetNativeValue(row)
+        if self.displayNativeValue:
+            value = self.GetNativeValue(row)
+        else:
+            value = self.GetValue(row)
         if value is None:
             return self.defaultSortValue
         elif isinstance(value, str):
@@ -111,7 +122,10 @@ class Column(ceGUI.BaseControl):
         return value
 
     def GetValue(self, row):
-        value = self.GetNativeValue(row)
+        if self.displayAttrName is not None:
+            value = getattr(row, self.displayAttrName)
+        else:
+            value = self.GetNativeValue(row)
         if value is None:
             return ""
         elif isinstance(value, str):
@@ -134,7 +148,12 @@ class Column(ceGUI.BaseControl):
         pass
 
     def SetValue(self, grid, dataSet, rowHandle, row, value):
-        dataSet.SetValue(rowHandle, self.attrName, value)
+        if self.displayAttrName is None:
+            dataSet.SetValue(rowHandle, self.attrName, value)
+        else:
+            keyValue, displayValue = value
+            dataSet.SetValue(rowHandle, self.attrName, keyValue)
+            dataSet.SetValue(rowHandle, self.displayAttrName, displayValue)
 
     def VerifyValue(self, row):
         if self.required:
@@ -143,7 +162,10 @@ class Column(ceGUI.BaseControl):
                 return ceGUI.RequiredFieldHasNoValue()
 
     def VerifyValueOnChange(self, row, rawValue):
-        return rawValue
+        if self.displayAttrName is None:
+            return rawValue
+        keyValue = self.GetKeyValueForDisplayValue(rawValue)
+        return (keyValue, rawValue)
 
 
 class ColumnBool(Column):
