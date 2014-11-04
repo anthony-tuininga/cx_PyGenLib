@@ -2,6 +2,7 @@
 Define windows used for editing data.
 """
 
+import ceDatabase
 import ceGUI
 import cx_Exceptions
 import cx_Logging
@@ -311,7 +312,8 @@ class DataMultipleRowPanel(DataPanel):
                 rows = self.GetBaseRows()
                 self.OnPopulateBaseRows(rows)
                 self.rows = rows
-            if self.rows is None:
+            if self.rows is None \
+                    or isinstance(self.dataSet, ceDatabase.FilteredDataSet):
                 self.rowControl.Retrieve(*args)
             else:
                 self.rowControl.Retrieve(self.rows, *args)
