@@ -102,7 +102,7 @@ class Column(ceGUI.BaseControl):
     def GetLabelValue(self):
         return self.heading
 
-    def GetKeyValueForDisplayValue(self, displayValue):
+    def GetKeyValueForDisplayValue(self, row, displayValue):
         return displayValue
 
     def GetNativeValue(self, row):
@@ -164,7 +164,7 @@ class Column(ceGUI.BaseControl):
     def VerifyValueOnChange(self, row, rawValue):
         if self.displayAttrName is None:
             return rawValue
-        keyValue = self.GetKeyValueForDisplayValue(rawValue)
+        keyValue = self.GetKeyValueForDisplayValue(row, rawValue)
         return (keyValue, rawValue)
 
 
