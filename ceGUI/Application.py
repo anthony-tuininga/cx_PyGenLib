@@ -61,7 +61,10 @@ class Application(wx.App):
         if method is not None:
             method()
 
-    def OnInit(self):
+    def OnStartup(self):
+        return True
+
+    def Run(self):
         self.topWindow = None
         self.SetAppName(self.__class__.__name__)
         if self.vendorName is not None:
@@ -86,10 +89,7 @@ class Application(wx.App):
                 self.SetTopWindow(self.topWindow)
                 if self.showTopWindowOnInit:
                     self.topWindow.Show()
-        return True
-
-    def OnStartup(self):
-        return True
+        self.MainLoop()
 
     def StartLogging(self):
         defaultFileName = self.GetDefaultLoggingFileName()
