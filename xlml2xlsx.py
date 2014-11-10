@@ -71,6 +71,11 @@ class Context(object):
                     value = datetime.datetime.strptime(value,
                             "%Y-%m-%d %H:%M:%S")
             method(self.rowIndex, self.columnIndex, value, style)
+        conditionalFormatNames = element.get("conditional_formats")
+        if conditionalFormatNames is not None:
+            for name in conditionalFormatNames.split(","):
+                conditionalFormat = self.conditionalFormatDict[name]
+                conditionalFormat.AddCell(self.rowIndex, self.columnIndex)
         self.columnIndex += mergeAcross + 1
 
     def AddColumn(self, element):
@@ -83,6 +88,20 @@ class Context(object):
             style = self.styleDict[styleName]
         self.sheet.set_column(self.columnIndex, self.columnIndex, width, style)
         self.columnIndex += 1
+
+    def AddConditionalFormat(self, element):
+        properties = {}
+        name = "default"
+        for attrName, value in element.items():
+            if attrName == "name":
+                name = value
+            elif attrName == "style":
+                properties["format"] = self.styleDict[value]
+            else:
+                properties[attrName] = value
+        conditionalFormat = ConditionalFormat(name, properties)
+        self.conditionalFormats.append(conditionalFormat)
+        self.conditionalFormatDict[name] = conditionalFormat
 
     def AddRow(self, element):
         self.rowIndex += 1
@@ -112,14 +131,56 @@ class Context(object):
                 properties[attrName] = value
         self.styleDict[name] = self.workbook.add_format(properties)
 
-    def AddWorksheet(self, element):
+    def BeginWorksheet(self, element):
         name = element.get("name")
         self.sheet = self.workbook.add_worksheet(name)
         self.rowIndex = -1
         self.columnIndex = 0
+        self.conditionalFormats = []
+        self.conditionalFormatDict = {}
 
     def Complete(self):
         self.workbook.close()
+
+    def EndWorksheet(self):
+        for conditionalFormat in self.conditionalFormats:
+            conditionalFormat.AddToSheet(self.sheet)
+
+
+class ConditionalFormat(object):
+
+    def __init__(self, name, properties):
+        self.name = name
+        self.properties = properties
+        self.rowDict = {}
+
+    def AddCell(self, rowIndex, colIndex):
+        columns = self.rowDict.setdefault(rowIndex, [])
+        if not columns:
+            columns.append((colIndex, colIndex))
+        else:
+            startColIndex, endColIndex = columns[-1]
+            if colIndex == endColIndex + 1:
+                columns[-1] = (startColIndex, colIndex)
+            else:
+                columns.append((colIndex, colIndex))
+
+    def AddToSheet(self, sheet):
+        rowRanges = []
+        for rowIndex in sorted(self.rowDict):
+            columnRanges = self.rowDict[rowIndex]
+            if not rowRanges:
+                rowRanges.append((rowIndex, rowIndex, columnRanges))
+                continue
+            startRowIndex, endRowIndex, ranges = rowRanges[-1]
+            if ranges == columnRanges and rowIndex == endRowIndex + 1:
+                rowRanges[-1] = (startRowIndex, rowIndex, columnRanges)
+            else:
+                rowRanges.append((rowIndex, rowIndex, columnRanges))
+        for startRowIndex, endRowIndex, columnRanges in rowRanges:
+            for startColIndex, endColIndex in columnRanges:
+                sheet.conditional_format(startRowIndex, startColIndex,
+                        endRowIndex, endColIndex, self.properties)
 
 
 def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
@@ -135,15 +196,19 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             events = ("start", "end")):
         if event == "start":
             if element.tag == "worksheet":
-                context.AddWorksheet(element)
+                context.BeginWorksheet(element)
             elif element.tag == "row":
                 context.AddRow(element)
         elif element.tag == "style":
             context.AddStyle(element)
+        elif element.tag == "conditional_format":
+            context.AddConditionalFormat(element)
         elif element.tag == "column":
             context.AddColumn(element)
         elif element.tag == "cell":
             context.AddCell(element)
+        elif element.tag == "worksheet":
+            context.EndWorksheet()
     context.Complete()
     return xlOutput
 
