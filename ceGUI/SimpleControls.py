@@ -229,6 +229,11 @@ class UpperCaseTextField(TextField):
         ceGUI.EventHandler(self.GetParent(), self, wx.EVT_CHAR, self.OnChar,
                 skipEvent = False)
 
+    def GetValue(self):
+        value = super(UpperCaseTextField, self).GetValue()
+        if value is not None:
+            return value.upper()
+
     def OnChar(self, event):
         if not self.IsEditable():
             event.Skip()
