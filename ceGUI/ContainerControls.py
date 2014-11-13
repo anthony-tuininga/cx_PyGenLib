@@ -253,7 +253,11 @@ class Frame(BaseContainer, wx.Frame):
     def __init__(self, parent = None, instanceName = None):
         wx.Frame.__init__(self, parent, title = self.title, style = self.style)
         self.instanceName = instanceName
-        self._Initialize()
+        try:
+            self._Initialize()
+        except:
+            self.Destroy()
+            raise
 
     def _OnCreate(self):
         if self.hasToolbar:
@@ -445,12 +449,22 @@ class TopLevelFrame(Frame):
     def OnExit(self, event):
         self.Close()
 
-    def Recreate(self):
+    def Recreate(self, config, message):
         app = ceGUI.GetApp()
-        app.topWindow.closing = True
-        ceGUI.UnsubscribeAll()
-        newFrame = app.topWindow = app.GetTopWindow()
-        self.Hide()
-        newFrame.Show()
-        wx.CallAfter(self.Destroy)
+        disabler = wx.WindowDisabler()
+        busyInfo = wx.BusyInfo(message)
+        try:
+            app.topWindow.closing = True
+            ceGUI.UnsubscribeAll()
+            self.Hide()
+            app.Yield()
+            self.Destroy()
+            app.config = config
+            config.OnRecreate()
+            newFrame = app.topWindow = app.GetTopWindow()
+            app.SetTopWindow(newFrame)
+            newFrame.Show()
+        finally:
+            del disabler
+            del busyInfo
 

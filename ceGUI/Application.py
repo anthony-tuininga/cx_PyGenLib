@@ -115,9 +115,10 @@ class Config(object):
     dateNumberFormat = "yyyy/mm/dd"
     timestampNumberFormat = "yyyy/mm/dd hh:mm:ss"
 
-    def __init__(self, app, dataSource = None):
+    def __init__(self, app, dataSource = None, configId = None):
         self.settings = app.settings
         self.dataSource = dataSource
+        self.configId = configId
         if dataSource is None:
             appName = app.GetAppName()
             self.dataSource = self.ConnectToDataSource(app, appName)
@@ -135,9 +136,10 @@ class Config(object):
     def __ConvertTimestampToString(self, value):
         return value.strftime(self.timestampFormat)
 
-    def Clone(self):
+    def Clone(self, configId = None):
         app = ceGUI.GetApp()
-        newConfig = self.__class__(app, self.dataSource)
+        newConfig = self.__class__(app, self.dataSource,
+                configId or self.configId)
         newConfig.OnClone(self)
         return newConfig
 
@@ -151,6 +153,9 @@ class Config(object):
         pass
 
     def OnCreate(self):
+        pass
+
+    def OnRecreate(self):
         pass
 
     def ReadDatabaseSetting(self, name, defaultValue = None, isComplex = False,
@@ -181,7 +186,8 @@ class Config(object):
 
     def RestoreConfigId(self):
         settingsName = "Database/%s/ConfigId" % self.dataSource.dsn
-        return self.ReadSetting(settingsName, converter = int)
+        self.configId = self.ReadSetting(settingsName, converter = int)
+        return self.configId
 
     def SaveConfigId(self, configId):
         settingsName = "Database/%s/ConfigId" % self.dataSource.dsn
