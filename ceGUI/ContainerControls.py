@@ -452,7 +452,7 @@ class TopLevelFrame(Frame):
     def Recreate(self, config, message):
         app = ceGUI.GetApp()
         disabler = wx.WindowDisabler()
-        busyInfo = wx.BusyInfo(message)
+        app.busyInfo = wx.BusyInfo(message)
         try:
             app.topWindow.closing = True
             ceGUI.UnsubscribeAll()
@@ -466,5 +466,5 @@ class TopLevelFrame(Frame):
             newFrame.Show()
         finally:
             del disabler
-            del busyInfo
+            app.busyInfo = None
 
