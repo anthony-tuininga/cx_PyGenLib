@@ -106,6 +106,7 @@ class Context(object):
     def AddRow(self, element):
         self.rowIndex += 1
         self.columnIndex = int(element.get("start_col", 0))
+        freeze = int(element.get("freeze", 0))
         height = style = None
         rawHeight = element.get("height")
         if rawHeight is not None:
@@ -114,6 +115,8 @@ class Context(object):
         if styleName is not None:
             style = self.styleDict[styleName]
         self.sheet.set_row(self.rowIndex, height, style)
+        if freeze:
+            self.sheet.freeze_panes(self.rowIndex + 1, 0)
 
     def AddStyle(self, element):
         name = "default"
