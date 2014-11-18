@@ -35,6 +35,7 @@ class Application(wx.App):
     version = BUILD_RELEASE_STRING
     logMaxFilesDefault = 1
     showTopWindowOnInit = True
+    busyInfo = None
 
     def _ExceptionHandler(self, excType, excValue, excTraceback):
         exc = cx_Exceptions.GetExceptionInfo(excType, excValue, excTraceback)
@@ -55,6 +56,9 @@ class Application(wx.App):
     def OnException(self, exc, parent = None, logException = True):
         if logException:
             cx_Logging.LogException(exc)
+        if self.busyInfo is not None:
+            self.busyInfo.Destroy()
+            self.busyInfo = None
         wx.MessageBox(exc.message, "Error", wx.OK | wx.ICON_EXCLAMATION,
                 parent)
         method = getattr(exc, "method", None)
