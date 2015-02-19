@@ -302,10 +302,8 @@ class List(ceGUI.BaseControl, wx.ListCtrl):
         focusedState = self._SaveItemState(wx.LIST_STATE_FOCUSED)
         selectedState = self._SaveItemState(wx.LIST_STATE_SELECTED)
         rowDict = self.dataSet.rows
-        itemsToSort = [(self._GetSortKey(rowDict[h], sortColumns), h) \
-                for h in self.rowHandles]
-        itemsToSort.sort()
-        self.rowHandles = [i[1] for i in itemsToSort]
+        self.rowHandles.sort(key = lambda h: \
+                self._GetSortKey(rowDict[h], sortColumns))
         itemIndexDict = dict([(h, i) for i, h in enumerate(self.rowHandles)])
         self._RestoreItemState(itemIndexDict, focusedState,
                 wx.LIST_STATE_FOCUSED)
