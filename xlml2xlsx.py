@@ -86,7 +86,12 @@ class Context(object):
         styleName = element.get("style")
         if styleName is not None:
             style = self.styleDict[styleName]
-        self.sheet.set_column(self.columnIndex, self.columnIndex, width, style)
+        options = {}
+        hidden = int(element.get("hidden", 0))
+        if hidden:
+            options["hidden"] = hidden
+        self.sheet.set_column(self.columnIndex, self.columnIndex, width, style,
+                options)
         self.columnIndex += 1
 
     def AddConditionalFormat(self, element):
