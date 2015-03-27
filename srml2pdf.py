@@ -228,14 +228,16 @@ class Context(object):
                 else:
                     args = (fontName,)
                 commands.append(("FONT", start, stop) + args)
+                color = self._ConvertColor(child, "textColor")
+                if color is not None:
+                    commands.append(("TEXTCOLOR", start, stop, color))
             elif child.tag == "blockValign":
                 alignment = child.get("value", "BOTTOM")
                 commands.append(("VALIGN", start, stop, alignment.upper()))
             elif child.tag == "lineStyle":
                 kind = child.get("kind", "GRID")
-                colorName = child.get("colorName", "black")
+                color = self._ConvertColor(child, "color", colors.black)
                 thickness = self._ConvertNumber(child, "thickness", 1)
-                color = getattr(colors, colorName)
                 cap = self._ConvertNumber(child, "cap", 1)
                 dashes = self._ConvertNumberList(child, "dashes")
                 commands.append((kind, start, stop, thickness, color, cap,
@@ -245,6 +247,9 @@ class Context(object):
                 length = self._ConvertNumber(child, "length", 6)
                 commandType = child.tag[5:].upper()
                 commands.append((commandType, start, stop, length))
+            elif child.tag == "background":
+                color = self._ConvertColor(child, "color", colors.white)
+                commands.append(("BACKGROUND", start, stop, color))
         style = TableStyle(commands)
         self.tableStyles[ident] = style
         return style
