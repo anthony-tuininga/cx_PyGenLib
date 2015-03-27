@@ -10,7 +10,7 @@ from reportlab.platypus.doctemplate import BaseDocTemplate, NextPageTemplate
 from reportlab.platypus.doctemplate import PageTemplate as BasePageTemplate
 from reportlab.platypus.doctemplate import FrameBreak
 from reportlab.platypus.frames import Frame
-from reportlab.platypus.flowables import PageBreak, Spacer
+from reportlab.platypus.flowables import PageBreak, Image, Spacer
 from reportlab.platypus.paragraph import Paragraph
 from reportlab.platypus.tables import LongTable, TableStyle
 from reportlab.lib import colors, enums, pagesizes, units
@@ -197,6 +197,12 @@ class Context(object):
                         cls = RotatedParagraph if rotated else Paragraph
                         para = cls(text, style)
                         contents.append(para)
+                    elif child.tag == "img":
+                        fileName = child.get("src", "unknown.png")
+                        width = self._ConvertNumber(child, "width")
+                        height = self._ConvertNumber(child, "height")
+                        img = Image(fileName, width, height)
+                        contents.append(img)
                 if not contents:
                     contents = cell.text and cell.text.strip()
                 cells.append(contents)
