@@ -256,6 +256,8 @@ class Context(object):
             elif child.tag == "background":
                 color = self._ConvertColor(child, "color", colors.white)
                 commands.append(("BACKGROUND", start, stop, color))
+            elif child.tag == "nosplit":
+                commands.append(("NOSPLIT", start, stop))
         style = TableStyle(commands)
         self.tableStyles[ident] = style
         return style
