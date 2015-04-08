@@ -40,6 +40,7 @@ class Context(object):
         styleName = element.get("style")
         if styleName is not None:
             style = self.styleDict[styleName]
+        self.columnIndex = int(element.get("column_index", self.columnIndex))
         mergeAcross = int(element.get("merge_across", 0))
         mergeDown = int(element.get("merge_down", 0))
         if mergeAcross > 0 or mergeDown > 0:
@@ -109,13 +110,13 @@ class Context(object):
         self.conditionalFormatDict[name] = conditionalFormat
 
     def AddRow(self, element):
-        self.rowIndex += 1
         self.columnIndex = int(element.get("start_col", 0))
+        self.rowIndex = int(element.get("row_index", self.rowIndex + 1))
         freeze = int(element.get("freeze", 0))
         height = style = None
         rawHeight = element.get("height")
         if rawHeight is not None:
-            height = int(rawHeight)
+            height = float(rawHeight)
         styleName = element.get("style")
         if styleName is not None:
             style = self.styleDict[styleName]
