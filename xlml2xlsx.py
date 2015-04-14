@@ -260,6 +260,20 @@ class RangeReference(object):
         return [sheetName, firstRow, firstCol, lastRow, lastCol]
 
 
+class FontOptions(Options):
+    stringOptionNames = "name color"
+    intOptionNames = "size rotation"
+    boolOptionNames = "bold italic underline"
+
+
+class AxisOptions(Options):
+    floatOptionNames = "min max major_unit minor_unit"
+    subOptionTags = [
+            ("name_font", FontOptions),
+            ("num_font", FontOptions)
+    ]
+
+
 class DataLabelsOptions(Options):
     boolOptionNames = "series_name"
     stringOptionNames = "position"
@@ -275,7 +289,10 @@ class LayoutOptions(Options):
 
 class LegendOptions(Options):
     stringOptionNames = "position"
-    subOptionTags = [("layout", LayoutOptions)]
+    subOptionTags = [
+            ("font", FontOptions),
+            ("layout", LayoutOptions)
+    ]
 
 
 class PlotAreaOptions(Options):
@@ -301,6 +318,7 @@ class SizeOptions(Options):
 
 class TitleOptions(Options):
     stringOptionNames = "name"
+    subOptionTags = [("name_font", FontOptions)]
 
 
 class TypeOptions(Options):
@@ -314,7 +332,8 @@ class Chart(object):
         self.col = int(element.get("col", 0))
         self.typeOptions = TypeOptions.Get(sheet, element)
         self.sizeOptions = self.legendOptions = self.titleOptions = None
-        self.plotAreaOptions = None
+        self.plotAreaOptions = self.xAxisOptions = self.yAxisOptions = None
+        self.x2AxisOptions = self.y2AxisOptions = None
         self.series = []
         for childElement in element:
             if childElement.tag == "series":
@@ -327,6 +346,14 @@ class Chart(object):
                 self.titleOptions = TitleOptions.Get(sheet, childElement)
             elif childElement.tag == "size":
                 self.sizeOptions = SizeOptions.Get(sheet, childElement)
+            elif childElement.tag == "x_axis":
+                self.xAxisOptions = AxisOptions.Get(sheet, childElement)
+            elif childElement.tag == "x2_axis":
+                self.x2AxisOptions = AxisOptions.Get(sheet, childElement)
+            elif childElement.tag == "y_axis":
+                self.yAxisOptions = AxisOptions.Get(sheet, childElement)
+            elif childElement.tag == "y2_axis":
+                self.y2AxisOptions = AxisOptions.Get(sheet, childElement)
 
     def AddToSheet(self, workbook, sheet):
         chart = workbook.add_chart(self.typeOptions)
@@ -340,6 +367,14 @@ class Chart(object):
             chart.set_legend(self.legendOptions)
         if self.plotAreaOptions:
             chart.set_plotarea(self.plotAreaOptions)
+        if self.xAxisOptions:
+            chart.set_x_axis(self.xAxisOptions)
+        if self.x2AxisOptions:
+            chart.set_x2_axis(self.x2AxisOptions)
+        if self.yAxisOptions:
+            chart.set_y_axis(self.yAxisOptions)
+        if self.y2AxisOptions:
+            chart.set_y2_axis(self.y2AxisOptions)
         sheet.insert_chart(self.row, self.col, chart)
 
 
