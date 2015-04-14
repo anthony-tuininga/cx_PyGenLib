@@ -79,6 +79,10 @@ class Context(object):
                 conditionalFormat.AddCell(self.rowIndex, self.columnIndex)
         self.columnIndex += mergeAcross + 1
 
+    def AddChart(self, element):
+        chart = Chart(self.sheet, element)
+        self.charts.append(chart)
+
     def AddColumn(self, element):
         width = style = None
         rawWidth = element.get("width")
@@ -147,6 +151,7 @@ class Context(object):
         self.columnIndex = 0
         self.conditionalFormats = []
         self.conditionalFormatDict = {}
+        self.charts = []
 
     def Complete(self):
         self.workbook.close()
@@ -154,6 +159,8 @@ class Context(object):
     def EndWorksheet(self):
         for conditionalFormat in self.conditionalFormats:
             conditionalFormat.AddToSheet(self.sheet)
+        for chart in self.charts:
+            chart.AddToSheet(self.workbook, self.sheet)
 
 
 class ConditionalFormat(object):
@@ -192,6 +199,150 @@ class ConditionalFormat(object):
                         endRowIndex, endColIndex, self.properties)
 
 
+class OptionsMetaClass(type):
+
+    def __new__(cls, name, bases, classDict):
+        for name in classDict:
+            if name == "subOptionTags":
+                value = classDict[name]
+                classDict[name] = dict(value)
+            elif name.endswith("OptionNames"):
+                value = classDict[name]
+                if isinstance(value, str):
+                    classDict[name] = value.split()
+        return type.__new__(cls, name, bases, classDict)
+
+
+class Options(metaclass = OptionsMetaClass):
+    stringOptionNames = ""
+    floatOptionNames = ""
+    intOptionNames = ""
+    boolOptionNames = ""
+    subOptionTags = []
+
+    @classmethod
+    def Get(cls, sheet, element):
+        options = {}
+        for name in cls.stringOptionNames:
+            value = element.get(name)
+            if value is not None:
+                options[name] = value
+        for name in cls.floatOptionNames:
+            value = element.get(name)
+            if value is not None:
+                options[name] = float(value)
+        for name in cls.intOptionNames:
+            value = element.get(name)
+            if value is not None:
+                options[name] = int(value)
+        for name in cls.boolOptionNames:
+            value = element.get(name)
+            if value is not None:
+                options[name] = bool(int(value))
+        if cls.subOptionTags:
+            for childElement in element:
+                subOptionsClass = cls.subOptionTags.get(childElement.tag)
+                if subOptionsClass is not None:
+                    subOptions = subOptionsClass.Get(sheet, childElement)
+                    options[childElement.tag] = subOptions
+        return options
+
+
+class RangeReference(object):
+
+    @classmethod
+    def Get(cls, sheet, element):
+        sheetName = element.get("sheet_name", sheet.name)
+        firstRow = int(element.get("first_row", 0))
+        firstCol = int(element.get("first_col", 0))
+        lastRow = int(element.get("last_row", 0))
+        lastCol = int(element.get("last_col", 0))
+        return [sheetName, firstRow, firstCol, lastRow, lastCol]
+
+
+class DataLabelsOptions(Options):
+    boolOptionNames = "series_name"
+    stringOptionNames = "position"
+
+
+class FillOptions(Options):
+    stringOptionNames = "color"
+
+
+class LayoutOptions(Options):
+    floatOptionNames = "x y width height"
+
+
+class LegendOptions(Options):
+    stringOptionNames = "position"
+    subOptionTags = [("layout", LayoutOptions)]
+
+
+class PlotAreaOptions(Options):
+    subOptionTags = [
+            ("fill", FillOptions),
+            ("layout", LayoutOptions)
+    ]
+
+
+class SeriesOptions(Options):
+    stringOptionNames = "name"
+    subOptionTags = [
+            ("values", RangeReference),
+            ("categories", RangeReference),
+            ("data_labels", DataLabelsOptions),
+            ("fill", FillOptions)
+    ]
+
+
+class SizeOptions(Options):
+    floatOptionNames = "x_offset y_offset x_scale y_scale width height"
+
+
+class TitleOptions(Options):
+    stringOptionNames = "name"
+
+
+class TypeOptions(Options):
+    stringOptionNames = "type subtype"
+
+
+class Chart(object):
+
+    def __init__(self, sheet, element):
+        self.row = int(element.get("row", 0))
+        self.col = int(element.get("col", 0))
+        self.typeOptions = TypeOptions.Get(sheet, element)
+        self.sizeOptions = self.legendOptions = self.titleOptions = None
+        self.plotAreaOptions = None
+        self.series = []
+        for childElement in element:
+            if childElement.tag == "series":
+                self.series.append(SeriesOptions.Get(sheet, childElement))
+            elif childElement.tag == "legend":
+                self.legendOptions = LegendOptions.Get(sheet, childElement)
+            elif childElement.tag == "plotarea":
+                self.plotAreaOptions = PlotAreaOptions.Get(sheet, childElement)
+            elif childElement.tag == "title":
+                self.titleOptions = TitleOptions.Get(sheet, childElement)
+            elif childElement.tag == "size":
+                self.sizeOptions = SizeOptions.Get(sheet, childElement)
+
+    def AddToSheet(self, workbook, sheet):
+        chart = workbook.add_chart(self.typeOptions)
+        for seriesOptions in self.series:
+            chart.add_series(seriesOptions)
+        if self.sizeOptions:
+            chart.set_size(self.sizeOptions)
+        if self.titleOptions:
+            chart.set_title(self.titleOptions)
+        if self.legendOptions:
+            chart.set_legend(self.legendOptions)
+        if self.plotAreaOptions:
+            chart.set_plotarea(self.plotAreaOptions)
+        sheet.insert_chart(self.row, self.col, chart)
+
+
 def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
     if inputIsString:
         f = io.BytesIO()
@@ -208,6 +359,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
                 context.BeginWorksheet(element)
             elif element.tag == "row":
                 context.AddRow(element)
+            elif element.tag == "chart":
+                context.AddChart(element)
         elif element.tag == "style":
             context.AddStyle(element)
         elif element.tag == "conditional_format":
