@@ -10,6 +10,7 @@ import decimal
 import io
 import re
 import xlsxwriter
+import xlsxwriter.utility
 
 from xml.etree import cElementTree
 
@@ -47,6 +48,20 @@ class Context(object):
             self.sheet.merge_range(self.rowIndex, self.columnIndex,
                     self.rowIndex + mergeDown, self.columnIndex + mergeAcross,
                     None, style)
+        name = element.get("name")
+        if name is not None:
+            ref = xlsxwriter.utility.xl_rowcol_to_cell(self.rowIndex,
+                    self.columnIndex, row_abs = True, col_abs = True)
+            if element.get("start_range"):
+                self.rangeNames[name] = ref
+            else:
+                startRef = self.rangeNames.get(name)
+                if startRef is not None:
+                    ref = "%s:%s" % (startRef, ref)
+                fullRef = "'%s'!%s" % (self.sheet.name, ref)
+                if not element.get("global_name"):
+                    name = "'%s'!%s" % (self.sheet.name, name)
+                self.workbook.define_name(name, '=%s' % fullRef)
         formula = element.get("formula")
         if formula is not None:
             adjustedFormula = self.formulaPattern.sub(self.__SubstituteFormula,
@@ -124,7 +139,8 @@ class Context(object):
         styleName = element.get("style")
         if styleName is not None:
             style = self.styleDict[styleName]
-        self.sheet.set_row(self.rowIndex, height, style)
+        if height is not None or style is not None:
+            self.sheet.set_row(self.rowIndex, height, style)
         if freeze:
             self.sheet.freeze_panes(self.rowIndex + 1, 0)
 
@@ -151,6 +167,7 @@ class Context(object):
         self.columnIndex = 0
         self.conditionalFormats = []
         self.conditionalFormatDict = {}
+        self.rangeNames = {}
         self.charts = []
 
     def Complete(self):
@@ -238,7 +255,7 @@ class Options(metaclass = OptionsMetaClass):
         for name in cls.boolOptionNames:
             value = element.get(name)
             if value is not None:
-                options[name] = bool(int(value))
+                options[name] = value.lower() in ("1", "true", "y")
         if cls.subOptionTags:
             for childElement in element:
                 subOptionsClass = cls.subOptionTags.get(childElement.tag)
@@ -268,6 +285,7 @@ class FontOptions(Options):
 
 class AxisOptions(Options):
     floatOptionNames = "min max major_unit minor_unit"
+    stringOptionNames = "num_format"
     subOptionTags = [
             ("name_font", FontOptions),
             ("num_font", FontOptions)
@@ -289,6 +307,7 @@ class LayoutOptions(Options):
 
 class LegendOptions(Options):
     stringOptionNames = "position"
+    boolOptionNames = "none"
     subOptionTags = [
             ("font", FontOptions),
             ("layout", LayoutOptions)
