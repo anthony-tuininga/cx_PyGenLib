@@ -57,7 +57,11 @@ class Context(object):
             else:
                 startRef = self.rangeNames.get(name)
                 if startRef is not None:
-                    ref = "%s:%s" % (startRef, ref)
+                    endRef = xlsxwriter.utility.xl_rowcol_to_cell( \
+                            self.rowIndex + mergeDown,
+                            self.columnIndex + mergeAcross, row_abs = True,
+                            col_abs = True)
+                    ref = "%s:%s" % (startRef, endRef)
                 fullRef = "'%s'!%s" % (self.sheet.name, ref)
                 if not element.get("global_name"):
                     name = "'%s'!%s" % (self.sheet.name, name)
@@ -322,7 +326,7 @@ class PlotAreaOptions(Options):
 
 
 class SeriesOptions(Options):
-    stringOptionNames = "name"
+    stringOptionNames = "name values categories"
     subOptionTags = [
             ("values", RangeReference),
             ("categories", RangeReference),
