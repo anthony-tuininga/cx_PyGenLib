@@ -326,12 +326,28 @@ class FontOptions(Options):
     boolOptionNames = "bold italic underline"
 
 
-class AxisOptions(Options):
-    floatOptionNames = "min max major_unit minor_unit"
-    stringOptionNames = "num_format"
+class LineOptions(Options):
+    stringOptionNames = "color dash_type"
+    floatOptionNames = "width"
+    boolOptionNames = "none"
+
+
+class GridlineOptions(Options):
+    boolOptionNames = "visible"
     subOptionTags = [
+            ("line", LineOptions)
+    ]
+
+
+class AxisOptions(Options):
+    boolOptionNames = "date_axis"
+    floatOptionNames = "min max major_unit minor_unit"
+    stringOptionNames = "num_format major_unit_type minor_unit_type"
+    subOptionTags = [
+            ("line", LineOptions),
             ("name_font", FontOptions),
-            ("num_font", FontOptions)
+            ("num_font", FontOptions),
+            ("major_gridlines", GridlineOptions)
     ]
 
 
@@ -357,12 +373,6 @@ class LegendOptions(Options):
     ]
 
 
-class LineOptions(Options):
-    stringOptionNames = "color dash_type"
-    floatOptionNames = "width"
-    boolOptionNames = "none"
-
-
 class MarkerOptions(Options):
     stringOptionNames = "type"
     intOptionNames = "size"
@@ -374,6 +384,7 @@ class MarkerOptions(Options):
 
 class PlotAreaOptions(Options):
     subOptionTags = [
+            ("border", LineOptions),
             ("fill", FillOptions),
             ("layout", LayoutOptions)
     ]
