@@ -167,6 +167,27 @@ class Context(object):
     def BeginWorksheet(self, element):
         name = element.get("name")
         self.sheet = self.workbook.add_worksheet(name)
+        if int(element.get("landscape", 0)):
+            self.sheet.set_landscape()
+        paperIndex = int(element.get("paper", 0))
+        if paperIndex:
+            self.sheet.set_paper(paperIndex)
+        if int(element.get("center_horizontally", 0)):
+            self.sheet.center_horizontally()
+        if int(element.get("center_vertically", 0)):
+            self.sheet.center_vertically()
+        if int(element.get("hide_gridlines", 0)):
+            self.sheet.hide_gridlines()
+        fitToPagesWide = int(element.get("fit_to_pages_wide", 0))
+        fitToPagesHigh = int(element.get("fit_to_pages_high", 0))
+        if fitToPagesWide or fitToPagesHigh:
+            self.sheet.fit_to_pages(fitToPagesWide, fitToPagesHigh)
+        leftMargin = float(element.get("left_margin", 0.7))
+        rightMargin = float(element.get("right_margin", 0.7))
+        topMargin = float(element.get("top_margin", 0.75))
+        bottomMargin = float(element.get("bottom_margin", 0.75))
+        self.sheet.set_margins(leftMargin, rightMargin, topMargin,
+                bottomMargin)
         self.rowIndex = -1
         self.columnIndex = 0
         self.conditionalFormats = []
@@ -193,6 +214,13 @@ class Context(object):
                 otherChartObj.combine(obj)
         for chart, obj in chartObjs:
             self.sheet.insert_chart(chart.row, chart.col, obj)
+
+    def SetPrintArea(self, element):
+        firstRow = int(element.get("first_row", 0))
+        firstColumn = int(element.get("first_col", 0))
+        lastRow = int(element.get("last_row", 0))
+        lastColumn = int(element.get("last_col", 0))
+        self.sheet.print_area(firstRow, firstColumn, lastRow, lastColumn)
 
 
 class ConditionalFormat(object):
@@ -457,6 +485,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             context.AddColumn(element)
         elif element.tag == "cell":
             context.AddCell(element)
+        elif element.tag == "print_area":
+            context.SetPrintArea(element)
         elif element.tag == "worksheet":
             context.EndWorksheet()
     context.Complete()
