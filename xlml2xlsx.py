@@ -180,8 +180,19 @@ class Context(object):
     def EndWorksheet(self):
         for conditionalFormat in self.conditionalFormats:
             conditionalFormat.AddToSheet(self.sheet)
+        chartObjs = []
+        chartObjDict = {}
         for chart in self.charts:
-            chart.AddToSheet(self.workbook, self.sheet)
+            obj = chart.Create(self.workbook)
+            if chart.name is not None:
+                chartObjDict[chart.name] = obj
+            if chart.combineWithName is None:
+                chartObjs.append((chart, obj))
+            else:
+                otherChartObj = chartObjDict[chart.combineWithName]
+                otherChartObj.combine(obj)
+        for chart, obj in chartObjs:
+            self.sheet.insert_chart(chart.row, chart.col, obj)
 
 
 class ConditionalFormat(object):
@@ -370,6 +381,8 @@ class Chart(object):
     def __init__(self, sheet, element):
         self.row = int(element.get("row", 0))
         self.col = int(element.get("col", 0))
+        self.name = element.get("name")
+        self.combineWithName = element.get("combine_with")
         self.typeOptions = TypeOptions.Get(sheet, element)
         self.sizeOptions = self.legendOptions = self.titleOptions = None
         self.plotAreaOptions = self.xAxisOptions = self.yAxisOptions = None
@@ -395,7 +408,7 @@ class Chart(object):
             elif childElement.tag == "y2_axis":
                 self.y2AxisOptions = AxisOptions.Get(sheet, childElement)
 
-    def AddToSheet(self, workbook, sheet):
+    def Create(self, workbook):
         chart = workbook.add_chart(self.typeOptions)
         for seriesOptions in self.series:
             chart.add_series(seriesOptions)
@@ -415,7 +428,7 @@ class Chart(object):
             chart.set_y_axis(self.yAxisOptions)
         if self.y2AxisOptions:
             chart.set_y2_axis(self.y2AxisOptions)
-        sheet.insert_chart(self.row, self.col, chart)
+        return chart
 
 
 def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
