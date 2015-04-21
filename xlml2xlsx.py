@@ -318,6 +318,21 @@ class LegendOptions(Options):
     ]
 
 
+class LineOptions(Options):
+    stringOptionNames = "color dash_type"
+    floatOptionNames = "width"
+    boolOptionNames = "none"
+
+
+class MarkerOptions(Options):
+    stringOptionNames = "type"
+    intOptionNames = "size"
+    subOptionTags = [
+            ("border", LineOptions),
+            ("fill", FillOptions)
+    ]
+
+
 class PlotAreaOptions(Options):
     subOptionTags = [
             ("fill", FillOptions),
@@ -331,7 +346,9 @@ class SeriesOptions(Options):
             ("values", RangeReference),
             ("categories", RangeReference),
             ("data_labels", DataLabelsOptions),
-            ("fill", FillOptions)
+            ("fill", FillOptions),
+            ("line", LineOptions),
+            ("marker", MarkerOptions)
     ]
 
 
