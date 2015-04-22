@@ -282,7 +282,11 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
             rows.extend(self.table.GetRows(top, bottom - top + 1))
         return rows
 
-    def InsertRows(self, pos = None, numRows = 1, choices = None):
+    def AppendRows(self, numRows = 1, choices = None, rows = None):
+        pos = len(self.table.rowHandles)
+        self.InsertRows(pos, numRows, choices, rows)
+
+    def InsertRows(self, pos = None, numRows = 1, choices = None, rows = None):
         if pos is None:
             if len(self.table.rowHandles) == 0:
                 pos = 0
@@ -292,7 +296,7 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 pos = len(self.table.rowHandles)
             else:
                 pos = self.contextPos + 1
-        if choices is None:
+        if choices is None and rows is None:
             dialog = self.GetInsertChoicesDialog(self.GetParent())
             if dialog is None:
                 choices = [None] * numRows
@@ -304,15 +308,21 @@ class Grid(ceGUI.BaseControl, wx.grid.Grid):
                 dialog.Destroy()
                 if not choices:
                     return
-        for choiceNum, choice in enumerate(choices):
-            row = self.table.InsertRow(pos + choiceNum, choice)
-            self.OnInsertRow(row, choice)
+        if rows is not None:
+            numRows = len(rows)
+            for rowNum, row in enumerate(rows):
+                self.table.InsertRow(pos + rowNum, row, row)
+        else:
+            numRows = len(choices)
+            for choiceNum, choice in enumerate(choices):
+                row = self.table.InsertRow(pos + choiceNum, choice)
+                self.OnInsertRow(row, choice)
         msg = wx.grid.GridTableMessage(self.table,
-                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, len(choices))
+                wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows)
         self.ProcessTableMessage(msg)
         self.SetGridCursor(pos, 0)
         self.MakeCellVisible(pos, 0)
-        if choices is None and dialog is None:
+        if choices is None and rows is None and dialog is None:
             self.EnableCellEditControl(True)
 
     def OnContextMenu(self):
@@ -547,8 +557,8 @@ class GridTable(wx.grid.GridTableBase):
         row = self.dataSet.rows[handle]
         return column.GetValue(row)
 
-    def InsertRow(self, pos, choice):
-        handle, row = self.dataSet.InsertRow(choice)
+    def InsertRow(self, pos, choice, row = None):
+        handle, row = self.dataSet.InsertRow(choice, row)
         self.rowHandles.insert(pos, handle)
         return row
 

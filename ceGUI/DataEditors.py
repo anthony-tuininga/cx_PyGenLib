@@ -103,7 +103,7 @@ class DataPanel(ceGUI.Panel):
                         editDialog.GetRow())
             else:
                 app = ceGUI.GetApp()
-                dataSet = cls(app.cache.dataSource)
+                dataSet = cls(app.config.dataSource)
             return dataSet
         if editDialog is not None:
             return editDialog.dataSet
@@ -364,7 +364,7 @@ class DataGridPanel(DataMultipleRowPanel):
 
     def DeleteSelectedItems(self):
         items = self.grid.GetSelectedRows()
-        if not self.CanDeleteItems(items):
+        if not items or not self.CanDeleteItems(items):
             return
         blocks = self.grid._GetSelectionBlocks()
         if not blocks:
