@@ -421,6 +421,7 @@ class Chart(object):
         self.row = int(element.get("row", 0))
         self.col = int(element.get("col", 0))
         self.name = element.get("name")
+        self.showHiddenData = bool(int(element.get("show_hidden_data", 0)))
         self.combineWithName = element.get("combine_with")
         self.typeOptions = TypeOptions.Get(sheet, element)
         self.sizeOptions = self.legendOptions = self.titleOptions = None
@@ -449,6 +450,8 @@ class Chart(object):
 
     def Create(self, workbook):
         chart = workbook.add_chart(self.typeOptions)
+        if self.showHiddenData:
+            chart.show_hidden_data()
         for seriesOptions in self.series:
             chart.add_series(seriesOptions)
         if self.sizeOptions:
