@@ -358,6 +358,7 @@ class DataLabelsOptions(Options):
 
 class FillOptions(Options):
     stringOptionNames = "color"
+    boolOptionNames = "none"
 
 
 class LayoutOptions(Options):
@@ -387,6 +388,13 @@ class PlotAreaOptions(Options):
             ("border", LineOptions),
             ("fill", FillOptions),
             ("layout", LayoutOptions)
+    ]
+
+
+class ChartAreaOptions(Options):
+    subOptionTags = [
+            ("border", LineOptions),
+            ("fill", FillOptions)
     ]
 
 
@@ -426,13 +434,16 @@ class Chart(object):
         self.typeOptions = TypeOptions.Get(sheet, element)
         self.sizeOptions = self.legendOptions = self.titleOptions = None
         self.plotAreaOptions = self.xAxisOptions = self.yAxisOptions = None
-        self.x2AxisOptions = self.y2AxisOptions = None
+        self.x2AxisOptions = self.y2AxisOptions = self.chartAreaOptions = None
         self.series = []
         for childElement in element:
             if childElement.tag == "series":
                 self.series.append(SeriesOptions.Get(sheet, childElement))
             elif childElement.tag == "legend":
                 self.legendOptions = LegendOptions.Get(sheet, childElement)
+            elif childElement.tag == "chartarea":
+                self.chartAreaOptions = \
+                        ChartAreaOptions.Get(sheet, childElement)
             elif childElement.tag == "plotarea":
                 self.plotAreaOptions = PlotAreaOptions.Get(sheet, childElement)
             elif childElement.tag == "title":
@@ -460,6 +471,8 @@ class Chart(object):
             chart.set_title(self.titleOptions)
         if self.legendOptions:
             chart.set_legend(self.legendOptions)
+        if self.chartAreaOptions:
+            chart.set_chartarea(self.chartAreaOptions)
         if self.plotAreaOptions:
             chart.set_plotarea(self.plotAreaOptions)
         if self.xAxisOptions:
