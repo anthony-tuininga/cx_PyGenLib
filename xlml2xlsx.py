@@ -502,8 +502,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
                 context.BeginWorksheet(element)
             elif element.tag == "row":
                 context.AddRow(element)
-            elif element.tag == "chart":
-                context.AddChart(element)
+        elif element.tag == "chart":
+            context.AddChart(element)
         elif element.tag == "style":
             context.AddStyle(element)
         elif element.tag == "conditional_format":
