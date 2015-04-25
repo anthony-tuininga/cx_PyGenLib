@@ -132,6 +132,13 @@ class Context(object):
         self.conditionalFormats.append(conditionalFormat)
         self.conditionalFormatDict[name] = conditionalFormat
 
+    def AddImage(self, element):
+        row = int(element.get("row", 0))
+        col = int(element.get("col", 0))
+        fileName = element.get("file_name", "unknown.png")
+        options = ImageOptions.Get(self.sheet, element)
+        self.sheet.insert_image(row, col, fileName, options)
+
     def AddRow(self, element):
         self.columnIndex = int(element.get("start_col", 0))
         self.rowIndex = int(element.get("row_index", self.rowIndex + 1))
@@ -423,6 +430,12 @@ class TypeOptions(Options):
     stringOptionNames = "type subtype"
 
 
+class ImageOptions(Options):
+    floatOptionNames = "x_offset y_offset x_scale y_scale"
+    intOptionNames = "positioning"
+    stringOptionNames = "url tip"
+
+
 class Chart(object):
 
     def __init__(self, sheet, element):
@@ -512,6 +525,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             context.AddColumn(element)
         elif element.tag == "cell":
             context.AddCell(element)
+        elif element.tag == "image":
+            context.AddImage(element)
         elif element.tag == "print_area":
             context.SetPrintArea(element)
         elif element.tag == "worksheet":
