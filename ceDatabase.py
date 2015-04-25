@@ -394,11 +394,20 @@ class DataSet(object, metaclass = DataSetMetaClass):
     def DeleteRowInDatabase(self, transaction, row):
         return transaction.RemoveRow(self, row)
 
+    def GetDeletedRows(self):
+        return list(self.deletedRows.values())
+
+    def GetInsertedRows(self):
+        return list(self.insertedRows.values())
+
     def GetKeyedDataSet(self, *attrNames):
         return KeyedDataSet(self, *attrNames)
 
     def GetRows(self):
         return list(self.rows.values())
+
+    def GetUpdatedRows(self):
+        return [self.rows[h] for h in self.updatedRows]
 
     def GetSortedRows(self, *attrNames):
         handles = self.GetSortedRowHandles(*attrNames)
