@@ -12,10 +12,10 @@ def CopyFile(source, target, bufferSize = 16 * 1024, log = True):
     """Copy the source to the target."""
     if log:
         cx_Logging.Info("copying %s to %s...", source, target)
-    sourceFile = file(source, "rb")
+    sourceFile = open(source, "rb")
     if os.path.exists(target):
         Remove(target, log = log)
-    targetFile = file(target, "wb")
+    targetFile = open(target, "wb")
     while True:
         buffer = sourceFile.read(bufferSize)
         if not buffer:
