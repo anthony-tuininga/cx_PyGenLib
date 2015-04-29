@@ -349,7 +349,7 @@ class GridlineOptions(Options):
 class AxisOptions(Options):
     boolOptionNames = "date_axis"
     floatOptionNames = "min max major_unit minor_unit"
-    stringOptionNames = "num_format major_unit_type minor_unit_type"
+    stringOptionNames = "name num_format major_unit_type minor_unit_type"
     subOptionTags = [
             ("line", LineOptions),
             ("name_font", FontOptions),
