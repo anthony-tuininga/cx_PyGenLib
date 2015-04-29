@@ -916,10 +916,13 @@ class BooleanEditDialogColumn(EditDialogColumn):
 class ChoiceEditDialogColumn(EditDialogColumn):
 
     def __init__(self, parent, attrName, labelText, choices, required = False,
-            editable = True):
+            editable = True, onChangeMethod = None, passEvent = False):
         self.choices = dict(choices)
         if editable:
             field = parent.AddChoiceField(choices)
+            if onChangeMethod is not None:
+                parent.BindEvent(field, wx.EVT_CHOICE, onChangeMethod,
+                        passEvent = passEvent)
         else:
             field = parent.AddTextField(editable = False)
         self.editable = editable
@@ -1042,10 +1045,13 @@ class TextEditDialogColumn(EditDialogColumn):
     def __init__(self, parent, attrName, labelText, style = 0,
             maxLength = 0, size = (-1, -1), required = False,
             editable = True, cls = ceGUI.TextField, multiLine = False,
-            constantValue = None):
+            constantValue = None, onChangeMethod = None, passEvent = False):
         field = parent.AddTextField(style, maxLength, size = size, cls = cls,
                 editable = editable and constantValue is None,
                 multiLine = multiLine)
+        if editable and onChangeMethod is not None:
+            parent.BindEvent(field, wx.EVT_TEXT, onChangeMethod,
+                    passEvent = passEvent)
         super(TextEditDialogColumn, self).__init__(parent, attrName, labelText,
                 field, required = required, constantValue = constantValue)
 
