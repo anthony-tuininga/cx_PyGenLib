@@ -11,6 +11,7 @@ __all__ = [ "Tree", "TreeItem" ]
 
 
 class Tree(ceGUI.BaseControl, wx.TreeCtrl):
+    sortRootItems = True
     rootItemLabel = ""
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +38,8 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
                 self.SetItemHasChildren(itemId, False)
 
     def _PopulateBranch(self, parent, items):
-        items.sort(key = lambda x: x.GetSortValue())
+        if parent is not None or self.sortRootItems:
+            items.sort(key = lambda x: x.GetSortValue())
         for item in items:
             self.AppendItem(parent, item)
 
