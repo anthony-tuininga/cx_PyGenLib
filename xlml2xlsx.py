@@ -176,6 +176,8 @@ class Context(object):
         self.sheet = self.workbook.add_worksheet(name)
         if int(element.get("landscape", 0)):
             self.sheet.set_landscape()
+        if int(element.get("activate", 0)):
+            self.sheet.activate()
         paperIndex = int(element.get("paper", 0))
         if paperIndex:
             self.sheet.set_paper(paperIndex)
