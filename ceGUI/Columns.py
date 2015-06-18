@@ -151,7 +151,10 @@ class Column(ceGUI.BaseControl):
         if self.displayAttrName is None:
             dataSet.SetValue(rowHandle, self.attrName, value)
         else:
-            keyValue, displayValue = value
+            if value is None:
+                keyValue = displayValue = None
+            else:
+                keyValue, displayValue = value
             dataSet.SetValue(rowHandle, self.attrName, keyValue)
             dataSet.SetValue(rowHandle, self.displayAttrName, displayValue)
 
