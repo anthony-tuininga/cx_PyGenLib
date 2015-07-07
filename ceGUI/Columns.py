@@ -297,11 +297,19 @@ class ColumnMoney(ColumnDecimal):
 
 class ColumnStr(Column):
 
-    def ExtendedInitialize(self, forceUpper = False, forceLower = False):
+    def ExtendedInitialize(self, forceUpper = False, forceLower = False,
+            maxLength = None):
         self.forceUpper = forceUpper
         self.forceLower = forceLower
+        self.maxLength = maxLength
 
     def VerifyValueOnChange(self, row, rawValue):
+        if rawValue and self.maxLength is not None \
+                and len(rawValue) > self.maxLength:
+            message = "Value is too large (%s characters and only " \
+                    "%s characters are allowed" % \
+                    (len(rawValue), self.maxLength)
+            raise InvalidValueEntered(message)
         if rawValue and self.forceUpper:
             return rawValue.upper()
         elif rawValue and self.forceLower:
