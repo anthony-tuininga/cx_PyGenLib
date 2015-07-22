@@ -171,6 +171,9 @@ class Context(object):
                 properties[attrName] = value
         self.styleDict[name] = self.workbook.add_format(properties)
 
+    def AddTextBox(self, element):
+        self.textBoxes.append(TextBox(self.sheet, element))
+
     def BeginWorksheet(self, element):
         name = element.get("name")
         self.sheet = self.workbook.add_worksheet(name)
@@ -203,6 +206,7 @@ class Context(object):
         self.conditionalFormatDict = {}
         self.rangeNames = {}
         self.charts = []
+        self.textBoxes = []
 
     def Complete(self):
         self.workbook.close()
@@ -223,6 +227,9 @@ class Context(object):
                 otherChartObj.combine(obj)
         for chart, obj in chartObjs:
             self.sheet.insert_chart(chart.row, chart.col, obj)
+        for textBox in self.textBoxes:
+            self.sheet.insert_textbox(textBox.row, textBox.col,
+                    textBox.text, textBox.options)
 
     def SetPrintArea(self, element):
         firstRow = int(element.get("first_row", 0))
@@ -429,6 +436,15 @@ class SizeOptions(Options):
     floatOptionNames = "x_offset y_offset x_scale y_scale width height"
 
 
+class TextBoxOptions(Options):
+    floatOptionNames = "x_offset y_offset x_scale y_scale width height"
+    subOptionTags = [
+            ("border", LineOptions),
+            ("fill", FillOptions),
+            ("font", FontOptions)
+    ]
+
+
 class TitleOptions(Options):
     stringOptionNames = "name"
     subOptionTags = [("name_font", FontOptions)]
@@ -507,6 +523,15 @@ class Chart(object):
         return chart
 
 
+class TextBox(object):
+
+    def __init__(self, sheet, element):
+        self.row = int(element.get("row", 0))
+        self.col = int(element.get("col", 0))
+        self.text = element.get("text", "")
+        self.options = TextBoxOptions.Get(sheet, element)
+
+
 def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
     if inputIsString:
         f = io.BytesIO()
@@ -535,6 +560,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             context.AddCell(element)
         elif element.tag == "image":
             context.AddImage(element)
+        elif element.tag == "textbox":
+            context.AddTextBox(element)
         elif element.tag == "print_area":
             context.SetPrintArea(element)
         elif element.tag == "worksheet":
