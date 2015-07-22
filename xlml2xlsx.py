@@ -307,7 +307,6 @@ class Options(metaclass = OptionsMetaClass):
                 options[name] = int(value)
         for name in cls.intListOptionNames:
             value = element.get(name)
-            print("integer list option:", name, value)
             if value is not None:
                 options[name] = [int(s.strip()) for s in value.split(",")]
         for name in cls.boolOptionNames:
@@ -492,7 +491,6 @@ class Chart(object):
         if self.titleOptions:
             chart.set_title(self.titleOptions)
         if self.legendOptions:
-            print("Setting legend options:", self.legendOptions)
             chart.set_legend(self.legendOptions)
         if self.chartAreaOptions:
             chart.set_chartarea(self.chartAreaOptions)
