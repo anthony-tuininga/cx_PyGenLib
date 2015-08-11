@@ -192,19 +192,21 @@ class OracleDataSource(DatabaseDataSource):
 
     def _AddWhereClauseAndArg(self, columnName, rawOperator, value,
             whereClauses, args):
+        shortColumnName = columnName if "." not in columnName \
+                else columnName.split(".")[1]
         if rawOperator is None:
             if value is None:
                 whereClauses.append("%s is null" % columnName)
                 return
             clauseFormat = "%s = :%s"
-            argName = columnName
+            argName = shortColumnName
         else:
             seqNum = 1
-            argName = columnName
+            argName = shortColumnName
             while argName in args:
                 seqNum += 1
                 strSeqNum = str(seqNum)
-                argName = columnName[:30 - len(strSeqNum)] + strSeqNum
+                argName = shortColumnName[:30 - len(strSeqNum)] + strSeqNum
             operator = self.operators.get(rawOperator, "?")
             if rawOperator == "contains":
                 clauseFormat = "regexp_like(%s, :%s, 'i')"
@@ -216,7 +218,7 @@ class OracleDataSource(DatabaseDataSource):
                 inClauseParts = []
                 for i, inValue in enumerate(value):
                     strSeqNum = str(seqNum + i)
-                    argName = columnName[:30 - len(strSeqNum)] + strSeqNum
+                    argName = shortColumnName[:30 - len(strSeqNum)] + strSeqNum
                     inClauseParts.append(":" + argName)
                     args[argName] = inValue
                 clause = "%s in (%s)" % (columnName, ",".join(inClauseParts))
