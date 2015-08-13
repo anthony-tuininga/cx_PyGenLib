@@ -27,6 +27,8 @@ class Context(object):
         self.styleDict = {}
         self.rowIndex = -1
         self.columnIndex = 0
+        self.startAutoFilterRowIndex = None
+        self.startAutoFilterColumnIndex = None
 
     def __SubstituteFormula(self, match):
         rowString = match.group(1)
@@ -48,6 +50,14 @@ class Context(object):
             self.sheet.merge_range(self.rowIndex, self.columnIndex,
                     self.rowIndex + mergeDown, self.columnIndex + mergeAcross,
                     None, style)
+        if element.get("start_autofilter"):
+            self.startAutoFilterRowIndex = self.rowIndex
+            self.startAutoFilterColumnIndex = self.columnIndex
+        if element.get("end_autofilter") \
+                and self.startAutoFilterRowIndex is not None:
+            self.sheet.autofilter(self.startAutoFilterRowIndex,
+                    self.startAutoFilterColumnIndex, self.rowIndex + mergeDown,
+                    self.columnIndex + mergeAcross)
         name = element.get("name")
         if name is not None:
             ref = xlsxwriter.utility.xl_rowcol_to_cell(self.rowIndex,
@@ -96,6 +106,11 @@ class Context(object):
             for name in conditionalFormatNames.split(","):
                 conditionalFormat = self.conditionalFormatDict[name]
                 conditionalFormat.AddCell(self.rowIndex, self.columnIndex)
+        for childElement in element:
+            if childElement.tag == "comment":
+                commentOptions = CommentOptions.Get(self.sheet, childElement)
+                self.sheet.write_comment(self.rowIndex, self.columnIndex,
+                        childElement.text, commentOptions)
         self.columnIndex += mergeAcross + 1
 
     def AddChart(self, element):
@@ -418,6 +433,13 @@ class ChartAreaOptions(Options):
             ("border", LineOptions),
             ("fill", FillOptions)
     ]
+
+
+class CommentOptions(Options):
+    floatOptionNames = "x_offset y_offset x_scale y_scale width height"
+    stringOptionNames = "author color start_cell"
+    intOptionNames = "start_row start_col"
+    boolOptionNames = "visible"
 
 
 class SeriesOptions(Options):
