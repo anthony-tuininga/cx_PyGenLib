@@ -112,6 +112,13 @@ class Row(object, metaclass = RowMetaClass):
     schemaName = None
     tableName = None
 
+    @property
+    def pkValue(self):
+        if len(self.pkAttrNames) == 1:
+            return getattr(self, self.pkAttrNames[0])
+        elif self.pkAttrNames:
+            return tuple(getattr(self, n) for n in self.pkAttrNames)
+
     def __repr__(self):
         reprAttrNames = self.reprAttrNames or self.attrNames
         if reprAttrNames:
