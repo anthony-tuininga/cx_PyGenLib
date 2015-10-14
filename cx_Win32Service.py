@@ -21,7 +21,8 @@ class ServiceManager(object):
         try:
             return Service(self, serviceName)
         except pywintypes.error as e:
-            if ignoreError and e[0] == winerror.ERROR_SERVICE_DOES_NOT_EXIST:
+            if ignoreError \
+                    and e.args[0] == winerror.ERROR_SERVICE_DOES_NOT_EXIST:
                 return None
             raise
 
