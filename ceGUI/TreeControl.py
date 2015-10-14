@@ -86,7 +86,7 @@ class Tree(ceGUI.BaseControl, wx.TreeCtrl):
             return parentItem.data
 
     def GetItemParents(self, item):
-        while True:
+        while item is not None:
             parentItem = self.GetItemParent(item)
             if parentItem is None:
                 break
