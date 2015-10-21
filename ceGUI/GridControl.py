@@ -619,7 +619,14 @@ class GridColumnChoice(ceGUI.Column):
 
     def GetValue(self, row):
         value = self.GetNativeValue(row)
-        return self.displayValuesByDataValue.get(value, value or "")
+        try:
+            return self.displayValuesByDataValue[value]
+        except KeyError:
+            if value is None:
+                return ""
+            elif not isinstance(value, str):
+                return str(value)
+            return value
 
     def OnAddToGrid(self, grid):
         self.RefreshChoices()
