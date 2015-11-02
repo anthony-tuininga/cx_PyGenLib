@@ -135,7 +135,7 @@ class Row(object, metaclass = RowMetaClass):
         tableName, selectNames, queryConditions = \
                 cls.GetQueryInfo(**conditions)
         row = dataSource.GetRow(tableName, selectNames, cls, **queryConditions)
-        cls.SetExtraAttributes([row])
+        cls.SetExtraAttributes(dataSource, [row])
         return row
 
     @classmethod
@@ -144,7 +144,7 @@ class Row(object, metaclass = RowMetaClass):
                 cls.GetQueryInfo(**conditions)
         rows = dataSource.GetRows(tableName, selectNames, cls,
                 **queryConditions)
-        cls.SetExtraAttributes(rows)
+        cls.SetExtraAttributes(dataSource, rows)
         if cls.sortByAttrNames:
             rows.sort(key = cls.SortValue)
             if cls.sortReversed:
@@ -152,7 +152,7 @@ class Row(object, metaclass = RowMetaClass):
         return rows
 
     @classmethod
-    def SetExtraAttributes(cls, rows):
+    def SetExtraAttributes(cls, dataSource, rows):
         pass
 
     def Copy(self):
