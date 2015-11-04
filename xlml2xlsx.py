@@ -30,6 +30,20 @@ class Context(object):
         self.startAutoFilterRowIndex = None
         self.startAutoFilterColumnIndex = None
 
+    def __GetRichArgs(self, cellElement, defaultStyle):
+        args = []
+        style = defaultStyle
+        for childElement in cellElement:
+            if childElement.tag == "part":
+                style = defaultStyle
+                styleName = childElement.get("style")
+                if styleName is not None:
+                    style = self.styleDict[styleName]
+                args.append(style)
+                args.append(childElement.text)
+        args.append(defaultStyle)
+        return args
+
     def __SubstituteFormula(self, match):
         rowString = match.group(1)
         rowOffset = 0 if rowString is None else int(rowString[1:-1])
@@ -84,23 +98,24 @@ class Context(object):
                     adjustedFormula, style)
         else:
             value = element.text
-            if value is not None:
-                value = value.strip()
-            defaultTypeName = "string" if value else "blank"
-            typeName = element.get("type", defaultTypeName)
-            if value is None:
-                typeName = "blank"
+            typeName = element.get("type", "string")
+            if typeName == "rich_string":
+                methodArgs = self.__GetRichArgs(element, style)
+            else:
+                if not value:
+                    typeName = "blank"
+                elif typeName == "number":
+                    value = decimal.Decimal(value)
+                elif typeName == "datetime":
+                    if len(value) == 10:
+                        value = datetime.datetime.strptime(value, "%Y-%m-%d")
+                    else:
+                        value = datetime.datetime.strptime(value,
+                                "%Y-%m-%d %H:%M:%S")
+                methodArgs = (value, style)
             methodName = "write_%s" % typeName
             method = getattr(self.sheet, methodName)
-            if typeName == "number":
-                value = decimal.Decimal(value)
-            elif typeName == "datetime":
-                if len(value) == 10:
-                    value = datetime.datetime.strptime(value, "%Y-%m-%d")
-                else:
-                    value = datetime.datetime.strptime(value,
-                            "%Y-%m-%d %H:%M:%S")
-            method(self.rowIndex, self.columnIndex, value, style)
+            method(self.rowIndex, self.columnIndex, *methodArgs)
         conditionalFormatNames = element.get("conditional_formats")
         if conditionalFormatNames is not None:
             for name in conditionalFormatNames.split(","):
