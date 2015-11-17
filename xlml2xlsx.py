@@ -39,8 +39,9 @@ class Context(object):
                 styleName = childElement.get("style")
                 if styleName is not None:
                     style = self.styleDict[styleName]
-                args.append(style)
-                args.append(childElement.text)
+                if childElement.text:
+                    args.append(style)
+                    args.append(childElement.text)
         args.append(defaultStyle)
         return args
 
