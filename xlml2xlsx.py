@@ -170,22 +170,6 @@ class Context(object):
         options = ImageOptions.Get(self.sheet, element)
         self.sheet.insert_image(row, col, fileName, options)
 
-    def AddRow(self, element):
-        self.columnIndex = int(element.get("start_col", 0))
-        self.rowIndex = int(element.get("row_index", self.rowIndex + 1))
-        freeze = int(element.get("freeze", 0))
-        height = style = None
-        rawHeight = element.get("height")
-        if rawHeight is not None:
-            height = float(rawHeight)
-        styleName = element.get("style")
-        if styleName is not None:
-            style = self.styleDict[styleName]
-        if height is not None or style is not None:
-            self.sheet.set_row(self.rowIndex, height, style)
-        if freeze:
-            self.sheet.freeze_panes(self.rowIndex + 1, 0)
-
     def AddStyle(self, element):
         name = "default"
         properties = {}
@@ -204,6 +188,25 @@ class Context(object):
 
     def AddTextBox(self, element):
         self.textBoxes.append(TextBox(self.sheet, element))
+
+    def BeginRow(self, element):
+        self.columnIndex = int(element.get("start_col", 0))
+        self.rowIndex = int(element.get("row_index", self.rowIndex + 1))
+        if element.get("start_autofilter"):
+            self.startAutoFilterRowIndex = self.rowIndex
+            self.startAutoFilterColumnIndex = self.columnIndex
+        freeze = int(element.get("freeze", 0))
+        height = style = None
+        rawHeight = element.get("height")
+        if rawHeight is not None:
+            height = float(rawHeight)
+        styleName = element.get("style")
+        if styleName is not None:
+            style = self.styleDict[styleName]
+        if height is not None or style is not None:
+            self.sheet.set_row(self.rowIndex, height, style)
+        if freeze:
+            self.sheet.freeze_panes(self.rowIndex + 1, 0)
 
     def BeginWorksheet(self, element):
         name = element.get("name")
@@ -241,6 +244,13 @@ class Context(object):
 
     def Complete(self):
         self.workbook.close()
+
+    def EndRow(self, element):
+        if element.get("end_autofilter") \
+                and self.startAutoFilterRowIndex is not None:
+            self.sheet.autofilter(self.startAutoFilterRowIndex,
+                    self.startAutoFilterColumnIndex, self.rowIndex,
+                    self.columnIndex - 1)
 
     def EndWorksheet(self):
         for conditionalFormat in self.conditionalFormats:
@@ -585,7 +595,7 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             if element.tag == "worksheet":
                 context.BeginWorksheet(element)
             elif element.tag == "row":
-                context.AddRow(element)
+                context.BeginRow(element)
         elif element.tag == "chart":
             context.AddChart(element)
         elif element.tag == "style":
@@ -604,6 +614,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             context.SetPrintArea(element)
         elif element.tag == "worksheet":
             context.EndWorksheet()
+        elif element.tag == "row":
+            context.EndRow(element)
     context.Complete()
     return xlOutput
 
