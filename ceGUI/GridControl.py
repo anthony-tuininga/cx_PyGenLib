@@ -500,7 +500,7 @@ class GridTable(wx.grid.GridTableBase):
         self.sortByColumnIndexes = []
 
     def DeleteRows(self, pos = 0, numRows = 1):
-        while numRows > 0:
+        while numRows > 0 and pos < len(self.rowHandles):
             handle = self.rowHandles[pos]
             self.dataSet.DeleteRow(handle)
             self.rowHandles.pop(pos)
