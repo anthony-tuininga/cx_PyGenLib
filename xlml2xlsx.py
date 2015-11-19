@@ -18,7 +18,7 @@ class Context(object):
     styleBooleanAttrNames = """bold italic underline font_strikeout text_wrap
             shrink""".split()
     styleIntegerAttrNames = """font_size font_script rotation indent pattern
-            border bottom top left right""".split()
+            border diag_border diag_type bottom top left right""".split()
 
     def __init__(self, output):
         self.formulaPattern = re.compile("R(\[-?\d+\])?C(\[-?\d+\])?")
@@ -228,6 +228,9 @@ class Context(object):
         fitToPagesHigh = int(element.get("fit_to_pages_high", 0))
         if fitToPagesWide or fitToPagesHigh:
             self.sheet.fit_to_pages(fitToPagesWide, fitToPagesHigh)
+        zoom = int(element.get("zoom", 100))
+        if zoom != 100:
+            self.sheet.set_zoom(zoom)
         leftMargin = float(element.get("left_margin", 0.7))
         rightMargin = float(element.get("right_margin", 0.7))
         topMargin = float(element.get("top_margin", 0.75))
