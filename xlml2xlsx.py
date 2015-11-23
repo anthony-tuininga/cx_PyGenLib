@@ -472,6 +472,7 @@ class CommentOptions(Options):
 
 
 class SeriesOptions(Options):
+    boolOptionNames = "y2_axis"
     stringOptionNames = "name values categories"
     subOptionTags = [
             ("values", RangeReference),
@@ -485,6 +486,10 @@ class SeriesOptions(Options):
 
 class SizeOptions(Options):
     floatOptionNames = "x_offset y_offset x_scale y_scale width height"
+
+
+class TableOptions(Options):
+    boolOptionNames = "horizontal vertical outline show_keys"
 
 
 class TextBoxOptions(Options):
@@ -523,6 +528,7 @@ class Chart(object):
         self.sizeOptions = self.legendOptions = self.titleOptions = None
         self.plotAreaOptions = self.xAxisOptions = self.yAxisOptions = None
         self.x2AxisOptions = self.y2AxisOptions = self.chartAreaOptions = None
+        self.tableOptions = None
         self.series = []
         for childElement in element:
             if childElement.tag == "series":
@@ -546,6 +552,8 @@ class Chart(object):
                 self.yAxisOptions = AxisOptions.Get(sheet, childElement)
             elif childElement.tag == "y2_axis":
                 self.y2AxisOptions = AxisOptions.Get(sheet, childElement)
+            elif childElement.tag == "table":
+                self.tableOptions = TableOptions.Get(sheet, childElement)
 
     def Create(self, workbook):
         chart = workbook.add_chart(self.typeOptions)
@@ -571,6 +579,8 @@ class Chart(object):
             chart.set_y_axis(self.yAxisOptions)
         if self.y2AxisOptions:
             chart.set_y2_axis(self.y2AxisOptions)
+        if self.tableOptions:
+            chart.set_table(self.tableOptions)
         return chart
 
 
