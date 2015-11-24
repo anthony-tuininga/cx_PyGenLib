@@ -405,7 +405,7 @@ class GridlineOptions(Options):
 
 
 class AxisOptions(Options):
-    boolOptionNames = "date_axis"
+    boolOptionNames = "date_axis reverse"
     floatOptionNames = "min max major_unit minor_unit"
     stringOptionNames = "name num_format major_unit_type minor_unit_type"
     subOptionTags = [
