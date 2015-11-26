@@ -163,6 +163,12 @@ class Context(object):
         self.conditionalFormats.append(conditionalFormat)
         self.conditionalFormatDict[name] = conditionalFormat
 
+    def AddHeaderFooter(self, element):
+        options = HeaderFooterOptions.Get(self.sheet, element)
+        methodName = "set_%s" % element.tag
+        method = getattr(self.sheet, methodName)
+        method(element.text, options)
+
     def AddImage(self, element):
         row = int(element.get("row", 0))
         col = int(element.get("col", 0))
@@ -426,6 +432,11 @@ class FillOptions(Options):
     boolOptionNames = "none"
 
 
+class HeaderFooterOptions(Options):
+    floatOptionNames = "margin"
+    boolOptionNames = "scale_with_doc align_with_margins"
+
+
 class LayoutOptions(Options):
     floatOptionNames = "x y width height"
 
@@ -621,6 +632,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             context.AddCell(element)
         elif element.tag == "image":
             context.AddImage(element)
+        elif element.tag in ("header", "footer"):
+            context.AddHeaderFooter(element)
         elif element.tag == "textbox":
             context.AddTextBox(element)
         elif element.tag == "print_area":
