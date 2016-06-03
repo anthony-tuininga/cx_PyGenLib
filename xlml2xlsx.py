@@ -642,6 +642,8 @@ def GenerateXL(xlmlInput, xlOutput = None, inputIsString = True):
             context.EndWorksheet()
         elif element.tag == "row":
             context.EndRow(element)
+        elif element.tag == "!--":
+            continue
     context.Complete()
     return xlOutput
 
