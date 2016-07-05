@@ -221,6 +221,8 @@ class Context(object):
             self.sheet.set_landscape()
         if int(element.get("activate", 0)):
             self.sheet.activate()
+        if int(element.get("hide", 0)):
+            self.sheet.hide()
         paperIndex = int(element.get("paper", 0))
         if paperIndex:
             self.sheet.set_paper(paperIndex)
