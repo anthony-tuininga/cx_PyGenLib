@@ -64,6 +64,7 @@ class FilterArg(object):
 
 
 class FilterArgBool(FilterArg):
+    changeEvent = wx.EVT_CHECKBOX
 
     def __init__(self, parent, name, label, labelBorder = 10,
             onChangeMethod = None, passEvent = False, saveValue = False,
