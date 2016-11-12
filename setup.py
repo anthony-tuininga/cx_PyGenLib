@@ -13,6 +13,7 @@ modules = [
         "ceDatabase",
         "ceDatabaseCache",
         "ceDataSource",
+        "ceModuleLoader",
         "ceWin32NamedPipes",
         "cx_ClassLibrary",
         "cx_DatabaseTable",
@@ -30,7 +31,9 @@ modules = [
         "cx_Utils",
         "cx_Win32Pipe",
         "cx_Win32Service",
-        "cx_XML"
+        "cx_XML",
+        "srml2pdf",
+        "xlml2xlsx"
 ]
 
 setup(
