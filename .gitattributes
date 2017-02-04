@@ -1,0 +1,6 @@
+*       text=auto
+
+*.in    text
+*.py    text
+*.rst   text
+*.txt   text
