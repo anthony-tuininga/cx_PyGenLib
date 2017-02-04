@@ -1,5 +1,6 @@
 from .Framework import *
 from .Images import *
+from .Config import *
 from .Application import *
 from .SimpleControls import *
 from .Columns import *

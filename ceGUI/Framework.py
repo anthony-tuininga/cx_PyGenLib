@@ -66,21 +66,34 @@ class DataSet(ceDatabase.DataSet):
         if self.selectCacheAttrName is not None:
             method = getattr(self.cache, self.selectCacheAttrName)
             return method(*args)
+        elif self.rowClass.cached:
+            if not args:
+                return self.config.GetCachedRows(self.rowClass)
+            pkValue, = args
+            row = self.config.GetCachedRowByPK(self.rowClass, pkValue)
+            if row is not None:
+                return [row]
         return super(DataSet, self)._GetRows(*args)
 
     def Update(self):
-        if self.updateSubCacheAttrName is not None:
-            cache = self.cache
-            subCache = getattr(cache, self.updateSubCacheAttrName)
+        if self.updateSubCacheAttrName is not None or self.rowClass.cached:
             rowsToUpdate = [self.rows[h] for h in self.insertedRows] + \
                     [self.rows[h] for h in self.updatedRows]
             rowsToDelete = list(self.deletedRows.values())
         super(DataSet, self).Update()
         if self.updateSubCacheAttrName is not None:
+            cache = self.cache
+            subCache = getattr(cache, self.updateSubCacheAttrName)
             for row in rowsToDelete:
                 subCache.RemoveRow(cache, row)
             for row in rowsToUpdate:
                 subCache.UpdateRow(cache, row, self.contextItem)
+        elif self.rowClass.cached:
+            config = self.config
+            for row in rowsToDelete:
+                config.RemoveCachedRow(self.rowClass, row)
+            for row in rowsToUpdate:
+                config.UpdateCachedRow(self.rowClass, row, self.contextItem)
 
 
 class FilteredDataSet(ceDatabase.FilteredDataSet, DataSet):
