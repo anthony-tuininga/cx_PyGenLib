@@ -1,3 +1,31 @@
+Changes from 3.0 to 3.1
+ 1) Further work on improving Python 3.x compatibility.
+ 2) Significant improvements to the ceGUI module, including support for the
+    Phoenix branch of wxPython and improved handling of grids.
+ 3) Add new module, ceModuleLoader, which can be used to load a module from a
+    database, for example, without polluting the sys namespace.
+ 4) Add new module, ceDataSource, which allows for data sources that acquire
+    data from a database indirectly or from a different source entirely (such
+    as a web service).
+ 5) Add new module, srml2pdf, which is used for translating RML (Report Markup
+    Language defined by ReportLab) to PDF in a simplified fashion, unlike the
+    commercial module provided by ReportLab itself.
+ 6) Add new module, xlml2xlsx, which converts a template language modeling the
+    abilities of the xlsxwriter module into Excel using the xlsxwriter module
+    itself (enables easy use by web frameworks like Django).
+ 7) In ceDatabaseCache, correct caching issues.
+ 8) In cx_Utils, add support for creating modules from scripts and acquiring a
+    class from those script modules.
+ 9) In cx_Threads, added support for clearing a queue completely.
+10) In cx_ShellUtils, add support for clearing the read-only flag on Windows
+    prior to attempting to delete the file.
+11) In ceWin32NamedPipes, allow for more flexibility when creating named pipes.
+12) Removed module cx_ServerFramework since it was really a sample anyway (and
+    has now been moved to the cx_Freeze project where it belongs).
+13) Removed modules cx_CVS and cx_FTP as these are no longer used.
+14) Removed cx_Threads.Event() and cx_Threads.Timer() since these are both
+    covered by the built-in threading module.
+
 Changes from 2.5 to 3.0
  1) Substantial changes and enhancements to ceGUI to handle additional
     controls and support better integration with databases.
