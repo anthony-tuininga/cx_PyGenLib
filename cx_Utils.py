@@ -143,7 +143,6 @@ def PathRemainder(path1, path2, caseSensitive=False, ignoreDriveLetters=True):
             break
     return p2
 
-
 def PerformDiff(sourceDir, targetDir):
     """Perform a diff between two directories and return the results as a set
        of three lists: new, modified and removed."""
@@ -152,13 +151,22 @@ def PerformDiff(sourceDir, targetDir):
     removedFiles = []
     command = 'diff --recursive --brief "%s" "%s"' % (sourceDir, targetDir)
     pipe = os.popen(command)
+    inverse = False
+    if targetDir.startswith(sourceDir):
+        inverse = True
     for line in pipe.readlines():
         if line.startswith("Only"):
             fileOrDir = os.path.join(*line[8:-1].split(": "))
-            if fileOrDir.startswith(sourceDir):
-                removedFiles += FilesInDirectory(fileOrDir)
+            if inverse:
+                if fileOrDir.startswith(targetDir):
+                    newFiles += FilesInDirectory(fileOrDir)
+                else:
+                    removedFiles += FilesInDirectory(fileOrDir)
             else:
-                newFiles += FilesInDirectory(fileOrDir)
+                if fileOrDir.startswith(sourceDir):
+                    removedFiles += FilesInDirectory(fileOrDir)
+                else:
+                    newFiles += FilesInDirectory(fileOrDir)
         else:
             modifiedFiles.append(line[line.find(" and "):][5:-8])
     status = pipe.close()
@@ -167,9 +175,9 @@ def PerformDiff(sourceDir, targetDir):
             exitCode = os.WEXITSTATUS(status)
         else:
             exitCode = status
-        raise CommandExecutionFailed(command = command, exitCode = exitCode)
+        if exitCode not in(1, 0):
+            raise CommandExecutionFailed(command = command, exitCode = exitCode)
     return (newFiles, modifiedFiles, removedFiles)
-
 
 def SplitFirst(path):
     """Return a tuple containing the first directory and the rest of path.
