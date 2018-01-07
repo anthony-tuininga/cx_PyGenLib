@@ -170,8 +170,10 @@ class DatabaseDataSource(DataSource):
             whereClause = " and ".join(whereClauses)
         return whereClause, args
 
-    def GetRowsDirect(self, sql, args, rowFactory = None):
+    def GetRowsDirect(self, sql, args = None, rowFactory = None):
         cursor = self.connection.cursor()
+        if args is None:
+            args = []
         cursor.execute(sql, args)
         if rowFactory is not None:
             cursor.rowfactory = rowFactory
