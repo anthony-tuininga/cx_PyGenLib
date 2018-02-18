@@ -114,7 +114,7 @@ class FilterArgChoiceMultiple(FilterArg):
         self.choices = choices
         self.selectedKeys = []
         fieldControl = parent.AddTextField(size = size, editable = False)
-        self.button = parent.AddButton("...", size = (25, -1),
+        self.button = parent.AddButton("...", style = wx.BU_EXACTFIT,
                 method = self.OnChooseValue, passEvent = False)
         super(FilterArgChoiceMultiple, self).__init__(parent, name, label,
                 fieldControl, onChangeMethod = onChangeMethod,

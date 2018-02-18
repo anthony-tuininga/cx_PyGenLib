@@ -81,8 +81,8 @@ class BaseContainer(ceGUI.BaseControl):
         self.settings.Flush()
 
     def AddButton(self, label = "", method = None, size = (-1, -1),
-            passEvent = True, enabled = True):
-        button = wx.Button(self, -1, label, size = size)
+            style = 0, passEvent = True, enabled = True):
+        button = wx.Button(self, -1, label, size = size, style = style)
         if not enabled:
             button.Enable(False)
         if method is not None:
