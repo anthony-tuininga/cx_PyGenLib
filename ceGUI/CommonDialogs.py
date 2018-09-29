@@ -176,14 +176,12 @@ class SelectionListDialog(ceGUI.StandardDialog):
         key = event.GetKeyCode()
         if key == 1 and not self.selectionList.singleSelection: # Ctrl-A
             self.selectionList.SelectAll()
-        elif key == wx.WXK_RETURN and self.GetSelectedItems():
-            self._OnOk(event)
-            self.EndModal(wx.ID_OK)
         event.Skip()
 
     def OnItemActivated(self, event):
-        self._OnOk(event)
-        self.EndModal(wx.ID_OK)
+        if self.GetSelectedItems():
+            self._OnOk(event)
+            self.EndModal(wx.ID_OK)
 
     def OnItemDeselected(self, event):
         if self.selectionList.GetSelectedItemCount() == 0:
