@@ -10,15 +10,11 @@ import cx_Threads
 import wx
 import sys
 
-import wx.lib.pubsub.setupkwargs
-
-from wx.lib.pubsub import pub
-
 __all__ = [ "AppExit", "AppTopWindow", "BusyCursorContext", "DataSet",
             "DataSetRow", "EventHandler", "EVT_THREAD_TERMINATED",
             "FilteredDataSet", "FrozenContext", "GetApp", "GetModuleItem",
-            "OpenWindow", "RequiredFieldHasNoValue", "SendMessage",
-            "Subscribe", "Thread", "TransactionContext", "UnsubscribeAll" ]
+            "OpenWindow", "RequiredFieldHasNoValue", "Thread",
+            "TransactionContext"]
 
 EVT_THREAD_TERMINATED = wx.NewEventType()
 
@@ -202,18 +198,6 @@ def OpenWindow(name, parent = None, forceNewInstance = False,
 
 class RequiredFieldHasNoValue(cx_Exceptions.BaseException):
     message = "Required field has no value."
-
-
-def SendMessage(topic, **args):
-    pub.sendMessage(topic, **args)
-
-
-def Subscribe(listener, topic):
-    pub.subscribe(listener, topic)
-
-
-def UnsubscribeAll(topics = None):
-    pub.unsubAll(topics)
 
 
 class TransactionContext(BusyCursorContext):

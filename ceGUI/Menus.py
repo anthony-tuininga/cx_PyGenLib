@@ -15,10 +15,8 @@ class Menu(object):
 
     def _AddEntry(self, parent, label = "", helpString = "",
             kind = wx.ITEM_NORMAL, method = None, createBusyCursor = False,
-            id = None, skipEvent = False, passEvent = True, enabled = True,
+            id = wx.ID_ANY, skipEvent = False, passEvent = True, enabled = True,
             pos = None):
-        if id is None:
-            id = wx.NewId()
         item = wx.MenuItem(self.menu, id, label, helpString, kind)
         if pos is None:
             self.menu.Append(item)
