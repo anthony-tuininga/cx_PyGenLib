@@ -131,7 +131,7 @@ class DatabaseDataSource(DataSource):
         return self.cursor.callproc(procedureName, args)
 
     def CommitTransaction(self, transaction):
-        with self.connection:
+        try:
             cursor = self.connection.cursor()
             for item in transaction.items:
                 if item.procedureName is not None:
@@ -142,6 +142,10 @@ class DatabaseDataSource(DataSource):
                     self._TransactionUpdateRow(cursor, item)
                 else:
                     self._TransactionDeleteRow(cursor, item)
+            self.connection.commit()
+        except:
+            self.connection.rollback()
+            raise
 
     def GetSqlAndArgs(self, tableName, columnNames, **conditions):
         sql = "select %s from %s" % (", ".join(columnNames), tableName)
