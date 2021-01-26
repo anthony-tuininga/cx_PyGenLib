@@ -1,5 +1,6 @@
 *.pyc
 __pycache__
+cx_PyGenLib.egg-info
 MANIFEST
 build
 dist
