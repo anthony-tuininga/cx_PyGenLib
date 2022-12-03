@@ -816,7 +816,7 @@ class EllipsisEditDialogColumn(EditDialogColumn):
     def Layout(self, sizer):
         fieldSizer = wx.BoxSizer(wx.HORIZONTAL)
         fieldSizer.Add(self.field, border = 5, proportion = 1,
-                flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.RIGHT)
+                flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT)
         fieldSizer.Add(self.button, flag = wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.label, flag = wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(fieldSizer, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
