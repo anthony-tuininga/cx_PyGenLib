@@ -45,19 +45,13 @@ class BaseException(Exception):
             stringRep = self._FormatValue(value, maxLength = 500)
             self.details.append("  %s -> %s" % (name, stringRep))
 
-    def __AddLocalVariables(self, frame, tb = None):
+    def __AddLocalVariables(self, tb, frames_to_skip = 0):
         self.details.append("Local Variables:")
-        if tb:
-            tbFrame = tb.tb_frame
-            tbLineNo = tb.tb_lineno
-        else:
-            tbFrame = tbLineNo = None
-        while frame is not None:
-            if frame is tbFrame:
-                self.__AddFrame(frame, tbLineNo)
+        for frame, line_no in traceback.walk_tb(tb):
+            if frames_to_skip > 0:
+                frames_to_skip -= 1
             else:
-                self.__AddFrame(frame, frame.f_lineno)
-            frame = frame.f_back
+                self.__AddFrame(frame, line_no)
 
     def _FormatException(self, excType, excValue, tb):
         """Format the traceback and put it in the traceback attribute."""
@@ -70,12 +64,7 @@ class BaseException(Exception):
             for line in str(excValue).rstrip().splitlines():
                 self.details.append(prefix + line)
                 prefix = ""
-        frame = None
-        initialTb = tb
-        while tb is not None:
-            frame = tb.tb_frame
-            tb = tb.tb_next
-        self.__AddLocalVariables(frame, initialTb)
+        self.__AddLocalVariables(tb)
 
     def _FormatStack(self, framesToSkip = 0):
         """Format the traceback for the current location."""
@@ -84,12 +73,7 @@ class BaseException(Exception):
         try:
             raise ZeroDivisionError
         except ZeroDivisionError:
-            frame = sys.exc_info()[2].tb_frame
-            framesToSkip += 2
-            while framesToSkip > 0:
-                frame = frame.f_back
-                framesToSkip -= 1
-        self.__AddLocalVariables(frame)
+            self.__AddLocalVariables(sys.exc_info()[2], framesToSkip + 2)
 
     def _FormatValue(self, value, maxLength = None):
         """Format the value for display in the exception."""
