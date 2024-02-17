@@ -47,11 +47,16 @@ class BaseException(Exception):
 
     def __AddLocalVariables(self, tb, frames_to_skip = 0):
         self.details.append("Local Variables:")
+        frames_seen = set()
         for frame, line_no in traceback.walk_tb(tb):
             if frames_to_skip > 0:
                 frames_to_skip -= 1
             else:
-                self.__AddFrame(frame, line_no)
+                for frame, line_no in traceback.walk_stack(frame):
+                    if frame in frames_seen:
+                        continue
+                    frames_seen.add(frame)
+                    self.__AddFrame(frame, line_no)
 
     def _FormatException(self, excType, excValue, tb):
         """Format the traceback and put it in the traceback attribute."""
