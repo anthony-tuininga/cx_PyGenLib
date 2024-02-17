@@ -132,7 +132,7 @@ class FilterArgChoiceMultiple(FilterArg):
         sizer.Add(self.labelControl, flag = flag, border = self.labelBorder)
         fieldSizer = wx.BoxSizer(wx.HORIZONTAL)
         fieldSizer.Add(self.fieldControl, proportion = 1, border = 5,
-                flag = baseFlag | wx.EXPAND | wx.RIGHT)
+                flag = baseFlag | wx.RIGHT)
         fieldSizer.Add(self.button, flag = baseFlag)
         sizer.Add(fieldSizer, flag = baseFlag | wx.LEFT, border = 5)
 
